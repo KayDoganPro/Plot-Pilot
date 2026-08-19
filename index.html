@@ -1,0 +1,2550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>PlotPilot – Your Home Garden Command Center</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sage: {
+              50: '#f6f7f4',
+              100: '#e8ebe3',
+              200: '#d1d8c7',
+              300: '#b3bfa3',
+              400: '#94a57f',
+              500: '#768a63',
+              600: '#5c6e4d',
+              700: '#48573e',
+              800: '#3b4734',
+              900: '#323c2d',
+            },
+            terracotta: {
+              400: '#e07a5f',
+              500: '#d46a4c',
+              600: '#c45a3c',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; }
+    .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+    .card-shadow { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .plant-card:active { transform: scale(0.98); }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: #b3bfa3; border-radius: 4px; }
+  </style>
+</head>
+<body class="bg-sage-50 text-sage-900 antialiased">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo } = React;
+
+    // ========== MOCK DATA ==========
+    const INITIAL_SEEDS = [
+      { id: 1, name: "Cherokee Purple Tomato", type: "Vegetable", qty: 12, expires: "2025-08-12", germRate: 92, low: false },
+      { id: 2, name: "Paris Market Carrot", type: "Vegetable", qty: 4, expires: "2025-05-18", germRate: 85, low: true },
+      { id: 3, name: "Genovese Basil", type: "Herb", qty: 7, expires: "2025-06-03", germRate: 78, low: false },
+      { id: 4, name: "English Lavender", type: "Flower", qty: 9, expires: "2025-09-22", germRate: 88, low: false },
+      { id: 5, name: "California Giants Zinnia", type: "Flower", qty: 15, expires: "2025-11-30", germRate: 90, low: false },
+      { id: 6, name: "Slow Bolt Cilantro", type: "Herb", qty: 3, expires: "2025-05-05", germRate: 65, low: true },
+    ];
+
+    // germDays, daysToHarvest, fertilizeEveryDays, startWeeksBeforeFrost, transplantWeeksBeforeFrost
+    const PLANT_LIBRARY = [
+      { id: "tomato", name: "Tomato", scientific: "Solanum lycopersicum", type: "Vegetable", spacing: "24-36 in", sun: "Full sun", icon: "🍅", family: "Solanaceae", familyName: "Nightshade", germDays: 7, daysToHarvest: 75, fertilizeEveryDays: 21, startWeeksBeforeFrost: 6, transplantWeeksBeforeFrost: 1 },
+      { id: "basil", name: "Basil", scientific: "Ocimum basilicum", type: "Herb", spacing: "12-18 in", sun: "Full sun", icon: "🌿", family: "Lamiaceae", familyName: "Mint", germDays: 5, daysToHarvest: 30, fertilizeEveryDays: 28, startWeeksBeforeFrost: 4, transplantWeeksBeforeFrost: 0 },
+      { id: "marigold", name: "Marigold", scientific: "Tagetes spp.", type: "Flower", spacing: "8-12 in", sun: "Full sun", icon: "🌼", family: "Asteraceae", familyName: "Aster", germDays: 5, daysToHarvest: 50, fertilizeEveryDays: 30, startWeeksBeforeFrost: 4, transplantWeeksBeforeFrost: 1 },
+      { id: "lavender", name: "Lavender", scientific: "Lavandula angustifolia", type: "Herb", spacing: "12-18 in", sun: "Full sun", icon: "💜", family: "Lamiaceae", familyName: "Mint", germDays: 14, daysToHarvest: 90, fertilizeEveryDays: 45, startWeeksBeforeFrost: 8, transplantWeeksBeforeFrost: 2 },
+      { id: "lettuce", name: "Lettuce", scientific: "Lactuca sativa", type: "Vegetable", spacing: "6-12 in", sun: "Partial", icon: "🥬", family: "Asteraceae", familyName: "Aster", germDays: 4, daysToHarvest: 45, fertilizeEveryDays: 21, startWeeksBeforeFrost: 4, transplantWeeksBeforeFrost: 2 },
+      { id: "pepper", name: "Pepper", scientific: "Capsicum annuum", type: "Vegetable", spacing: "18-24 in", sun: "Full sun", icon: "🫑", family: "Solanaceae", familyName: "Nightshade", germDays: 10, daysToHarvest: 70, fertilizeEveryDays: 21, startWeeksBeforeFrost: 8, transplantWeeksBeforeFrost: 1 },
+      { id: "carrot", name: "Carrot", scientific: "Daucus carota", type: "Vegetable", spacing: "2-3 in", sun: "Full sun", icon: "🥕", family: "Apiaceae", familyName: "Umbellifer", germDays: 14, daysToHarvest: 70, fertilizeEveryDays: 30, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0 },
+      { id: "blueberry", name: "Blueberry", scientific: "Vaccinium corymbosum", type: "Fruit", spacing: "4-5 ft", sun: "Full sun", icon: "🫐", family: "Ericaceae", familyName: "Heath (perennial)", germDays: 30, daysToHarvest: 365, fertilizeEveryDays: 60, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0 },
+      { id: "cucumber", name: "Cucumber", scientific: "Cucumis sativus", type: "Vegetable", spacing: "12-18 in", sun: "Full sun", icon: "🥒", family: "Cucurbitaceae", familyName: "Gourd", germDays: 5, daysToHarvest: 55, fertilizeEveryDays: 21, startWeeksBeforeFrost: 3, transplantWeeksBeforeFrost: 1 },
+      { id: "zucchini", name: "Zucchini", scientific: "Cucurbita pepo", type: "Vegetable", spacing: "24-36 in", sun: "Full sun", icon: "🟢", family: "Cucurbitaceae", familyName: "Gourd", germDays: 6, daysToHarvest: 50, fertilizeEveryDays: 21, startWeeksBeforeFrost: 3, transplantWeeksBeforeFrost: 1 },
+      { id: "bean", name: "Bush Bean", scientific: "Phaseolus vulgaris", type: "Vegetable", spacing: "4-6 in", sun: "Full sun", icon: "🫘", family: "Fabaceae", familyName: "Legume", germDays: 7, daysToHarvest: 55, fertilizeEveryDays: 35, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0 },
+      { id: "onion", name: "Onion", scientific: "Allium cepa", type: "Vegetable", spacing: "4-6 in", sun: "Full sun", icon: "🧅", family: "Amaryllidaceae", familyName: "Allium", germDays: 10, daysToHarvest: 100, fertilizeEveryDays: 30, startWeeksBeforeFrost: 8, transplantWeeksBeforeFrost: 4 },
+      { id: "spinach", name: "Spinach", scientific: "Spinacia oleracea", type: "Vegetable", spacing: "4-6 in", sun: "Partial", icon: "🍃", family: "Amaranthaceae", familyName: "Amaranth", germDays: 7, daysToHarvest: 40, fertilizeEveryDays: 21, startWeeksBeforeFrost: 4, transplantWeeksBeforeFrost: 2 },
+      { id: "radish", name: "Radish", scientific: "Raphanus sativus", type: "Vegetable", spacing: "2 in", sun: "Full sun", icon: "🔴", family: "Brassicaceae", familyName: "Brassica", germDays: 4, daysToHarvest: 25, fertilizeEveryDays: 0, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0 },
+      { id: "kale", name: "Kale", scientific: "Brassica oleracea", type: "Vegetable", spacing: "12-18 in", sun: "Full sun", icon: "🥬", family: "Brassicaceae", familyName: "Brassica", germDays: 6, daysToHarvest: 55, fertilizeEveryDays: 28, startWeeksBeforeFrost: 5, transplantWeeksBeforeFrost: 2 },
+      { id: "cilantro", name: "Cilantro", scientific: "Coriandrum sativum", type: "Herb", spacing: "6-8 in", sun: "Partial", icon: "🌿", family: "Apiaceae", familyName: "Umbellifer", germDays: 8, daysToHarvest: 40, fertilizeEveryDays: 28, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0 },
+      { id: "strawberry", name: "Strawberry", scientific: "Fragaria × ananassa", type: "Fruit", spacing: "12 in", sun: "Full sun", icon: "🍓", family: "Rosaceae", familyName: "Rose", germDays: 14, daysToHarvest: 90, fertilizeEveryDays: 30, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0 },
+      { id: "corn", name: "Sweet Corn", scientific: "Zea mays", type: "Vegetable", spacing: "8-12 in", sun: "Full sun", icon: "🌽", family: "Poaceae", familyName: "Grass", germDays: 7, daysToHarvest: 80, fertilizeEveryDays: 21, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0 },
+    ];
+
+    // Family colors for visual badges
+    const FAMILY_COLORS = {
+      Solanaceae: "bg-red-100 text-red-700",
+      Lamiaceae: "bg-purple-100 text-purple-700",
+      Asteraceae: "bg-yellow-100 text-yellow-800",
+      Apiaceae: "bg-orange-100 text-orange-700",
+      Ericaceae: "bg-blue-100 text-blue-700",
+      Cucurbitaceae: "bg-green-100 text-green-700",
+      Fabaceae: "bg-lime-100 text-lime-700",
+      Amaryllidaceae: "bg-violet-100 text-violet-700",
+      Amaranthaceae: "bg-teal-100 text-teal-700",
+      Brassicaceae: "bg-emerald-100 text-emerald-800",
+      Rosaceae: "bg-pink-100 text-pink-700",
+      Poaceae: "bg-amber-100 text-amber-800",
+    };
+
+    // Date helpers
+    const addDays = (date, days) => {
+      const d = new Date(date);
+      d.setDate(d.getDate() + days);
+      return d;
+    };
+    const fmtDate = (d) => {
+      if (!d) return "";
+      const x = d instanceof Date ? d : new Date(d);
+      return x.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    };
+    const toISODate = (d) => {
+      const x = d instanceof Date ? d : new Date(d);
+      return x.toISOString().slice(0, 10);
+    };
+
+    // Recommended wait years before repeating a family in the same bed
+    const ROTATION_YEARS = 3;
+
+    // ========== PLANT DIAGNOSTIC DATA ==========
+    const SYMPTOMS = [
+      { id: "yellow_leaves", label: "Yellow leaves", icon: "🟡" },
+      { id: "brown_spots", label: "Brown / black spots", icon: "🟤" },
+      { id: "white_powder", label: "White powdery coating", icon: "⚪" },
+      { id: "holes_chewed", label: "Holes or chewed edges", icon: "🕳️" },
+      { id: "wilting", label: "Wilting / drooping", icon: "🥀" },
+      { id: "sticky_residue", label: "Sticky residue / honeydew", icon: "💧" },
+      { id: "webbing", label: "Fine webbing", icon: "🕸️" },
+      { id: "stunted", label: "Stunted growth", icon: "📉" },
+      { id: "curled_leaves", label: "Curled / distorted leaves", icon: "🌀" },
+      { id: "blossom_end", label: "Dark patch on fruit bottom", icon: "⚫" },
+      { id: "purple_tint", label: "Purple / reddish tint", icon: "🟣" },
+      { id: "soft_mushy", label: "Soft / mushy tissue", icon: "🫠" },
+    ];
+
+    // Problems: symptoms map to weighted evidence; plants list = relevant crop ids (empty = all)
+    const PROBLEMS = [
+      {
+        id: "aphids",
+        name: "Aphids",
+        type: "Pest",
+        icon: "🐛",
+        symptoms: { sticky_residue: 3, curled_leaves: 2, yellow_leaves: 1, stunted: 1 },
+        plants: ["tomato", "pepper", "basil", "lettuce", "carrot"],
+        description: "Small soft-bodied insects clustering on new growth and undersides of leaves. They suck sap and leave sticky honeydew.",
+        organic: [
+          "Spray with strong water jet to dislodge",
+          "Apply insecticidal soap or neem oil (evening)",
+          "Introduce or attract ladybugs / lacewings",
+          "Pinch off heavily infested tips"
+        ],
+        prevent: "Avoid excess nitrogen; encourage beneficial insects; use reflective mulch."
+      },
+      {
+        id: "spider_mites",
+        name: "Spider mites",
+        type: "Pest",
+        icon: "🕷️",
+        symptoms: { webbing: 3, yellow_leaves: 2, stunted: 1, curled_leaves: 1 },
+        plants: ["tomato", "pepper", "basil", "blueberry"],
+        description: "Tiny mites that thrive in hot, dry conditions. Fine webbing and stippled yellow leaves are classic signs.",
+        organic: [
+          "Increase humidity / mist plants",
+          "Spray neem oil or horticultural oil thoroughly (undersides)",
+          "Wipe leaves with damp cloth",
+          "Release predatory mites if available"
+        ],
+        prevent: "Keep plants well watered; avoid dusty conditions; hose foliage regularly."
+      },
+      {
+        id: "early_blight",
+        name: "Early blight",
+        type: "Disease",
+        icon: "🍂",
+        symptoms: { brown_spots: 3, yellow_leaves: 2, wilting: 1 },
+        plants: ["tomato", "pepper"],
+        description: "Fungal disease causing concentric brown spots (target-like) on older leaves that yellow and drop.",
+        organic: [
+          "Remove and bag infected leaves (do not compost)",
+          "Improve air circulation; avoid wetting foliage",
+          "Apply copper or Bacillus-based biofungicide",
+          "Mulch to reduce soil splash"
+        ],
+        prevent: "Rotate nightshades; stake plants; water at soil level; choose resistant varieties."
+      },
+      {
+        id: "powdery_mildew",
+        name: "Powdery mildew",
+        type: "Disease",
+        icon: "🌫️",
+        symptoms: { white_powder: 3, yellow_leaves: 1, curled_leaves: 1 },
+        plants: ["lettuce", "basil", "carrot", "blueberry"],
+        description: "White powdery fungal growth on leaf surfaces. Common in humid conditions with poor airflow.",
+        organic: [
+          "Remove worst leaves",
+          "Spray milk solution (1:9 milk:water) or potassium bicarbonate",
+          "Improve spacing and airflow",
+          "Apply neem oil as preventative"
+        ],
+        prevent: "Avoid overcrowding; water early in day; resistant varieties when possible."
+      },
+      {
+        id: "blossom_end_rot",
+        name: "Blossom end rot",
+        type: "Disorder",
+        icon: "🍅",
+        symptoms: { blossom_end: 4, soft_mushy: 1 },
+        plants: ["tomato", "pepper"],
+        description: "Physiological disorder from uneven calcium uptake — dark, leathery patch on the blossom end of fruit.",
+        organic: [
+          "Keep soil evenly moist (mulch helps)",
+          "Do not over-fertilize with nitrogen",
+          "Add calcium if soil test shows deficiency (gypsum or crushed eggshells long-term)",
+          "Remove affected fruit; later fruit often improves"
+        ],
+        prevent: "Consistent watering; balanced fertility; avoid root damage."
+      },
+      {
+        id: "nitrogen_def",
+        name: "Nitrogen deficiency",
+        type: "Nutrient",
+        icon: "🟡",
+        symptoms: { yellow_leaves: 3, stunted: 2 },
+        plants: [],
+        description: "Older leaves turn uniformly yellow (chlorosis) while new growth stays greener. Plants grow slowly.",
+        organic: [
+          "Side-dress with compost or well-rotted manure",
+          "Apply fish emulsion or blood meal (follow rates)",
+          "Use nitrogen-fixing cover crops next season",
+          "Check pH — extreme pH locks up nutrients"
+        ],
+        prevent: "Regular organic matter additions; rotate with legumes."
+      },
+      {
+        id: "overwatering",
+        name: "Overwatering / root stress",
+        type: "Environmental",
+        icon: "💦",
+        symptoms: { wilting: 3, yellow_leaves: 2, soft_mushy: 2, stunted: 1 },
+        plants: [],
+        description: "Soil stays wet; roots suffocate. Plants may wilt even though soil is moist, and lower leaves yellow.",
+        organic: [
+          "Stop watering until top inch of soil is dry",
+          "Improve drainage; raise beds if needed",
+          "Remove any rotting material",
+          "Check for root rot — firm white roots are healthy"
+        ],
+        prevent: "Water deeply but less often; mulch; ensure good drainage."
+      },
+      {
+        id: "underwatering",
+        name: "Underwatering",
+        type: "Environmental",
+        icon: "🏜️",
+        symptoms: { wilting: 3, curled_leaves: 2, stunted: 1, yellow_leaves: 1 },
+        plants: [],
+        description: "Leaves droop, curl, or crisp at edges. Soil is dry deep down.",
+        organic: [
+          "Water deeply at the base until soil is moist 6+ inches down",
+          "Add organic mulch to retain moisture",
+          "Water in early morning",
+          "Consider drip irrigation for consistency"
+        ],
+        prevent: "Mulch; group plants by water need; check soil before watering."
+      },
+      {
+        id: "phosphorus_def",
+        name: "Phosphorus deficiency",
+        type: "Nutrient",
+        icon: "🟣",
+        symptoms: { purple_tint: 3, stunted: 2, yellow_leaves: 1 },
+        plants: [],
+        description: "Leaves (especially undersides) develop purple or reddish tint; growth is slow.",
+        organic: [
+          "Apply bone meal or rock phosphate (works slowly)",
+          "Use compost rich in organic matter",
+          "Ensure soil pH is in optimal range (most veggies 6.0–7.0)",
+          "Warm soil helps phosphorus uptake"
+        ],
+        prevent: "Maintain organic matter; avoid cold, wet soils at planting."
+      },
+      {
+        id: "caterpillars",
+        name: "Caterpillars / chewing pests",
+        type: "Pest",
+        icon: "🐛",
+        symptoms: { holes_chewed: 3, wilting: 1 },
+        plants: ["tomato", "pepper", "lettuce", "basil", "carrot"],
+        description: "Irregular holes in leaves or fruit; frass (droppings) may be visible. Hornworms, cabbage loopers, etc.",
+        organic: [
+          "Hand-pick at dusk/dawn",
+          "Apply Bt (Bacillus thuringiensis) to leaves",
+          "Use row cover on young plants",
+          "Encourage birds and beneficial wasps"
+        ],
+        prevent: "Scout regularly; remove egg masses; companion plant with dill/yarrow."
+      },
+    ];
+
+    // Companion matrix: +1 = beneficial, -1 = antagonistic, 0 or missing = neutral
+    // Based on common traditional + research-backed pairings
+    const COMPANION_MATRIX = {
+      tomato:   { basil: 1, marigold: 1, carrot: 1, lettuce: 1, pepper: 0, lavender: 0, blueberry: 0 },
+      basil:    { tomato: 1, pepper: 1, marigold: 1, lettuce: 0, carrot: 0, lavender: -1, blueberry: 0 },
+      marigold: { tomato: 1, basil: 1, pepper: 1, carrot: 1, lettuce: 0, lavender: 0, blueberry: 0 },
+      lavender: { tomato: 0, basil: -1, marigold: 0, lettuce: 0, pepper: 0, carrot: 0, blueberry: 0 },
+      lettuce:  { tomato: 1, carrot: 1, basil: 0, marigold: 0, pepper: 0, lavender: 0, blueberry: 0 },
+      pepper:   { basil: 1, marigold: 1, tomato: 0, carrot: 1, lettuce: 0, lavender: 0, blueberry: 0 },
+      carrot:   { tomato: 1, lettuce: 1, marigold: 1, pepper: 1, basil: 0, lavender: 0, blueberry: 0 },
+      blueberry:{ tomato: 0, basil: 0, marigold: 0, lavender: 0, lettuce: 0, pepper: 0, carrot: 0 },
+    };
+
+    const INITIAL_TASKS = [
+      { id: 1, title: "Water tomato bed", detail: "2 beds • 15 min", done: false, icon: "💧" },
+      { id: 2, title: "Start pepper seeds indoors", detail: "Seed tray • 20 min", done: false, icon: "🌱" },
+      { id: 3, title: "Fertilize blueberries", detail: "Blueberry bed • 10 min", done: false, icon: "🧪" },
+    ];
+
+    const BEDS = [
+      { id: "tomato", name: "Tomato Bed", color: "bg-red-100 border-red-300" },
+      { id: "herb", name: "Herb Border", color: "bg-green-100 border-green-300" },
+      { id: "pepper", name: "Pepper Bed", color: "bg-orange-100 border-orange-300" },
+      { id: "berry", name: "Blueberry Bed", color: "bg-blue-100 border-blue-300" },
+    ];
+
+    // ========== COMPONENTS ==========
+    function BottomNav({ active, setActive }) {
+      const primary = [
+        { id: "home", icon: "fa-home", label: "Home" },
+        { id: "layout", icon: "fa-th-large", label: "Layout" },
+        { id: "calendar", icon: "fa-calendar-alt", label: "Cal" },
+        { id: "journal", icon: "fa-book", label: "Journal" },
+        { id: "more", icon: "fa-ellipsis-h", label: "More" },
+      ];
+      const moreIds = ["rotate", "diagnose", "vault", "plants", "settings"];
+      const isMoreActive = moreIds.includes(active);
+      return (
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-sage-200 safe-bottom z-50">
+          <div className="flex justify-around items-center h-16 max-w-lg mx-auto">
+            {primary.map(item => {
+              const on = item.id === "more" ? isMoreActive : active === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActive(item.id)}
+                  className={`flex flex-col items-center justify-center w-14 h-full transition ${
+                    on ? "text-sage-600" : "text-sage-400"
+                  }`}
+                >
+                  <i className={`fas ${item.icon} text-lg mb-0.5`}></i>
+                  <span className="text-[10px] font-medium">{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      );
+    }
+
+    function MoreScreen({ setActive, profile, exportData }) {
+      const links = [
+        { id: "rotate", icon: "fa-sync-alt", label: "Crop Rotation", desc: "Family history & next crops" },
+        { id: "diagnose", icon: "fa-stethoscope", label: "Diagnose", desc: "Symptom checker" },
+        { id: "vault", icon: "fa-box", label: "Seed Vault", desc: "Inventory & expiry" },
+        { id: "plants", icon: "fa-leaf", label: "Plant Library", desc: "Timelines & care info" },
+        { id: "settings", icon: "fa-cog", label: "Settings", desc: "Zone, frost dates, backup" },
+      ];
+      return (
+        <div className="pb-24">
+          <Header title="More" />
+          <div className="px-4 pt-4 space-y-2">
+            {profile?.zone && (
+              <div className="bg-sage-100 rounded-xl p-3 text-xs text-sage-700 mb-3">
+                Zone <strong>{profile.zone}</strong>
+                {profile.lastFrost && <> · Last frost {profile.lastFrost}</>}
+                {profile.firstFrost && <> · First frost {profile.firstFrost}</>}
+              </div>
+            )}
+            {links.map(l => (
+              <button
+                key={l.id}
+                onClick={() => setActive(l.id)}
+                className="w-full bg-white rounded-2xl p-4 card-shadow flex items-center gap-4 text-left hover:bg-sage-50 transition"
+              >
+                <div className="w-10 h-10 rounded-xl bg-sage-100 flex items-center justify-center text-sage-600">
+                  <i className={`fas ${l.icon}`}></i>
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-sage-800">{l.label}</p>
+                  <p className="text-xs text-sage-500">{l.desc}</p>
+                </div>
+                <i className="fas fa-chevron-right text-sage-300 text-sm"></i>
+              </button>
+            ))}
+            <button
+              onClick={exportData}
+              className="w-full mt-4 py-3 rounded-xl border border-sage-300 text-sage-700 text-sm font-medium"
+            >
+              📥 Export backup (JSON)
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    function Header({ title, right }) {
+      return (
+        <header className="sticky top-0 z-40 bg-sage-50/95 backdrop-blur border-b border-sage-100 px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sage-600 text-xl">🌱</span>
+            <h1 className="font-semibold text-sage-800 text-lg">{title}</h1>
+          </div>
+          {right}
+        </header>
+      );
+    }
+
+    // ========== SCREENS ==========
+    // Weather code → icon + label (WMO)
+    const weatherIcon = (code) => {
+      if (code === 0) return { icon: "☀️", label: "Clear" };
+      if (code <= 3) return { icon: "⛅", label: "Partly cloudy" };
+      if (code <= 48) return { icon: "🌫️", label: "Foggy" };
+      if (code <= 67) return { icon: "🌧️", label: "Rain" };
+      if (code <= 77) return { icon: "🌨️", label: "Snow" };
+      if (code <= 82) return { icon: "🌦️", label: "Showers" };
+      if (code <= 99) return { icon: "⛈️", label: "Thunderstorm" };
+      return { icon: "🌡️", label: "—" };
+    };
+
+    function Dashboard({ tasks, setTasks, seeds, placed }) {
+      const lowStock = seeds.filter(s => s.low || s.qty <= 3).length;
+      const toggleTask = (id) => {
+        setTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
+      };
+
+      const [weather, setWeather] = useState(null);
+      const [weatherLoading, setWeatherLoading] = useState(true);
+      const [weatherError, setWeatherError] = useState(null);
+      const [location, setLocation] = useState(() => {
+        const saved = localStorage.getItem("pp_location");
+        return saved ? JSON.parse(saved) : { name: "Austin, TX", lat: 30.27, lon: -97.74, zone: "8b" };
+      });
+      const [showLocEdit, setShowLocEdit] = useState(false);
+      const [locQuery, setLocQuery] = useState("");
+
+      useEffect(() => {
+        localStorage.setItem("pp_location", JSON.stringify(location));
+      }, [location]);
+
+      useEffect(() => {
+        let cancelled = false;
+        setWeatherLoading(true);
+        setWeatherError(null);
+
+        const fallbackWeather = () => {
+          // Realistic demo data so UI always works offline / rate-limited
+          const today = new Date();
+          const iso = (d) => d.toISOString().slice(0, 10);
+          const d0 = iso(today);
+          const d1 = iso(new Date(today.getTime() + 86400000));
+          const d2 = iso(new Date(today.getTime() + 172800000));
+          return {
+            current: {
+              temperature_2m: 74,
+              relative_humidity_2m: 58,
+              weather_code: 2,
+              wind_speed_10m: 8,
+              precipitation: 0,
+            },
+            daily: {
+              time: [d0, d1, d2],
+              temperature_2m_max: [82, 79, 85],
+              temperature_2m_min: [61, 58, 63],
+              precipitation_sum: [0, 0.12, 0],
+              weather_code: [2, 61, 1],
+              precipitation_probability_max: [10, 40, 5],
+            },
+          };
+        };
+
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${location.lat}&longitude=${location.lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,precipitation&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code,precipitation_probability_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=3`;
+        fetch(url)
+          .then(r => r.json())
+          .then(data => {
+            if (cancelled) return;
+            if (data.error || !data.current) throw new Error(data.reason || "No data");
+            setWeather(data);
+            setWeatherLoading(false);
+          })
+          .catch(() => {
+            if (cancelled) return;
+            setWeather(fallbackWeather());
+            setWeatherError(null); // silent fallback — still show useful UI
+            setWeatherLoading(false);
+          });
+        return () => { cancelled = true; };
+      }, [location.lat, location.lon]);
+
+      const searchLocation = async () => {
+        if (!locQuery.trim()) return;
+        try {
+          const res = await fetch(
+            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(locQuery.trim())}&count=1&language=en&format=json`
+          );
+          const data = await res.json();
+          if (data.results && data.results[0]) {
+            const r = data.results[0];
+            setLocation({
+              name: `${r.name}${r.admin1 ? ", " + r.admin1 : ""}`,
+              lat: r.latitude,
+              lon: r.longitude,
+              zone: location.zone || "—",
+            });
+            setShowLocEdit(false);
+            setLocQuery("");
+          } else {
+            alert("Location not found. Try a city name.");
+          }
+        } catch {
+          alert("Search failed. Check connection.");
+        }
+      };
+
+      // Garden advice from weather
+      const gardenAdvice = () => {
+        if (!weather?.current) return [];
+        const tips = [];
+        const t = weather.current.temperature_2m;
+        const minTonight = weather.daily?.temperature_2m_min?.[0];
+        const precip = weather.current.precipitation || 0;
+        const precipToday = weather.daily?.precipitation_sum?.[0] || 0;
+        const humidity = weather.current.relative_humidity_2m;
+
+        if (minTonight != null && minTonight <= 36) {
+          tips.push({ level: "warn", text: `Frost risk tonight (low ${Math.round(minTonight)}°F) — cover tender plants` });
+        } else if (minTonight != null && minTonight <= 42) {
+          tips.push({ level: "info", text: `Chilly night ahead (${Math.round(minTonight)}°F) — watch tender seedlings` });
+        } else {
+          tips.push({ level: "ok", text: "Low frost risk tonight" });
+        }
+
+        if (precipToday >= 0.15 || precip > 0) {
+          tips.push({ level: "ok", text: "Rain expected — skip or reduce watering" });
+        } else if (t >= 85 && humidity < 50) {
+          tips.push({ level: "warn", text: "Hot & dry — water deeply this morning or evening" });
+        } else if (t >= 75) {
+          tips.push({ level: "info", text: "Warm day — check soil moisture on containers" });
+        } else {
+          tips.push({ level: "info", text: "Good conditions for outdoor work" });
+        }
+
+        if (humidity >= 80 && t >= 60) {
+          tips.push({ level: "info", text: "High humidity — watch for fungal issues" });
+        }
+        return tips;
+      };
+
+      const currentWx = weather?.current ? weatherIcon(weather.current.weather_code) : null;
+      const temp = weather?.current ? Math.round(weather.current.temperature_2m) : null;
+      const minT = weather?.daily?.temperature_2m_min?.[0];
+      const frostLevel =
+        minT == null ? "unknown" :
+        minT <= 32 ? "likely" :
+        minT <= 36 ? "risk" :
+        minT <= 42 ? "chilly" : "low";
+      const frostLabel =
+        frostLevel === "likely" ? "Frost likely" :
+        frostLevel === "risk" ? "Frost risk" :
+        frostLevel === "chilly" ? "Chilly" :
+        frostLevel === "low" ? "Low frost" : "—";
+
+      // Header badge styling by frost severity
+      const frostBadgeClass =
+        frostLevel === "likely"
+          ? "bg-red-500 text-white ring-2 ring-red-300"
+          : frostLevel === "risk"
+          ? "bg-amber-500 text-white ring-2 ring-amber-300"
+          : frostLevel === "chilly"
+          ? "bg-sky-100 text-sky-800"
+          : "bg-white text-sage-800";
+
+      return (
+        <div className="pb-24">
+          <Header
+            title="PlotPilot"
+            right={
+              <button
+                onClick={() => setShowLocEdit(true)}
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 card-shadow text-sm transition ${frostBadgeClass}`}
+                title={minT != null ? `Tonight's low: ${Math.round(minT)}°F` : "Weather"}
+              >
+                {(frostLevel === "likely" || frostLevel === "risk") ? (
+                  <span className="text-base" aria-hidden>❄️</span>
+                ) : (
+                  <span>{currentWx?.icon || "🌡️"}</span>
+                )}
+                <span className="font-medium">
+                  {weatherLoading ? "…" : `${temp ?? "--"}°F`}
+                </span>
+                <span className={`text-xs font-semibold ml-0.5 ${
+                  frostLevel === "likely" || frostLevel === "risk" ? "opacity-95" : "text-sage-500"
+                }`}>
+                  {frostLabel}
+                </span>
+              </button>
+            }
+          />
+
+          {/* Frost alert banner — only when risk is elevated */}
+          {(frostLevel === "likely" || frostLevel === "risk") && !weatherLoading && (
+            <div className={`mx-4 mt-3 rounded-xl px-3 py-2.5 flex items-center gap-2 text-sm font-medium ${
+              frostLevel === "likely"
+                ? "bg-red-50 text-red-800 border border-red-200"
+                : "bg-amber-50 text-amber-900 border border-amber-200"
+            }`}>
+              <span className="text-lg">❄️</span>
+              <div className="flex-1 leading-tight">
+                <p className="font-semibold">
+                  {frostLevel === "likely" ? "Frost likely tonight" : "Frost risk tonight"}
+                </p>
+                <p className="text-xs opacity-80 font-normal">
+                  Low {Math.round(minT)}°F — cover tomatoes, peppers & tender seedlings
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div className="px-4 pt-4 space-y-5">
+            {/* Weather card */}
+            <section className="bg-white rounded-2xl p-4 card-shadow">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <p className="text-xs text-sage-500">Garden weather</p>
+                  <p className="font-semibold text-sage-800 text-sm">{location.name}</p>
+                </div>
+                <button
+                  onClick={() => setShowLocEdit(true)}
+                  className="text-[10px] text-sage-500 underline"
+                >
+                  Change
+                </button>
+              </div>
+
+              {weatherLoading && (
+                <p className="text-sm text-sage-400 py-4 text-center">Loading weather…</p>
+              )}
+              {weatherError && (
+                <p className="text-sm text-amber-600 py-2">{weatherError}. Using offline tips.</p>
+              )}
+              {weather && !weatherLoading && (
+                <>
+                  <div className="flex items-center gap-4 mb-3">
+                    <span className="text-4xl">{currentWx?.icon}</span>
+                    <div>
+                      <p className="text-2xl font-bold text-sage-800">{temp}°F</p>
+                      <p className="text-xs text-sage-500">
+                        {currentWx?.label} · H {Math.round(weather.daily.temperature_2m_max[0])}° / L {Math.round(weather.daily.temperature_2m_min[0])}°
+                      </p>
+                      <p className="text-[10px] text-sage-400">
+                        Humidity {weather.current.relative_humidity_2m}% · Wind {Math.round(weather.current.wind_speed_10m)} mph
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 3-day strip */}
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    {weather.daily.time.slice(0, 3).map((day, i) => {
+                      const w = weatherIcon(weather.daily.weather_code[i]);
+                      const d = new Date(day + "T12:00:00");
+                      const label = i === 0 ? "Today" : d.toLocaleDateString("en-US", { weekday: "short" });
+                      return (
+                        <div key={day} className="bg-sage-50 rounded-xl p-2 text-center">
+                          <p className="text-[10px] text-sage-500 font-medium">{label}</p>
+                          <p className="text-lg my-0.5">{w.icon}</p>
+                          <p className="text-[10px] text-sage-700">
+                            {Math.round(weather.daily.temperature_2m_max[i])}° / {Math.round(weather.daily.temperature_2m_min[i])}°
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Garden tips */}
+                  <div className="space-y-1.5">
+                    {gardenAdvice().map((tip, i) => (
+                      <div
+                        key={i}
+                        className={`text-xs rounded-lg px-2.5 py-1.5 flex items-start gap-2 ${
+                          tip.level === "warn" ? "bg-amber-50 text-amber-800" :
+                          tip.level === "ok" ? "bg-green-50 text-green-800" :
+                          "bg-sage-50 text-sage-700"
+                        }`}
+                      >
+                        <span>{tip.level === "warn" ? "⚠️" : tip.level === "ok" ? "✓" : "ℹ️"}</span>
+                        <span>{tip.text}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </section>
+
+            {/* Location edit modal */}
+            {showLocEdit && (
+              <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
+                <div className="bg-white rounded-2xl p-5 w-full max-w-sm card-shadow">
+                  <h3 className="font-semibold text-sage-800 mb-1">Garden location</h3>
+                  <p className="text-xs text-sage-500 mb-3">Used for weather and frost advice</p>
+                  <input
+                    type="text"
+                    value={locQuery}
+                    onChange={e => setLocQuery(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && searchLocation()}
+                    placeholder="City name (e.g. Denver, CO)"
+                    className="w-full border border-sage-200 rounded-xl px-3 py-2.5 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-sage-400"
+                  />
+                  <p className="text-[10px] text-sage-400 mb-3">Current: {location.name}</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowLocEdit(false)}
+                      className="flex-1 py-2.5 rounded-xl border border-sage-200 text-sage-600 text-sm font-medium"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={searchLocation}
+                      className="flex-1 py-2.5 rounded-xl bg-sage-600 text-white text-sm font-medium"
+                    >
+                      Update
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Today's Tasks */}
+            <section>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-semibold text-sage-800 flex items-center gap-2">
+                  <i className="fas fa-tasks text-sage-500"></i> Today's Tasks
+                </h2>
+                <button className="text-xs text-sage-500">View all</button>
+              </div>
+              <div className="space-y-2">
+                {tasks.map(task => (
+                  <div
+                    key={task.id}
+                    onClick={() => toggleTask(task.id)}
+                    className={`flex items-center gap-3 bg-white rounded-xl p-3 card-shadow cursor-pointer transition ${
+                      task.done ? "opacity-60" : ""
+                    }`}
+                  >
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                      task.done ? "bg-sage-500 border-sage-500 text-white" : "border-sage-300"
+                    }`}>
+                      {task.done && <i className="fas fa-check text-xs"></i>}
+                    </div>
+                    <div className="flex-1">
+                      <p className={`font-medium ${task.done ? "line-through text-sage-400" : "text-sage-800"}`}>
+                        {task.title}
+                      </p>
+                      <p className="text-xs text-sage-500">{task.detail}</p>
+                    </div>
+                    <span className="text-xl">{task.icon}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Garden Overview */}
+            <section>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-semibold text-sage-800">Garden Overview</h2>
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Healthy</span>
+              </div>
+              <div className="bg-white rounded-2xl p-4 card-shadow">
+                <div className="grid grid-cols-2 gap-2">
+                  {BEDS.map(bed => {
+                    const bedIcons = placed
+                      .filter(p => p.bed === bed.id)
+                      .map(p => PLANT_LIBRARY.find(pl => pl.id === p.plant)?.icon || "🌱")
+                      .slice(0, 4);
+                    return (
+                      <div key={bed.id} className={`${bed.color} border rounded-xl p-2 text-center`}>
+                        <div className="text-lg mb-1 min-h-[28px]">
+                          {bedIcons.length > 0 ? bedIcons.join("") : <span className="text-sage-300 text-sm">empty</span>}
+                        </div>
+                        <p className="text-[10px] font-medium text-sage-700 leading-tight">{bed.name}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+                <button className="w-full mt-3 text-sm text-sage-600 font-medium py-2 border border-sage-200 rounded-xl">
+                  View full layout →
+                </button>
+              </div>
+            </section>
+
+            {/* Seed Vault Alert + Harvest */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white rounded-2xl p-4 card-shadow">
+                <div className="flex items-center gap-2 mb-2">
+                  <i className="fas fa-box text-sage-500"></i>
+                  <span className="font-medium text-sm">Seed Vault</span>
+                </div>
+                {lowStock > 0 ? (
+                  <div className="bg-amber-50 text-amber-700 text-xs rounded-lg px-2 py-1.5 flex items-center gap-1">
+                    <i className="fas fa-exclamation-triangle"></i>
+                    {lowStock} low stock
+                  </div>
+                ) : (
+                  <p className="text-xs text-sage-500">All good</p>
+                )}
+              </div>
+              <div className="bg-white rounded-2xl p-4 card-shadow">
+                <div className="flex items-center gap-2 mb-2">
+                  <i className="fas fa-calendar text-sage-500"></i>
+                  <span className="font-medium text-sm">Next Harvest</span>
+                </div>
+                {(() => {
+                  const upcoming = placed
+                    .filter(p => p.status !== "harvested" && p.plantedAt)
+                    .map(p => {
+                      const pl = PLANT_LIBRARY.find(x => x.id === p.plant);
+                      if (!pl || !pl.daysToHarvest || pl.daysToHarvest >= 200) return null;
+                      const harvest = addDays(new Date(p.plantedAt + "T12:00:00"), pl.daysToHarvest);
+                      return { name: pl.name, icon: pl.icon, date: harvest };
+                    })
+                    .filter(Boolean)
+                    .sort((a, b) => a.date - b.date)
+                    .slice(0, 2);
+                  if (!upcoming.length) return <p className="text-xs text-sage-400">Plant something to see dates</p>;
+                  return upcoming.map((u, i) => (
+                    <p key={i} className="text-xs text-sage-600">{u.icon} {u.name} · {fmtDate(u.date)}</p>
+                  ));
+                })()}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function LayoutPlanner({ placed, setPlaced, setTasks }) {
+      const [dragPlantId, setDragPlantId] = useState(null);       // plant type being dragged from library
+      const [dragPlacedId, setDragPlacedId] = useState(null);     // unique id of placed plant being moved
+      const [dragOverBed, setDragOverBed] = useState(null);
+      const [justDropped, setJustDropped] = useState(null);
+      const [suggestions, setSuggestions] = useState([]);
+      const [suggestBed, setSuggestBed] = useState(null); // null = whole garden
+      const [undoStack, setUndoStack] = useState([]);
+
+      const pushUndo = (snapshot) => {
+        setUndoStack(prev => [...prev.slice(-9), snapshot]);
+      };
+
+      const undo = () => {
+        if (undoStack.length === 0) return;
+        const prev = undoStack[undoStack.length - 1];
+        setUndoStack(s => s.slice(0, -1));
+        setPlaced(prev);
+      };
+
+      const setPlantStatus = (id, status) => {
+        pushUndo(placed);
+        setPlaced(prev => prev.map(p => p.id === id ? { ...p, status } : p));
+      };
+
+      // ----- Drag from Plant Library -----
+      const onLibraryDragStart = (e, plantId) => {
+        setDragPlantId(plantId);
+        setDragPlacedId(null);
+        e.dataTransfer.setData("text/plain", JSON.stringify({ type: "library", plantId }));
+        e.dataTransfer.effectAllowed = "copy";
+      };
+
+      // ----- Drag already-placed plant -----
+      const onPlacedDragStart = (e, item) => {
+        setDragPlacedId(item.id);
+        setDragPlantId(null);
+        e.dataTransfer.setData("text/plain", JSON.stringify({ type: "placed", id: item.id }));
+        e.dataTransfer.effectAllowed = "move";
+      };
+
+      const onDragEnd = () => {
+        setDragPlantId(null);
+        setDragPlacedId(null);
+        setDragOverBed(null);
+      };
+
+      // ----- Companion helpers (must be before onDrop) -----
+      const getRelation = (a, b) => {
+        if (!a || !b || a === b) return 0;
+        return COMPANION_MATRIX[a]?.[b] ?? COMPANION_MATRIX[b]?.[a] ?? 0;
+      };
+
+      const computeSuggestions = (bedId = null) => {
+        const relevantPlaced = bedId
+          ? placed.filter(p => p.bed === bedId)
+          : placed;
+        const currentIds = [...new Set(relevantPlaced.map(p => p.plant))];
+        if (currentIds.length === 0) {
+          setSuggestions([]);
+          setSuggestBed(bedId);
+          return;
+        }
+
+        const scores = PLANT_LIBRARY
+          .filter(pl => !currentIds.includes(pl.id))
+          .map(pl => {
+            let score = 0;
+            let goodWith = [];
+            let badWith = [];
+            currentIds.forEach(cid => {
+              const rel = getRelation(pl.id, cid);
+              score += rel;
+              if (rel > 0) goodWith.push(PLANT_LIBRARY.find(x => x.id === cid)?.name || cid);
+              if (rel < 0) badWith.push(PLANT_LIBRARY.find(x => x.id === cid)?.name || cid);
+            });
+            return { ...pl, score, goodWith, badWith };
+          })
+          .filter(s => s.score > 0 || s.badWith.length > 0)
+          .sort((a, b) => b.score - a.score);
+
+        setSuggestions(scores);
+        setSuggestBed(bedId);
+      };
+
+      // ----- Drop zone handlers -----
+      const onDragOver = (e, bedId) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = dragPlantId ? "copy" : "move";
+        setDragOverBed(bedId);
+      };
+
+      const onDragLeave = () => setDragOverBed(null);
+
+      const onDrop = (e, bedId) => {
+        e.preventDefault();
+        setDragOverBed(null);
+        try {
+          const data = JSON.parse(e.dataTransfer.getData("text/plain"));
+          if (data.type === "library") {
+            // Check companions before adding
+            const bedPlants = placed.filter(p => p.bed === bedId).map(p => p.plant);
+            const conflicts = bedPlants.filter(pid => getRelation(data.plantId, pid) < 0);
+            if (conflicts.length > 0) {
+              const names = conflicts.map(c => PLANT_LIBRARY.find(p => p.id === c)?.name || c).join(", ");
+              if (!confirm(`⚠️ ${PLANT_LIBRARY.find(p => p.id === data.plantId)?.name} may conflict with: ${names}.\n\nPlant anyway?`)) {
+                setDragPlantId(null);
+                setDragPlacedId(null);
+                return;
+              }
+            }
+            pushUndo(placed);
+            const plantInfo = PLANT_LIBRARY.find(p => p.id === data.plantId);
+            const plantedAt = toISODate(new Date());
+            const newItem = {
+              id: Date.now() + Math.random(),
+              bed: bedId,
+              plant: data.plantId,
+              plantedAt,
+              status: "growing",
+            };
+            setPlaced(prev => [...prev, newItem]);
+            setJustDropped(newItem.id);
+            setTimeout(() => setJustDropped(null), 600);
+            // Auto-create timeline tasks
+            if (setTasks && plantInfo) {
+              const tasksToAdd = [];
+              if (plantInfo.germDays) {
+                tasksToAdd.push({
+                  id: Date.now() + 1,
+                  title: `Check ${plantInfo.name} germination`,
+                  detail: `~${plantInfo.germDays} days · ${fmtDate(addDays(new Date(), plantInfo.germDays))}`,
+                  done: false,
+                  icon: "🌱",
+                  due: toISODate(addDays(new Date(), plantInfo.germDays)),
+                });
+              }
+              if (plantInfo.fertilizeEveryDays > 0) {
+                tasksToAdd.push({
+                  id: Date.now() + 2,
+                  title: `Fertilize ${plantInfo.name}`,
+                  detail: `Every ~${plantInfo.fertilizeEveryDays} days`,
+                  done: false,
+                  icon: "🧪",
+                  due: toISODate(addDays(new Date(), plantInfo.fertilizeEveryDays)),
+                });
+              }
+              if (plantInfo.daysToHarvest && plantInfo.daysToHarvest < 200) {
+                tasksToAdd.push({
+                  id: Date.now() + 3,
+                  title: `Harvest window: ${plantInfo.name}`,
+                  detail: `~${plantInfo.daysToHarvest} days · ${fmtDate(addDays(new Date(), plantInfo.daysToHarvest))}`,
+                  done: false,
+                  icon: "🧺",
+                  due: toISODate(addDays(new Date(), plantInfo.daysToHarvest)),
+                });
+              }
+              if (tasksToAdd.length) setTasks(prev => [...tasksToAdd, ...prev]);
+            }
+          } else if (data.type === "placed") {
+            pushUndo(placed);
+            setPlaced(prev => prev.map(p => p.id === data.id ? { ...p, bed: bedId } : p));
+          }
+        } catch (err) {}
+        setDragPlantId(null);
+        setDragPlacedId(null);
+      };
+
+      const removePlant = (id) => {
+        pushUndo(placed);
+        setPlaced(prev => prev.filter(p => p.id !== id));
+      };
+
+      const clearBed = (bedId) => {
+        if (confirm("Clear all plants from this bed?")) {
+          pushUndo(placed);
+          setPlaced(prev => prev.filter(p => p.bed !== bedId));
+        }
+      };
+
+      return (
+        <div className="pb-24">
+          <Header title="Layout Planner" right={
+            <div className="flex gap-2 items-center">
+              <button
+                onClick={undo}
+                disabled={undoStack.length === 0}
+                className={`text-xs px-2 py-1 rounded-lg font-medium ${
+                  undoStack.length ? "bg-sage-100 text-sage-700" : "text-sage-300"
+                }`}
+                title="Undo"
+              >
+                ↩ Undo
+              </button>
+              <span className="text-xs text-sage-500 hidden sm:inline">Drag plants onto beds</span>
+              <button
+                onClick={() => { if (confirm("Reset entire layout?")) setPlaced([]); }}
+                className="text-sage-500 text-sm px-2"
+                title="Reset layout"
+              >
+                <i className="fas fa-undo"></i>
+              </button>
+            </div>
+          } />
+
+          <div className="px-4 pt-4">
+            {/* Canvas / Beds */}
+            <div className="bg-white rounded-2xl p-4 card-shadow mb-4 relative">
+              <div className="flex justify-between items-center mb-3">
+                <p className="text-xs font-medium text-sage-600">Your Garden Beds</p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => computeSuggestions(null)}
+                    className="text-xs bg-sage-600 text-white px-2.5 py-1 rounded-lg font-medium hover:bg-sage-700 transition"
+                  >
+                    ✨ Suggest Companions
+                  </button>
+                  <p className="text-xs text-sage-400">20 ft × 15 ft</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {BEDS.map(bed => {
+                  const bedPlants = placed.filter(p => p.bed === bed.id);
+                  const isOver = dragOverBed === bed.id;
+                  return (
+                    <div
+                      key={bed.id}
+                      onDragOver={(e) => onDragOver(e, bed.id)}
+                      onDragLeave={onDragLeave}
+                      onDrop={(e) => onDrop(e, bed.id)}
+                      className={`${bed.color} border-2 rounded-xl p-3 min-h-[130px] relative transition-all duration-150
+                        ${isOver ? "border-sage-600 border-solid scale-[1.02] shadow-md ring-2 ring-sage-300" : "border-dashed"}
+                        ${dragPlantId || dragPlacedId ? "cursor-copy" : ""}`}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <p className="text-xs font-semibold text-sage-700">{bed.name}</p>
+                        <div className="flex gap-1.5">
+                          {bedPlants.length > 0 && (
+                            <>
+                              <button
+                                onClick={() => computeSuggestions(bed.id)}
+                                className="text-[10px] text-sage-600 hover:text-sage-800"
+                                title="Suggest for this bed"
+                              >
+                                ✨
+                              </button>
+                              <button
+                                onClick={() => clearBed(bed.id)}
+                                className="text-[10px] text-sage-400 hover:text-red-500"
+                                title="Clear bed"
+                              >
+                                clear
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-1.5 min-h-[40px]">
+                        {bedPlants.length === 0 && !isOver && (
+                          <p className="text-[10px] text-sage-400/70 w-full text-center mt-4">
+                            Drop plants here
+                          </p>
+                        )}
+                        {isOver && (
+                          <p className="text-[10px] text-sage-600 font-medium w-full text-center mt-4 animate-pulse">
+                            Release to plant
+                          </p>
+                        )}
+                        {bedPlants.map(item => {
+                          const plant = PLANT_LIBRARY.find(pl => pl.id === item.plant);
+                          const harvested = item.status === "harvested";
+                          return (
+                            <div
+                              key={item.id}
+                              draggable={!harvested}
+                              onDragStart={(e) => onPlacedDragStart(e, item)}
+                              onDragEnd={onDragEnd}
+                              className={`relative group text-2xl bg-white/80 rounded-lg px-1.5 py-1 shadow-sm cursor-grab active:cursor-grabbing
+                                ${justDropped === item.id ? "animate-bounce" : ""}
+                                ${dragPlacedId === item.id ? "opacity-40" : ""}
+                                ${harvested ? "opacity-40 grayscale" : ""}`}
+                              title={`${plant?.name}${harvested ? " (harvested)" : ""} – drag to move`}
+                              onDoubleClick={() => removePlant(item.id)}
+                              onContextMenu={(e) => {
+                                e.preventDefault();
+                                setPlantStatus(item.id, harvested ? "growing" : "harvested");
+                              }}
+                            >
+                              {plant?.icon}
+                              {harvested && <span className="absolute -bottom-1 left-0 right-0 text-[8px] text-center text-sage-600">✓</span>}
+                              <button
+                                onClick={(e) => { e.stopPropagation(); removePlant(item.id); }}
+                                className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full text-[9px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <p className="text-center text-xs text-sage-400 mt-3">
+                Drag to plant · Right-click = harvest · Undo available
+              </p>
+            </div>
+
+            {/* Suggestions Panel */}
+            {suggestions.length > 0 && (
+              <div className="bg-sage-100 rounded-2xl p-4 mb-4 card-shadow">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-semibold text-sage-800 text-sm">
+                    Suggested Companions
+                    {suggestBed ? ` for ${BEDS.find(b => b.id === suggestBed)?.name}` : " (whole garden)"}
+                  </h3>
+                  <button
+                    onClick={() => { setSuggestions([]); setSuggestBed(null); }}
+                    className="text-xs text-sage-500 hover:text-sage-700"
+                  >
+                    ✕ Close
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {suggestions.slice(0, 5).map(s => (
+                    <div
+                      key={s.id}
+                      className="bg-white rounded-xl p-2.5 flex items-center gap-3 cursor-grab active:cursor-grabbing"
+                      draggable
+                      onDragStart={(e) => onLibraryDragStart(e, s.id)}
+                      onDragEnd={onDragEnd}
+                    >
+                      <span className="text-2xl">{s.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm text-sage-800">{s.name}</p>
+                        {s.score > 0 && (
+                          <p className="text-[10px] text-green-600 truncate">
+                            Good with: {s.goodWith.join(", ")}
+                          </p>
+                        )}
+                        {s.badWith.length > 0 && (
+                          <p className="text-[10px] text-red-500 truncate">
+                            Avoid near: {s.badWith.join(", ")}
+                          </p>
+                        )}
+                      </div>
+                      <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
+                        s.score > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"
+                      }`}>
+                        {s.score > 0 ? `+${s.score}` : s.score}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10px] text-sage-500 mt-2">Drag any suggestion onto a bed to plant it</p>
+              </div>
+            )}
+
+            {/* Plant Library – Draggable source */}
+            <h3 className="font-semibold text-sage-800 mb-1">Plant Library</h3>
+            <p className="text-xs text-sage-500 mb-3">
+              {dragPlantId ? "Drop onto a bed…" : "Drag a plant onto any bed"}
+            </p>
+            <div className="grid grid-cols-4 gap-2">
+              {PLANT_LIBRARY.map(plant => {
+                const isSuggested = suggestions.some(s => s.id === plant.id && s.score > 0);
+                return (
+                  <div
+                    key={plant.id}
+                    draggable
+                    onDragStart={(e) => onLibraryDragStart(e, plant.id)}
+                    onDragEnd={onDragEnd}
+                    className={`bg-white rounded-xl p-2 card-shadow text-center cursor-grab active:cursor-grabbing plant-card transition
+                      ${dragPlantId === plant.id ? "opacity-50 ring-2 ring-sage-400 scale-95" : "hover:scale-105 hover:shadow-md"}
+                      ${isSuggested ? "ring-2 ring-green-400 bg-green-50" : ""}`}
+                  >
+                    <div className="text-2xl mb-1 select-none">{plant.icon}</div>
+                    <p className="text-[10px] font-medium leading-tight select-none">{plant.name}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function SeedVault({ seeds, setSeeds }) {
+      const [filter, setFilter] = useState("All");
+      const [search, setSearch] = useState("");
+      const filters = ["All", "Vegetable", "Herb", "Flower", "Expiring"];
+
+      const filtered = useMemo(() => {
+        return seeds.filter(s => {
+          if (filter === "Expiring") return new Date(s.expires) < new Date("2025-07-01");
+          if (filter !== "All" && s.type !== filter) return false;
+          if (search && !s.name.toLowerCase().includes(search.toLowerCase())) return false;
+          return true;
+        });
+      }, [seeds, filter, search]);
+
+      const addSeed = () => {
+        const name = prompt("Seed variety name:");
+        if (!name) return;
+        setSeeds(prev => [...prev, {
+          id: Date.now(),
+          name,
+          type: "Vegetable",
+          qty: 5,
+          expires: "2026-12-31",
+          germRate: 80,
+          low: false
+        }]);
+      };
+
+      return (
+        <div className="pb-24">
+          <Header title="Seed Vault" right={
+            <button onClick={addSeed} className="bg-sage-600 text-white w-8 h-8 rounded-full flex items-center justify-center">
+              <i className="fas fa-plus text-sm"></i>
+            </button>
+          } />
+
+          <div className="px-4 pt-4">
+            {/* Search */}
+            <div className="relative mb-3">
+              <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-sage-400 text-sm"></i>
+              <input
+                type="text"
+                placeholder="Search seed varieties..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="w-full bg-white rounded-xl pl-9 pr-4 py-2.5 text-sm card-shadow outline-none focus:ring-2 focus:ring-sage-300"
+              />
+            </div>
+
+            {/* Filters */}
+            <div className="flex gap-2 overflow-x-auto pb-2 mb-4 -mx-1 px-1">
+              {filters.map(f => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition ${
+                    filter === f ? "bg-sage-600 text-white" : "bg-white text-sage-600 card-shadow"
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+
+            {/* Seed cards */}
+            <div className="grid grid-cols-2 gap-3">
+              {filtered.map(seed => {
+                const isExpiring = new Date(seed.expires) < new Date("2025-07-01");
+                return (
+                  <div key={seed.id} className="bg-white rounded-2xl p-3 card-shadow relative">
+                    {(seed.low || seed.qty <= 3) && (
+                      <span className="absolute top-2 right-2 bg-amber-100 text-amber-700 text-[9px] font-bold px-1.5 py-0.5 rounded">
+                        LOW
+                      </span>
+                    )}
+                    {isExpiring && (
+                      <span className="absolute top-2 left-2 bg-red-100 text-red-600 text-[9px] font-bold px-1.5 py-0.5 rounded">
+                        EXPIRING
+                      </span>
+                    )}
+                    <div className="text-3xl mb-2 mt-1">🌱</div>
+                    <p className="font-medium text-sm text-sage-800 leading-tight mb-1">{seed.name}</p>
+                    <p className="text-[10px] text-sage-500 mb-2">{seed.type}</p>
+                    <div className="flex justify-between text-xs">
+                      <span className={seed.qty <= 3 ? "text-red-500 font-semibold" : "text-sage-600"}>
+                        Qty: {seed.qty}
+                      </span>
+                      <span className="text-sage-500">{seed.germRate}%</span>
+                    </div>
+                    <p className="text-[10px] text-sage-400 mt-1">Exp: {seed.expires}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function CalendarScreen({ profile, placed, tasks }) {
+      const now = new Date();
+      const [viewYear, setViewYear] = useState(now.getFullYear());
+      const [viewMonth, setViewMonth] = useState(now.getMonth()); // 0-indexed
+      const [selected, setSelected] = useState(now.getDate());
+
+      const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+      const firstDow = new Date(viewYear, viewMonth, 1).getDay();
+      const monthName = new Date(viewYear, viewMonth, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+      const lastFrost = profile?.lastFrost ? new Date(profile.lastFrost + "T12:00:00") : null;
+      const firstFrost = profile?.firstFrost ? new Date(profile.firstFrost + "T12:00:00") : null;
+
+      // Build events from plant timelines + frost + tasks with due dates
+      const eventsByDay = useMemo(() => {
+        const map = {};
+        const add = (dateObj, evt) => {
+          if (!dateObj || dateObj.getMonth() !== viewMonth || dateObj.getFullYear() !== viewYear) return;
+          const d = dateObj.getDate();
+          if (!map[d]) map[d] = [];
+          map[d].push(evt);
+        };
+
+        if (lastFrost) {
+          add(lastFrost, { type: "frost", title: "Avg last spring frost", tag: "FROST", color: "bg-sky-100 text-sky-700" });
+          PLANT_LIBRARY.forEach(pl => {
+            if (pl.startWeeksBeforeFrost > 0) {
+              add(addDays(lastFrost, -pl.startWeeksBeforeFrost * 7), {
+                type: "sow", title: `Start ${pl.name} indoors`, tag: "SOW", color: "bg-blue-100 text-blue-700",
+                detail: `${pl.startWeeksBeforeFrost} weeks before last frost`,
+              });
+            }
+            if (pl.transplantWeeksBeforeFrost > 0) {
+              add(addDays(lastFrost, -pl.transplantWeeksBeforeFrost * 7), {
+                type: "transplant", title: `Transplant ${pl.name}`, tag: "TRANSPLANT", color: "bg-green-100 text-green-700",
+                detail: `${pl.transplantWeeksBeforeFrost} week(s) before last frost`,
+              });
+            }
+          });
+        }
+        if (firstFrost) {
+          add(firstFrost, { type: "frost", title: "Avg first fall frost", tag: "FROST", color: "bg-sky-100 text-sky-700" });
+        }
+
+        // From placed plants with plantedAt
+        placed.forEach(item => {
+          if (!item.plantedAt || item.status === "harvested") return;
+          const pl = PLANT_LIBRARY.find(p => p.id === item.plant);
+          if (!pl) return;
+          const planted = new Date(item.plantedAt + "T12:00:00");
+          if (pl.fertilizeEveryDays > 0) {
+            add(addDays(planted, pl.fertilizeEveryDays), {
+              type: "fertilize", title: `Fertilize ${pl.name}`, tag: "FERTILIZE", color: "bg-orange-100 text-orange-700",
+              detail: `Planted ${fmtDate(planted)}`,
+            });
+          }
+          if (pl.daysToHarvest < 200) {
+            add(addDays(planted, pl.daysToHarvest), {
+              type: "harvest", title: `Harvest ${pl.name}`, tag: "HARVEST", color: "bg-purple-100 text-purple-700",
+              detail: `~${pl.daysToHarvest} days after planting`,
+            });
+          }
+        });
+
+        (tasks || []).forEach(t => {
+          if (!t.due || t.done) return;
+          const due = new Date(t.due + "T12:00:00");
+          add(due, { type: "task", title: t.title, tag: "TASK", color: "bg-sage-100 text-sage-700", detail: t.detail });
+        });
+
+        return map;
+      }, [viewYear, viewMonth, profile, placed, tasks]);
+
+      const shiftMonth = (delta) => {
+        let m = viewMonth + delta;
+        let y = viewYear;
+        if (m < 0) { m = 11; y--; }
+        if (m > 11) { m = 0; y++; }
+        setViewMonth(m);
+        setViewYear(y);
+        setSelected(1);
+      };
+
+      const dayEvents = eventsByDay[selected] || [];
+
+      return (
+        <div className="pb-24">
+          <Header title="Season Calendar" />
+          <div className="px-4 pt-4">
+            {!profile?.lastFrost && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 mb-3">
+                Set your frost dates in Settings for personalized sow/transplant timing.
+              </div>
+            )}
+            <div className="flex items-center justify-between mb-4">
+              <button onClick={() => shiftMonth(-1)} className="text-sage-500 w-8 h-8"><i className="fas fa-chevron-left"></i></button>
+              <h2 className="font-semibold text-sage-800">{monthName}</h2>
+              <button onClick={() => shiftMonth(1)} className="text-sage-500 w-8 h-8"><i className="fas fa-chevron-right"></i></button>
+            </div>
+
+            <div className="bg-white rounded-2xl p-3 card-shadow mb-4">
+              <div className="grid grid-cols-7 gap-1 text-center text-xs text-sage-400 mb-2">
+                {["S","M","T","W","T","F","S"].map((d, i) => <div key={i}>{d}</div>)}
+              </div>
+              <div className="grid grid-cols-7 gap-1">
+                {Array.from({ length: firstDow }).map((_, i) => <div key={`e${i}`} />)}
+                {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(d => {
+                  const has = eventsByDay[d] || [];
+                  const isSelected = selected === d;
+                  const isToday = d === now.getDate() && viewMonth === now.getMonth() && viewYear === now.getFullYear();
+                  return (
+                    <button
+                      key={d}
+                      onClick={() => setSelected(d)}
+                      className={`aspect-square rounded-lg flex flex-col items-center justify-center text-sm relative ${
+                        isSelected ? "bg-sage-600 text-white" : isToday ? "bg-sage-100 font-bold" : "hover:bg-sage-50"
+                      }`}
+                    >
+                      {d}
+                      {has.length > 0 && (
+                        <div className="flex gap-0.5 mt-0.5 flex-wrap justify-center max-w-full">
+                          {has.slice(0, 3).map((h, i) => (
+                            <div key={i} className={`w-1 h-1 rounded-full ${
+                              h.type === "sow" ? "bg-blue-400" :
+                              h.type === "transplant" ? "bg-green-500" :
+                              h.type === "fertilize" ? "bg-orange-400" :
+                              h.type === "harvest" ? "bg-purple-400" :
+                              h.type === "frost" ? "bg-sky-400" : "bg-sage-400"
+                            } ${isSelected ? "bg-white" : ""}`} />
+                          ))}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <h3 className="font-semibold text-sage-800 mb-2">
+                {new Date(viewYear, viewMonth, selected).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                <span className="text-xs font-normal text-sage-500 ml-2">{dayEvents.length} items</span>
+              </h3>
+              <div className="space-y-2">
+                {dayEvents.map((t, i) => (
+                  <div key={i} className="bg-white rounded-xl p-3 card-shadow">
+                    <p className="font-medium text-sm text-sage-800">{t.title}</p>
+                    {t.detail && <p className="text-xs text-sage-500">{t.detail}</p>}
+                    <span className={`inline-block mt-1 text-[10px] font-semibold px-1.5 py-0.5 rounded ${t.color}`}>{t.tag}</span>
+                  </div>
+                ))}
+                {dayEvents.length === 0 && (
+                  <p className="text-sm text-sage-400 text-center py-4">Nothing scheduled</p>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-sage-100 rounded-xl p-3">
+              <p className="text-xs font-semibold text-sage-700 mb-2">LEGEND</p>
+              <div className="grid grid-cols-2 gap-2 text-xs text-sage-600">
+                <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-blue-400" />Sow</div>
+                <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-green-500" />Transplant</div>
+                <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-orange-400" />Fertilize</div>
+                <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-purple-400" />Harvest</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function PlantsScreen({ customPlants, setCustomPlants }) {
+      const [filter, setFilter] = useState("All");
+      const [search, setSearch] = useState("");
+      const [showAdd, setShowAdd] = useState(false);
+      const [newPlant, setNewPlant] = useState({ name: "", type: "Vegetable", icon: "🌱", germDays: 7, daysToHarvest: 60 });
+      const allPlants = [...PLANT_LIBRARY, ...(customPlants || [])];
+      const types = ["All", "Vegetable", "Herb", "Fruit", "Flower"];
+      const filtered = allPlants.filter(p => {
+        if (filter !== "All" && p.type !== filter) return false;
+        if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
+        return true;
+      });
+
+      const addCustom = () => {
+        if (!newPlant.name.trim()) return;
+        const id = "custom_" + Date.now();
+        setCustomPlants(prev => [...prev, {
+          ...newPlant,
+          id,
+          scientific: "Custom",
+          spacing: "—",
+          sun: "Full sun",
+          family: "Custom",
+          familyName: "Custom",
+          fertilizeEveryDays: 28,
+          startWeeksBeforeFrost: 0,
+          transplantWeeksBeforeFrost: 0,
+        }]);
+        setShowAdd(false);
+        setNewPlant({ name: "", type: "Vegetable", icon: "🌱", germDays: 7, daysToHarvest: 60 });
+      };
+
+      return (
+        <div className="pb-24">
+          <Header title="Plant Library" right={
+            <button onClick={() => setShowAdd(true)} className="text-xs bg-sage-600 text-white px-2.5 py-1.5 rounded-lg font-medium">+ Add</button>
+          } />
+          <div className="px-4 pt-4 space-y-3">
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search plants…"
+              className="w-full border border-sage-200 rounded-xl px-3 py-2 text-sm"
+            />
+            <div className="flex gap-1.5 overflow-x-auto pb-1">
+              {types.map(t => (
+                <button key={t} onClick={() => setFilter(t)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${filter === t ? "bg-sage-600 text-white" : "bg-white text-sage-600 card-shadow"}`}>
+                  {t}
+                </button>
+              ))}
+            </div>
+            {filtered.map(plant => (
+              <div key={plant.id} className="bg-white rounded-2xl p-4 card-shadow">
+                <div className="flex gap-3">
+                  <div className="text-4xl">{plant.icon}</div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sage-800">{plant.name}</h3>
+                    <p className="text-xs text-sage-400 italic mb-1">{plant.scientific}</p>
+                    <div className="flex flex-wrap gap-1.5 text-[10px] mb-2">
+                      <span className="bg-sage-100 text-sage-600 px-2 py-0.5 rounded">{plant.type}</span>
+                      <span className={`px-2 py-0.5 rounded ${FAMILY_COLORS[plant.family] || "bg-sage-100 text-sage-600"}`}>{plant.familyName}</span>
+                      <span className="bg-sage-100 text-sage-600 px-2 py-0.5 rounded">{plant.sun}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1 text-[10px] text-sage-600">
+                      <span>🌱 Germ: {plant.germDays || "—"} days</span>
+                      <span>🧺 Harvest: ~{plant.daysToHarvest || "—"} days</span>
+                      <span>🧪 Fertilize: {plant.fertilizeEveryDays ? `every ${plant.fertilizeEveryDays}d` : "—"}</span>
+                      <span>📐 Spacing: {plant.spacing}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {filtered.length === 0 && <p className="text-center text-sage-400 text-sm py-8">No plants match</p>}
+          </div>
+
+          {showAdd && (
+            <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
+              <div className="bg-white rounded-2xl p-5 w-full max-w-sm">
+                <h3 className="font-semibold text-sage-800 mb-3">Add custom plant</h3>
+                <input className="w-full border rounded-xl px-3 py-2 text-sm mb-2" placeholder="Name" value={newPlant.name} onChange={e => setNewPlant(n => ({ ...n, name: e.target.value }))} />
+                <div className="flex gap-2 mb-2">
+                  <select className="flex-1 border rounded-xl px-2 py-2 text-sm" value={newPlant.type} onChange={e => setNewPlant(n => ({ ...n, type: e.target.value }))}>
+                    {["Vegetable", "Herb", "Fruit", "Flower"].map(t => <option key={t}>{t}</option>)}
+                  </select>
+                  <input className="w-16 border rounded-xl px-2 py-2 text-sm text-center" value={newPlant.icon} onChange={e => setNewPlant(n => ({ ...n, icon: e.target.value }))} />
+                </div>
+                <div className="flex gap-2 mb-3">
+                  <input type="number" className="flex-1 border rounded-xl px-2 py-2 text-sm" placeholder="Germ days" value={newPlant.germDays} onChange={e => setNewPlant(n => ({ ...n, germDays: +e.target.value }))} />
+                  <input type="number" className="flex-1 border rounded-xl px-2 py-2 text-sm" placeholder="Days to harvest" value={newPlant.daysToHarvest} onChange={e => setNewPlant(n => ({ ...n, daysToHarvest: +e.target.value }))} />
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => setShowAdd(false)} className="flex-1 py-2.5 rounded-xl border text-sm">Cancel</button>
+                  <button onClick={addCustom} className="flex-1 py-2.5 rounded-xl bg-sage-600 text-white text-sm font-medium">Add</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function JournalScreen({ journal, setJournal, placed }) {
+      const [showAdd, setShowAdd] = useState(false);
+      const [entry, setEntry] = useState({ text: "", bed: "", mood: "ok" });
+
+      const addEntry = () => {
+        if (!entry.text.trim()) return;
+        setJournal(prev => [{
+          id: Date.now(),
+          date: toISODate(new Date()),
+          text: entry.text.trim(),
+          bed: entry.bed || null,
+          mood: entry.mood,
+        }, ...prev]);
+        setEntry({ text: "", bed: "", mood: "ok" });
+        setShowAdd(false);
+      };
+
+      const moodIcon = { great: "😊", ok: "😐", bad: "😟" };
+
+      return (
+        <div className="pb-24">
+          <Header title="Garden Journal" right={
+            <button onClick={() => setShowAdd(true)} className="text-xs bg-sage-600 text-white px-2.5 py-1.5 rounded-lg font-medium">+ Entry</button>
+          } />
+          <div className="px-4 pt-4 space-y-3">
+            {journal.length === 0 && (
+              <div className="text-center py-12 text-sage-400">
+                <p className="text-3xl mb-2">📓</p>
+                <p className="text-sm">No entries yet</p>
+                <p className="text-xs mt-1">Log what worked, pests, weather notes…</p>
+                <button onClick={() => setShowAdd(true)} className="mt-4 text-sm text-sage-600 font-medium underline">Write first entry</button>
+              </div>
+            )}
+            {journal.map(e => (
+              <div key={e.id} className="bg-white rounded-2xl p-4 card-shadow">
+                <div className="flex justify-between items-start mb-1">
+                  <p className="text-xs text-sage-500">{fmtDate(e.date)} {e.bed && `· ${BEDS.find(b => b.id === e.bed)?.name || e.bed}`}</p>
+                  <span>{moodIcon[e.mood] || "😐"}</span>
+                </div>
+                <p className="text-sm text-sage-800 whitespace-pre-wrap">{e.text}</p>
+                <button
+                  onClick={() => { if (confirm("Delete entry?")) setJournal(prev => prev.filter(x => x.id !== e.id)); }}
+                  className="text-[10px] text-sage-400 mt-2 hover:text-red-500"
+                >
+                  Delete
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {showAdd && (
+            <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
+              <div className="bg-white rounded-2xl p-5 w-full max-w-sm">
+                <h3 className="font-semibold text-sage-800 mb-3">New journal entry</h3>
+                <textarea
+                  className="w-full border rounded-xl px-3 py-2 text-sm mb-2 h-28"
+                  placeholder="What happened in the garden today?"
+                  value={entry.text}
+                  onChange={e => setEntry(n => ({ ...n, text: e.target.value }))}
+                />
+                <select className="w-full border rounded-xl px-3 py-2 text-sm mb-2" value={entry.bed} onChange={e => setEntry(n => ({ ...n, bed: e.target.value }))}>
+                  <option value="">Whole garden</option>
+                  {BEDS.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                </select>
+                <div className="flex gap-2 mb-3">
+                  {["great", "ok", "bad"].map(m => (
+                    <button key={m} onClick={() => setEntry(n => ({ ...n, mood: m }))}
+                      className={`flex-1 py-2 rounded-xl text-lg ${entry.mood === m ? "bg-sage-100 ring-2 ring-sage-500" : "bg-sage-50"}`}>
+                      {moodIcon[m]}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => setShowAdd(false)} className="flex-1 py-2.5 rounded-xl border text-sm">Cancel</button>
+                  <button onClick={addEntry} className="flex-1 py-2.5 rounded-xl bg-sage-600 text-white text-sm font-medium">Save</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function SettingsScreen({ profile, setProfile, setShowOnboarding }) {
+      const [form, setForm] = useState({ ...profile });
+      const save = () => {
+        setProfile({ ...form, onboarded: true });
+        alert("Settings saved");
+      };
+      return (
+        <div className="pb-24">
+          <Header title="Settings" />
+          <div className="px-4 pt-4 space-y-4">
+            <div className="bg-white rounded-2xl p-4 card-shadow space-y-3">
+              <h3 className="font-semibold text-sage-800 text-sm">Location & climate</h3>
+              <div>
+                <label className="text-xs text-sage-500">Display name / city</label>
+                <input className="w-full border rounded-xl px-3 py-2 text-sm mt-1" value={form.city || ""} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} placeholder="e.g. Austin, TX" />
+              </div>
+              <div>
+                <label className="text-xs text-sage-500">USDA hardiness zone</label>
+                <input className="w-full border rounded-xl px-3 py-2 text-sm mt-1" value={form.zone || ""} onChange={e => setForm(f => ({ ...f, zone: e.target.value }))} placeholder="e.g. 8b" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs text-sage-500">Last spring frost</label>
+                  <input type="date" className="w-full border rounded-xl px-2 py-2 text-sm mt-1" value={form.lastFrost || ""} onChange={e => setForm(f => ({ ...f, lastFrost: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="text-xs text-sage-500">First fall frost</label>
+                  <input type="date" className="w-full border rounded-xl px-2 py-2 text-sm mt-1" value={form.firstFrost || ""} onChange={e => setForm(f => ({ ...f, firstFrost: e.target.value }))} />
+                </div>
+              </div>
+              <button onClick={save} className="w-full py-2.5 rounded-xl bg-sage-600 text-white text-sm font-medium">Save</button>
+            </div>
+            <button onClick={() => setShowOnboarding(true)} className="w-full py-2.5 rounded-xl border border-sage-300 text-sage-700 text-sm">
+              Re-run onboarding
+            </button>
+            <p className="text-[10px] text-sage-400 text-center">Data stays in this browser (localStorage)</p>
+          </div>
+        </div>
+      );
+    }
+
+    function OnboardingModal({ profile, setProfile, onDone }) {
+      const [step, setStep] = useState(1);
+      const [form, setForm] = useState({
+        city: profile.city || "",
+        zone: profile.zone || "7a",
+        lastFrost: profile.lastFrost || "2026-04-15",
+        firstFrost: profile.firstFrost || "2026-10-25",
+      });
+
+      const finish = () => {
+        setProfile({ ...form, onboarded: true });
+        onDone();
+      };
+
+      return (
+        <div className="fixed inset-0 bg-sage-900/60 z-[60] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm card-shadow">
+            <p className="text-3xl text-center mb-2">🌱</p>
+            <h2 className="text-lg font-bold text-sage-800 text-center mb-1">Welcome to PlotPilot</h2>
+            <p className="text-xs text-sage-500 text-center mb-4">A few details make schedules & weather smarter</p>
+            <div className="flex gap-1 mb-4">
+              {[1, 2].map(s => <div key={s} className={`h-1 flex-1 rounded-full ${step >= s ? "bg-sage-600" : "bg-sage-200"}`} />)}
+            </div>
+            {step === 1 && (
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-sage-500">Your city or region</label>
+                  <input className="w-full border rounded-xl px-3 py-2.5 text-sm mt-1" value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} placeholder="e.g. Denver, CO" />
+                </div>
+                <div>
+                  <label className="text-xs text-sage-500">USDA hardiness zone</label>
+                  <input className="w-full border rounded-xl px-3 py-2.5 text-sm mt-1" value={form.zone} onChange={e => setForm(f => ({ ...f, zone: e.target.value }))} placeholder="e.g. 5b" />
+                  <p className="text-[10px] text-sage-400 mt-1">Find it at planthardiness.ars.usda.gov</p>
+                </div>
+                <button onClick={() => setStep(2)} className="w-full py-3 rounded-xl bg-sage-600 text-white font-medium">Next</button>
+                <button onClick={finish} className="w-full text-xs text-sage-500">Skip for now</button>
+              </div>
+            )}
+            {step === 2 && (
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-sage-500">Average last spring frost</label>
+                  <input type="date" className="w-full border rounded-xl px-3 py-2.5 text-sm mt-1" value={form.lastFrost} onChange={e => setForm(f => ({ ...f, lastFrost: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="text-xs text-sage-500">Average first fall frost</label>
+                  <input type="date" className="w-full border rounded-xl px-3 py-2.5 text-sm mt-1" value={form.firstFrost} onChange={e => setForm(f => ({ ...f, firstFrost: e.target.value }))} />
+                </div>
+                <button onClick={finish} className="w-full py-3 rounded-xl bg-sage-600 text-white font-medium">Start gardening</button>
+                <button onClick={() => setStep(1)} className="w-full text-xs text-sage-500">Back</button>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    function CropRotationScreen({ placed, rotationHistory, setRotationHistory }) {
+      const currentYear = new Date().getFullYear();
+      const [selectedBed, setSelectedBed] = useState(BEDS[0].id);
+      const [showLogConfirm, setShowLogConfirm] = useState(false);
+
+      const getPlant = (id) => PLANT_LIBRARY.find(p => p.id === id);
+
+      // Families currently in a bed (from live layout)
+      const currentFamiliesForBed = (bedId) => {
+        const plants = placed.filter(p => p.bed === bedId).map(p => getPlant(p.plant)).filter(Boolean);
+        return [...new Set(plants.map(p => p.family))];
+      };
+
+      // Recent families from history (last N years)
+      const recentFamilies = (bedId, years = ROTATION_YEARS) => {
+        const hist = rotationHistory[bedId] || [];
+        const cutoff = currentYear - years;
+        const fams = new Set();
+        hist.filter(h => h.year >= cutoff).forEach(h => {
+          (h.families || []).forEach(f => fams.add(f));
+        });
+        return [...fams];
+      };
+
+      // Suggested plants that avoid recent families for a bed
+      const suggestionsForBed = (bedId) => {
+        const recent = recentFamilies(bedId);
+        const current = currentFamiliesForBed(bedId);
+        const avoid = new Set([...recent, ...current]);
+        return PLANT_LIBRARY
+          .filter(p => p.family !== "Ericaceae") // skip long-term perennials for annual rotation advice
+          .filter(p => !avoid.has(p.family))
+          .map(p => ({
+            ...p,
+            reason: recent.length
+              ? `Avoids recent ${recent.map(f => PLANT_LIBRARY.find(x => x.family === f)?.familyName || f).filter((v,i,a)=>a.indexOf(v)===i).join(", ")}`
+              : "No recent history – any family is fine"
+          }));
+      };
+
+      const logCurrentSeason = () => {
+        const next = { ...rotationHistory };
+        BEDS.forEach(bed => {
+          const bedPlants = placed.filter(p => p.bed === bed.id);
+          if (bedPlants.length === 0) return;
+          const plantIds = [...new Set(bedPlants.map(p => p.plant))];
+          const families = [...new Set(plantIds.map(id => getPlant(id)?.family).filter(Boolean))];
+          const entry = {
+            year: currentYear,
+            plants: plantIds,
+            families,
+            loggedAt: new Date().toISOString()
+          };
+          const existing = next[bed.id] || [];
+          // Replace same-year entry if exists, else prepend
+          const filtered = existing.filter(h => h.year !== currentYear);
+          next[bed.id] = [entry, ...filtered].slice(0, 8); // keep last 8 seasons
+        });
+        setRotationHistory(next);
+        setShowLogConfirm(false);
+      };
+
+      const bedHistory = rotationHistory[selectedBed] || [];
+      const bedSuggestions = suggestionsForBed(selectedBed);
+      const bedCurrentFams = currentFamiliesForBed(selectedBed);
+      const bedRecentFams = recentFamilies(selectedBed);
+
+      // Check if current layout has rotation conflicts
+      const hasConflict = bedCurrentFams.some(f => bedRecentFams.includes(f) && f !== "Ericaceae");
+
+      return (
+        <div className="pb-24">
+          <Header
+            title="Crop Rotation"
+            right={
+              <button
+                onClick={() => setShowLogConfirm(true)}
+                className="text-xs bg-sage-600 text-white px-2.5 py-1.5 rounded-lg font-medium"
+              >
+                Log Season
+              </button>
+            }
+          />
+
+          <div className="px-4 pt-4 space-y-4">
+            {/* Intro */}
+            <div className="bg-white rounded-2xl p-3 card-shadow text-xs text-sage-600">
+              Avoid planting the same plant family in a bed for {ROTATION_YEARS}+ years.
+              This reduces disease and nutrient imbalance.
+            </div>
+
+            {/* Bed selector */}
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {BEDS.map(bed => (
+                <button
+                  key={bed.id}
+                  onClick={() => setSelectedBed(bed.id)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition ${
+                    selectedBed === bed.id
+                      ? "bg-sage-600 text-white"
+                      : "bg-white text-sage-600 card-shadow"
+                  }`}
+                >
+                  {bed.name}
+                </button>
+              ))}
+            </div>
+
+            {/* Status card for selected bed */}
+            <div className={`rounded-2xl p-4 card-shadow ${hasConflict ? "bg-amber-50 border border-amber-200" : "bg-white"}`}>
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="font-semibold text-sage-800">
+                  {BEDS.find(b => b.id === selectedBed)?.name}
+                </h3>
+                {hasConflict ? (
+                  <span className="text-[10px] bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full font-medium">
+                    ⚠ Rotation conflict
+                  </span>
+                ) : (
+                  <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
+                    ✓ Looking good
+                  </span>
+                )}
+              </div>
+
+              <p className="text-xs text-sage-500 mb-2">This season (from Layout)</p>
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {bedCurrentFams.length === 0 ? (
+                  <span className="text-xs text-sage-400">Empty – add plants in Layout</span>
+                ) : (
+                  bedCurrentFams.map(f => {
+                    const sample = PLANT_LIBRARY.find(p => p.family === f);
+                    return (
+                      <span key={f} className={`text-[10px] px-2 py-0.5 rounded-full ${FAMILY_COLORS[f] || "bg-sage-100"}`}>
+                        {sample?.familyName || f}
+                      </span>
+                    );
+                  })
+                )}
+              </div>
+
+              <p className="text-xs text-sage-500 mb-1">Recent families (last {ROTATION_YEARS} yrs)</p>
+              <div className="flex flex-wrap gap-1.5">
+                {bedRecentFams.length === 0 ? (
+                  <span className="text-xs text-sage-400">No history yet – log a season</span>
+                ) : (
+                  bedRecentFams.map(f => {
+                    const sample = PLANT_LIBRARY.find(p => p.family === f);
+                    return (
+                      <span key={f} className={`text-[10px] px-2 py-0.5 rounded-full ${FAMILY_COLORS[f] || "bg-sage-100"}`}>
+                        {sample?.familyName || f}
+                      </span>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* History timeline */}
+            <div className="bg-white rounded-2xl p-4 card-shadow">
+              <h3 className="font-semibold text-sage-800 text-sm mb-3">History</h3>
+              {bedHistory.length === 0 ? (
+                <p className="text-xs text-sage-400 text-center py-4">
+                  No seasons logged yet.<br />Use “Log Season” after planting.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {bedHistory.map((h, i) => (
+                    <div key={i} className="flex gap-3">
+                      <div className="flex flex-col items-center">
+                        <div className="w-2.5 h-2.5 rounded-full bg-sage-500 mt-1"></div>
+                        {i < bedHistory.length - 1 && <div className="w-0.5 flex-1 bg-sage-200 my-1"></div>}
+                      </div>
+                      <div className="pb-2 flex-1">
+                        <p className="text-sm font-medium text-sage-800">{h.year}</p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {(h.plants || []).map(pid => {
+                            const pl = getPlant(pid);
+                            return pl ? (
+                              <span key={pid} className="text-xs bg-sage-50 px-1.5 py-0.5 rounded">
+                                {pl.icon} {pl.name}
+                              </span>
+                            ) : null;
+                          })}
+                        </div>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {(h.families || []).map(f => {
+                            const sample = PLANT_LIBRARY.find(p => p.family === f);
+                            return (
+                              <span key={f} className={`text-[9px] px-1.5 py-0.5 rounded ${FAMILY_COLORS[f] || "bg-gray-100"}`}>
+                                {sample?.familyName || f}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Suggestions */}
+            <div className="bg-white rounded-2xl p-4 card-shadow">
+              <h3 className="font-semibold text-sage-800 text-sm mb-2">
+                Good next crops for this bed
+              </h3>
+              <p className="text-[10px] text-sage-500 mb-3">
+                Plants whose families haven’t been here in the last {ROTATION_YEARS} years
+              </p>
+              {bedSuggestions.length === 0 ? (
+                <p className="text-xs text-sage-400">All families recently used – consider a cover crop or rest the bed.</p>
+              ) : (
+                <div className="space-y-2">
+                  {bedSuggestions.slice(0, 6).map(s => (
+                    <div key={s.id} className="flex items-center gap-3 bg-sage-50 rounded-xl p-2.5">
+                      <span className="text-2xl">{s.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm text-sage-800">{s.name}</p>
+                        <p className="text-[10px] text-sage-500 truncate">{s.reason}</p>
+                      </div>
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded ${FAMILY_COLORS[s.family]}`}>
+                        {s.familyName}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Family legend */}
+            <div className="bg-sage-100 rounded-xl p-3">
+              <p className="text-xs font-semibold text-sage-700 mb-2">Plant Families</p>
+              <div className="flex flex-wrap gap-1.5">
+                {Object.entries(FAMILY_COLORS).map(([fam, cls]) => {
+                  const sample = PLANT_LIBRARY.find(p => p.family === fam);
+                  return (
+                    <span key={fam} className={`text-[10px] px-2 py-0.5 rounded-full ${cls}`}>
+                      {sample?.familyName || fam}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Log confirm modal */}
+          {showLogConfirm && (
+            <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
+              <div className="bg-white rounded-2xl p-5 w-full max-w-sm card-shadow">
+                <h3 className="font-semibold text-sage-800 mb-2">Log {currentYear} season?</h3>
+                <p className="text-xs text-sage-600 mb-4">
+                  This will record the plants currently in each bed as this year’s planting for rotation tracking.
+                  Existing {currentYear} entries will be replaced.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowLogConfirm(false)}
+                    className="flex-1 py-2.5 rounded-xl border border-sage-200 text-sage-600 text-sm font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={logCurrentSeason}
+                    className="flex-1 py-2.5 rounded-xl bg-sage-600 text-white text-sm font-medium"
+                  >
+                    Log Season
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function DiagnosticScreen({ tasks, setTasks }) {
+      const [step, setStep] = useState(1); // 1=plant, 2=symptoms, 3=context, 4=results
+      const [selectedPlant, setSelectedPlant] = useState(null); // plant id or "unknown"
+      const [selectedSymptoms, setSelectedSymptoms] = useState([]);
+      const [context, setContext] = useState({
+        watering: "normal", // dry | normal | wet
+        recentRain: false,
+        newGrowth: false,
+      });
+      const [results, setResults] = useState([]);
+
+      const toggleSymptom = (id) => {
+        setSelectedSymptoms(prev =>
+          prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
+        );
+      };
+
+      const scoreProblems = () => {
+        const scored = PROBLEMS.map(problem => {
+          // Plant relevance
+          let plantBoost = 1;
+          if (selectedPlant && selectedPlant !== "unknown") {
+            if (problem.plants.length > 0 && !problem.plants.includes(selectedPlant)) {
+              plantBoost = 0.35; // still possible but less likely
+            } else if (problem.plants.includes(selectedPlant)) {
+              plantBoost = 1.25;
+            }
+          }
+
+          // Symptom evidence
+          let evidence = 0;
+          let maxPossible = 0;
+          const matched = [];
+          Object.entries(problem.symptoms).forEach(([symId, weight]) => {
+            maxPossible += weight;
+            if (selectedSymptoms.includes(symId)) {
+              evidence += weight;
+              matched.push(symId);
+            }
+          });
+
+          // Context adjustments
+          let contextMod = 1;
+          if (problem.id === "spider_mites" && context.watering === "dry") contextMod += 0.2;
+          if (problem.id === "overwatering" && context.watering === "wet") contextMod += 0.35;
+          if (problem.id === "underwatering" && context.watering === "dry") contextMod += 0.35;
+          if (problem.id === "early_blight" && context.recentRain) contextMod += 0.15;
+          if (problem.id === "powdery_mildew" && context.recentRain) contextMod += 0.1;
+          if ((problem.id === "aphids" || problem.id === "spider_mites") && context.newGrowth) contextMod += 0.1;
+
+          const rawScore = maxPossible > 0 ? (evidence / maxPossible) * plantBoost * contextMod : 0;
+          // Require at least some evidence
+          const finalScore = evidence === 0 ? 0 : Math.min(1, rawScore);
+
+          return {
+            ...problem,
+            score: finalScore,
+            evidence,
+            matchedSymptoms: matched,
+            confidence: finalScore >= 0.7 ? "High" : finalScore >= 0.4 ? "Medium" : finalScore > 0 ? "Low" : "None",
+          };
+        })
+        .filter(p => p.score > 0.15)
+        .sort((a, b) => b.score - a.score);
+
+        setResults(scored);
+        setStep(4);
+      };
+
+      const addTreatmentTask = (problem) => {
+        const newTask = {
+          id: Date.now(),
+          title: `Treat ${problem.name}`,
+          detail: problem.organic[0] || "Follow organic treatment steps",
+          done: false,
+          icon: "🩺",
+        };
+        setTasks(prev => [newTask, ...prev]);
+        alert(`Task added: "${newTask.title}"`);
+      };
+
+      const reset = () => {
+        setStep(1);
+        setSelectedPlant(null);
+        setSelectedSymptoms([]);
+        setContext({ watering: "normal", recentRain: false, newGrowth: false });
+        setResults([]);
+      };
+
+      return (
+        <div className="pb-24">
+          <Header
+            title="Plant Diagnose"
+            right={
+              step > 1 ? (
+                <button onClick={reset} className="text-xs text-sage-600 font-medium">
+                  Start over
+                </button>
+              ) : null
+            }
+          />
+
+          <div className="px-4 pt-4 space-y-4">
+            {/* Progress */}
+            <div className="flex gap-1">
+              {[1, 2, 3, 4].map(s => (
+                <div
+                  key={s}
+                  className={`h-1.5 flex-1 rounded-full ${step >= s ? "bg-sage-600" : "bg-sage-200"}`}
+                />
+              ))}
+            </div>
+
+            {/* Step 1: Plant */}
+            {step === 1 && (
+              <div className="bg-white rounded-2xl p-4 card-shadow">
+                <h3 className="font-semibold text-sage-800 mb-1">Which plant is affected?</h3>
+                <p className="text-xs text-sage-500 mb-3">Improves accuracy of the diagnosis</p>
+                <div className="grid grid-cols-4 gap-2 mb-3">
+                  {PLANT_LIBRARY.map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => setSelectedPlant(p.id)}
+                      className={`rounded-xl p-2 text-center transition ${
+                        selectedPlant === p.id
+                          ? "ring-2 ring-sage-600 bg-sage-50"
+                          : "bg-sage-50 hover:bg-sage-100"
+                      }`}
+                    >
+                      <div className="text-2xl">{p.icon}</div>
+                      <p className="text-[10px] font-medium leading-tight mt-0.5">{p.name}</p>
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setSelectedPlant("unknown")}
+                  className={`w-full py-2.5 rounded-xl text-sm font-medium mb-4 ${
+                    selectedPlant === "unknown"
+                      ? "bg-sage-600 text-white"
+                      : "bg-sage-100 text-sage-700"
+                  }`}
+                >
+                  Not sure / Other plant
+                </button>
+                <button
+                  disabled={!selectedPlant}
+                  onClick={() => setStep(2)}
+                  className={`w-full py-3 rounded-xl font-medium ${
+                    selectedPlant
+                      ? "bg-sage-600 text-white"
+                      : "bg-sage-200 text-sage-400 cursor-not-allowed"
+                  }`}
+                >
+                  Next: Symptoms →
+                </button>
+              </div>
+            )}
+
+            {/* Step 2: Symptoms */}
+            {step === 2 && (
+              <div className="bg-white rounded-2xl p-4 card-shadow">
+                <h3 className="font-semibold text-sage-800 mb-1">What do you see?</h3>
+                <p className="text-xs text-sage-500 mb-3">Select all that apply</p>
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  {SYMPTOMS.map(s => {
+                    const active = selectedSymptoms.includes(s.id);
+                    return (
+                      <button
+                        key={s.id}
+                        onClick={() => toggleSymptom(s.id)}
+                        className={`flex items-center gap-2 p-2.5 rounded-xl text-left text-sm transition ${
+                          active
+                            ? "bg-sage-600 text-white"
+                            : "bg-sage-50 text-sage-700 hover:bg-sage-100"
+                        }`}
+                      >
+                        <span className="text-lg">{s.icon}</span>
+                        <span className="leading-tight text-xs font-medium">{s.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setStep(1)}
+                    className="flex-1 py-3 rounded-xl border border-sage-200 text-sage-600 font-medium"
+                  >
+                    Back
+                  </button>
+                  <button
+                    disabled={selectedSymptoms.length === 0}
+                    onClick={() => setStep(3)}
+                    className={`flex-1 py-3 rounded-xl font-medium ${
+                      selectedSymptoms.length > 0
+                        ? "bg-sage-600 text-white"
+                        : "bg-sage-200 text-sage-400 cursor-not-allowed"
+                    }`}
+                  >
+                    Next →
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Context */}
+            {step === 3 && (
+              <div className="bg-white rounded-2xl p-4 card-shadow space-y-4">
+                <div>
+                  <h3 className="font-semibold text-sage-800 mb-1">A bit more context</h3>
+                  <p className="text-xs text-sage-500">Optional but improves results</p>
+                </div>
+
+                <div>
+                  <p className="text-xs font-medium text-sage-700 mb-2">Soil moisture lately</p>
+                  <div className="flex gap-2">
+                    {[
+                      { id: "dry", label: "Mostly dry" },
+                      { id: "normal", label: "Normal" },
+                      { id: "wet", label: "Often wet" },
+                    ].map(o => (
+                      <button
+                        key={o.id}
+                        onClick={() => setContext(c => ({ ...c, watering: o.id }))}
+                        className={`flex-1 py-2 rounded-xl text-xs font-medium ${
+                          context.watering === o.id
+                            ? "bg-sage-600 text-white"
+                            : "bg-sage-50 text-sage-600"
+                        }`}
+                      >
+                        {o.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <label className="flex items-center gap-3 p-3 bg-sage-50 rounded-xl cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={context.recentRain}
+                    onChange={e => setContext(c => ({ ...c, recentRain: e.target.checked }))}
+                    className="w-4 h-4 accent-sage-600"
+                  />
+                  <span className="text-sm text-sage-700">Recent rain or high humidity</span>
+                </label>
+
+                <label className="flex items-center gap-3 p-3 bg-sage-50 rounded-xl cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={context.newGrowth}
+                    onChange={e => setContext(c => ({ ...c, newGrowth: e.target.checked }))}
+                    className="w-4 h-4 accent-sage-600"
+                  />
+                  <span className="text-sm text-sage-700">Symptoms mainly on new growth</span>
+                </label>
+
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={() => setStep(2)}
+                    className="flex-1 py-3 rounded-xl border border-sage-200 text-sage-600 font-medium"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={scoreProblems}
+                    className="flex-1 py-3 rounded-xl bg-sage-600 text-white font-medium"
+                  >
+                    See diagnosis →
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 4: Results */}
+            {step === 4 && (
+              <div className="space-y-3">
+                <div className="bg-white rounded-2xl p-4 card-shadow">
+                  <h3 className="font-semibold text-sage-800 mb-1">Likely causes</h3>
+                  <p className="text-xs text-sage-500">
+                    {selectedPlant && selectedPlant !== "unknown"
+                      ? `For ${PLANT_LIBRARY.find(p => p.id === selectedPlant)?.name}`
+                      : "General garden plants"}{" "}
+                    · {selectedSymptoms.length} symptom{selectedSymptoms.length !== 1 ? "s" : ""}
+                  </p>
+                </div>
+
+                {results.length === 0 ? (
+                  <div className="bg-white rounded-2xl p-6 card-shadow text-center">
+                    <p className="text-3xl mb-2">🤔</p>
+                    <p className="font-medium text-sage-800">No strong match</p>
+                    <p className="text-xs text-sage-500 mt-1">
+                      Try selecting more symptoms or different ones. When in doubt, check watering and look under leaves for pests.
+                    </p>
+                    <button
+                      onClick={() => setStep(2)}
+                      className="mt-4 px-4 py-2 bg-sage-600 text-white rounded-xl text-sm font-medium"
+                    >
+                      Adjust symptoms
+                    </button>
+                  </div>
+                ) : (
+                  results.map((r, idx) => (
+                    <div key={r.id} className="bg-white rounded-2xl p-4 card-shadow">
+                      <div className="flex items-start gap-3 mb-2">
+                        <span className="text-3xl">{r.icon}</span>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="font-semibold text-sage-800">{r.name}</h4>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                              r.confidence === "High" ? "bg-green-100 text-green-700" :
+                              r.confidence === "Medium" ? "bg-amber-100 text-amber-700" :
+                              "bg-sage-100 text-sage-600"
+                            }`}>
+                              {r.confidence}
+                            </span>
+                            <span className="text-[10px] bg-sage-100 text-sage-600 px-1.5 py-0.5 rounded-full">
+                              {r.type}
+                            </span>
+                          </div>
+                          <p className="text-xs text-sage-500 mt-1">{r.description}</p>
+                        </div>
+                        <span className="text-sm font-bold text-sage-600">
+                          {Math.round(r.score * 100)}%
+                        </span>
+                      </div>
+
+                      <div className="mt-3">
+                        <p className="text-xs font-semibold text-sage-700 mb-1.5">Organic treatment</p>
+                        <ol className="list-decimal list-inside space-y-1">
+                          {r.organic.map((step, i) => (
+                            <li key={i} className="text-xs text-sage-600">{step}</li>
+                          ))}
+                        </ol>
+                      </div>
+
+                      <p className="text-[10px] text-sage-400 mt-2">
+                        <span className="font-medium">Prevent:</span> {r.prevent}
+                      </p>
+
+                      <button
+                        onClick={() => addTreatmentTask(r)}
+                        className="mt-3 w-full py-2 rounded-xl bg-sage-100 text-sage-700 text-xs font-medium hover:bg-sage-200 transition"
+                      >
+                        + Add treatment task
+                      </button>
+                    </div>
+                  ))
+                )}
+
+                <button
+                  onClick={reset}
+                  className="w-full py-3 rounded-xl border border-sage-200 text-sage-600 font-medium text-sm"
+                >
+                  Diagnose another plant
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ========== APP ==========
+    function App() {
+      const [active, setActive] = useState("home");
+      const [tasks, setTasks] = useState(() => {
+        const saved = localStorage.getItem("pp_tasks");
+        return saved ? JSON.parse(saved) : INITIAL_TASKS;
+      });
+      const [seeds, setSeeds] = useState(() => {
+        const saved = localStorage.getItem("pp_seeds");
+        return saved ? JSON.parse(saved) : INITIAL_SEEDS;
+      });
+      const [placed, setPlaced] = useState(() => {
+        const saved = localStorage.getItem("pp_placed");
+        return saved ? JSON.parse(saved) : [
+          { id: 1, bed: "tomato", plant: "tomato", plantedAt: toISODate(addDays(new Date(), -20)), status: "growing" },
+          { id: 2, bed: "tomato", plant: "basil", plantedAt: toISODate(addDays(new Date(), -14)), status: "growing" },
+          { id: 3, bed: "tomato", plant: "marigold", plantedAt: toISODate(addDays(new Date(), -10)), status: "growing" },
+          { id: 4, bed: "herb", plant: "lavender", plantedAt: toISODate(addDays(new Date(), -40)), status: "growing" },
+          { id: 5, bed: "herb", plant: "basil", plantedAt: toISODate(addDays(new Date(), -12)), status: "growing" },
+          { id: 6, bed: "pepper", plant: "pepper", plantedAt: toISODate(addDays(new Date(), -18)), status: "growing" },
+          { id: 7, bed: "berry", plant: "blueberry", plantedAt: toISODate(addDays(new Date(), -100)), status: "growing" },
+        ];
+      });
+      const [rotationHistory, setRotationHistory] = useState(() => {
+        const saved = localStorage.getItem("pp_rotation");
+        return saved ? JSON.parse(saved) : {
+          tomato: [
+            { year: 2025, plants: ["tomato", "basil", "marigold"], families: ["Solanaceae", "Lamiaceae", "Asteraceae"] },
+            { year: 2024, plants: ["pepper"], families: ["Solanaceae"] },
+          ],
+          herb: [
+            { year: 2025, plants: ["lavender", "basil"], families: ["Lamiaceae"] },
+          ],
+          pepper: [
+            { year: 2025, plants: ["pepper"], families: ["Solanaceae"] },
+            { year: 2024, plants: ["carrot", "lettuce"], families: ["Apiaceae", "Asteraceae"] },
+          ],
+          berry: [
+            { year: 2025, plants: ["blueberry"], families: ["Ericaceae"] },
+          ],
+        };
+      });
+      const [profile, setProfile] = useState(() => {
+        const saved = localStorage.getItem("pp_profile");
+        return saved ? JSON.parse(saved) : { onboarded: false, city: "", zone: "", lastFrost: "", firstFrost: "" };
+      });
+      const [journal, setJournal] = useState(() => {
+        const saved = localStorage.getItem("pp_journal");
+        return saved ? JSON.parse(saved) : [];
+      });
+      const [customPlants, setCustomPlants] = useState(() => {
+        const saved = localStorage.getItem("pp_custom_plants");
+        return saved ? JSON.parse(saved) : [];
+      });
+      const [showOnboarding, setShowOnboarding] = useState(() => {
+        try {
+          const saved = localStorage.getItem("pp_profile");
+          const p = saved ? JSON.parse(saved) : null;
+          return !p?.onboarded;
+        } catch { return true; }
+      });
+
+      useEffect(() => { localStorage.setItem("pp_tasks", JSON.stringify(tasks)); }, [tasks]);
+      useEffect(() => { localStorage.setItem("pp_seeds", JSON.stringify(seeds)); }, [seeds]);
+      useEffect(() => { localStorage.setItem("pp_placed", JSON.stringify(placed)); }, [placed]);
+      useEffect(() => { localStorage.setItem("pp_rotation", JSON.stringify(rotationHistory)); }, [rotationHistory]);
+      useEffect(() => { localStorage.setItem("pp_profile", JSON.stringify(profile)); }, [profile]);
+      useEffect(() => { localStorage.setItem("pp_journal", JSON.stringify(journal)); }, [journal]);
+      useEffect(() => { localStorage.setItem("pp_custom_plants", JSON.stringify(customPlants)); }, [customPlants]);
+
+      const exportData = () => {
+        const payload = {
+          exportedAt: new Date().toISOString(),
+          profile, tasks, seeds, placed, rotationHistory, journal, customPlants,
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `plotpilot-backup-${toISODate(new Date())}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+
+      return (
+        <div className="min-h-screen max-w-lg mx-auto bg-sage-50 relative">
+          {showOnboarding && (
+            <OnboardingModal
+              profile={profile}
+              setProfile={setProfile}
+              onDone={() => setShowOnboarding(false)}
+            />
+          )}
+          {active === "home" && <Dashboard tasks={tasks} setTasks={setTasks} seeds={seeds} placed={placed} />}
+          {active === "layout" && <LayoutPlanner placed={placed} setPlaced={setPlaced} setTasks={setTasks} />}
+          {active === "rotate" && (
+            <CropRotationScreen
+              placed={placed}
+              rotationHistory={rotationHistory}
+              setRotationHistory={setRotationHistory}
+            />
+          )}
+          {active === "diagnose" && <DiagnosticScreen tasks={tasks} setTasks={setTasks} />}
+          {active === "vault" && <SeedVault seeds={seeds} setSeeds={setSeeds} />}
+          {active === "calendar" && <CalendarScreen profile={profile} placed={placed} tasks={tasks} />}
+          {active === "plants" && <PlantsScreen customPlants={customPlants} setCustomPlants={setCustomPlants} />}
+          {active === "journal" && <JournalScreen journal={journal} setJournal={setJournal} placed={placed} />}
+          {active === "settings" && (
+            <SettingsScreen profile={profile} setProfile={setProfile} setShowOnboarding={setShowOnboarding} />
+          )}
+          {active === "more" && (
+            <MoreScreen setActive={setActive} profile={profile} exportData={exportData} />
+          )}
+          <BottomNav active={active} setActive={setActive} />
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+  </script>
+</body>
+</html>
