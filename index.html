@@ -583,16 +583,292 @@
     // Legacy alias so older UI that references BEDS still works until fully migrated
     const BEDS = DEFAULT_BEDS;
 
+    // ========== PHASE 2: Kitchen — recipes, preserve, herbs ==========
+    // ingredients: { plantId, amount, unit, optional }
+    // yieldPerPlant: rough harvest per plant in same unit (for plant-count estimate)
+    const RECIPE_LIBRARY = [
+      {
+        id: "marinara",
+        name: "Garden Marinara",
+        category: "Vegetable",
+        servings: 8,
+        time: "90 min",
+        icon: "🍝",
+        tags: ["preserve", "sauce"],
+        ingredients: [
+          { plantId: "tomato", amount: 5, unit: "lb", yieldPerPlant: 8 },
+          { plantId: "basil", amount: 1, unit: "bunch", yieldPerPlant: 2 },
+          { plantId: "garlic", amount: 4, unit: "clove", yieldPerPlant: 8 },
+          { plantId: "oregano", amount: 1, unit: "tbsp", yieldPerPlant: 10 },
+        ],
+        steps: "Simmer peeled tomatoes with garlic and herbs until thick. Freeze or can using tested canning guidance.",
+      },
+      {
+        id: "pesto",
+        name: "Basil Pesto",
+        category: "Herb",
+        servings: 4,
+        time: "20 min",
+        icon: "🌿",
+        tags: ["freeze", "sauce"],
+        ingredients: [
+          { plantId: "basil", amount: 2, unit: "cup", yieldPerPlant: 3 },
+          { plantId: "garlic", amount: 2, unit: "clove", yieldPerPlant: 8 },
+        ],
+        steps: "Blend basil, garlic, oil, and nuts/cheese. Freeze in ice-cube trays for winter.",
+      },
+      {
+        id: "salsa",
+        name: "Fresh Garden Salsa",
+        category: "Vegetable",
+        servings: 6,
+        time: "25 min",
+        icon: "🌮",
+        tags: ["fresh", "preserve"],
+        ingredients: [
+          { plantId: "tomato", amount: 4, unit: "lb", yieldPerPlant: 8 },
+          { plantId: "pepper", amount: 2, unit: "each", yieldPerPlant: 6 },
+          { plantId: "onion", amount: 1, unit: "each", yieldPerPlant: 1 },
+          { plantId: "cilantro", amount: 1, unit: "bunch", yieldPerPlant: 2 },
+        ],
+        steps: "Dice and mix. For shelf-stable canning, use a tested salsa recipe with proper acid levels.",
+      },
+      {
+        id: "pickles",
+        name: "Refrigerator Dill Pickles",
+        category: "Vegetable",
+        servings: 4,
+        time: "30 min + chill",
+        icon: "🥒",
+        tags: ["preserve", "ferment-friendly"],
+        ingredients: [
+          { plantId: "cucumber", amount: 2, unit: "lb", yieldPerPlant: 5 },
+          { plantId: "dill", amount: 4, unit: "sprig", yieldPerPlant: 20 },
+          { plantId: "garlic", amount: 3, unit: "clove", yieldPerPlant: 8 },
+        ],
+        steps: "Pack cukes with dill and garlic; cover with brine. Keep refrigerated.",
+      },
+      {
+        id: "ratatouille",
+        name: "Ratatouille",
+        category: "Vegetable",
+        servings: 6,
+        time: "60 min",
+        icon: "🍆",
+        tags: ["fresh", "freeze"],
+        ingredients: [
+          { plantId: "zucchini", amount: 2, unit: "each", yieldPerPlant: 6 },
+          { plantId: "eggplant", amount: 1, unit: "each", yieldPerPlant: 4 },
+          { plantId: "tomato", amount: 3, unit: "lb", yieldPerPlant: 8 },
+          { plantId: "pepper", amount: 2, unit: "each", yieldPerPlant: 6 },
+          { plantId: "basil", amount: 0.5, unit: "bunch", yieldPerPlant: 2 },
+        ],
+        steps: "Roast or simmer summer vegetables with herbs. Freezes well.",
+      },
+      {
+        id: "kale_salad",
+        name: "Massaged Kale Salad",
+        category: "Vegetable",
+        servings: 4,
+        time: "15 min",
+        icon: "🥗",
+        tags: ["fresh"],
+        ingredients: [
+          { plantId: "kale", amount: 1, unit: "bunch", yieldPerPlant: 1 },
+          { plantId: "carrot", amount: 2, unit: "each", yieldPerPlant: 8 },
+        ],
+        steps: "Massage kale with oil and acid; add shredded carrot and toppings.",
+      },
+      {
+        id: "herb_tea",
+        name: "Garden Herb Tea",
+        category: "Herb",
+        servings: 2,
+        time: "10 min",
+        icon: "🍵",
+        tags: ["herbal", "dry"],
+        ingredients: [
+          { plantId: "mint", amount: 6, unit: "leaf", yieldPerPlant: 50 },
+          { plantId: "lavender", amount: 3, unit: "sprig", yieldPerPlant: 20 },
+        ],
+        steps: "Steep fresh or dried culinary herbs in hot water. Enjoy as a beverage — not a medical treatment.",
+      },
+      {
+        id: "beans_freezer",
+        name: "Blanched Freezer Beans",
+        category: "Vegetable",
+        servings: 8,
+        time: "40 min",
+        icon: "🫘",
+        tags: ["preserve", "freeze"],
+        ingredients: [
+          { plantId: "bean", amount: 4, unit: "lb", yieldPerPlant: 0.5 },
+        ],
+        steps: "Blanch, cool, pack, freeze. Great for winter side dishes.",
+      },
+      {
+        id: "roasted_roots",
+        name: "Roasted Root Medley",
+        category: "Vegetable",
+        servings: 6,
+        time: "50 min",
+        icon: "🥕",
+        tags: ["fresh", "storage"],
+        ingredients: [
+          { plantId: "carrot", amount: 2, unit: "lb", yieldPerPlant: 0.3 },
+          { plantId: "beet", amount: 1, unit: "lb", yieldPerPlant: 0.4 },
+          { plantId: "potato", amount: 2, unit: "lb", yieldPerPlant: 2 },
+          { plantId: "rosemary", amount: 2, unit: "sprig", yieldPerPlant: 30 },
+        ],
+        steps: "Toss with oil and roast until caramelized. Roots store well in a cool dark place.",
+      },
+      {
+        id: "corn_salsa",
+        name: "Sweet Corn & Pepper Salsa",
+        category: "Vegetable",
+        servings: 6,
+        time: "25 min",
+        icon: "🌽",
+        tags: ["fresh", "freeze"],
+        ingredients: [
+          { plantId: "corn", amount: 4, unit: "ear", yieldPerPlant: 2 },
+          { plantId: "pepper", amount: 2, unit: "each", yieldPerPlant: 6 },
+          { plantId: "cilantro", amount: 0.5, unit: "bunch", yieldPerPlant: 2 },
+          { plantId: "onion", amount: 0.5, unit: "each", yieldPerPlant: 1 },
+        ],
+        steps: "Char or boil corn; mix with diced pepper and herbs. Freeze extras.",
+      },
+      {
+        id: "squash_soup",
+        name: "Roasted Squash Soup",
+        category: "Vegetable",
+        servings: 6,
+        time: "75 min",
+        icon: "🎃",
+        tags: ["preserve", "freeze"],
+        ingredients: [
+          { plantId: "squash", amount: 3, unit: "lb", yieldPerPlant: 8 },
+          { plantId: "onion", amount: 1, unit: "each", yieldPerPlant: 1 },
+          { plantId: "garlic", amount: 3, unit: "clove", yieldPerPlant: 8 },
+          { plantId: "thyme", amount: 2, unit: "sprig", yieldPerPlant: 20 },
+        ],
+        steps: "Roast squash, blend with stock and aromatics. Freeze in portions.",
+      },
+      {
+        id: "strawberry_jam",
+        name: "Simple Strawberry Jam",
+        category: "Fruit",
+        servings: 6,
+        time: "45 min",
+        icon: "🍓",
+        tags: ["preserve", "can"],
+        ingredients: [
+          { plantId: "strawberry", amount: 4, unit: "lb", yieldPerPlant: 1 },
+        ],
+        steps: "Cook with sugar and lemon using a tested jam method. Process jars safely if canning.",
+      },
+    ];
+
+    // Note: mint may not be in library - map to basil-like or skip; add mint id if missing
+    // We'll use existing plant ids only - fix herb_tea to use available herbs
+    RECIPE_LIBRARY.find(r => r.id === "herb_tea").ingredients = [
+      { plantId: "lavender", amount: 3, unit: "sprig", yieldPerPlant: 20 },
+      { plantId: "thyme", amount: 4, unit: "sprig", yieldPerPlant: 20 },
+      { plantId: "basil", amount: 4, unit: "leaf", yieldPerPlant: 40 },
+    ];
+
+    const PRESERVE_GUIDES = [
+      { plantId: "tomato", methods: [
+        { id: "can", name: "Water-bath / pressure can", tip: "Use tested recipes; acidify as directed for safety." },
+        { id: "freeze", name: "Freeze sauce or whole", tip: "Cook down first for less freezer space." },
+        { id: "dry", name: "Sun or dehydrator", tip: "Oil-pack dried tomatoes for pantry use." },
+      ]},
+      { plantId: "basil", methods: [
+        { id: "freeze", name: "Pesto cubes", tip: "Freeze in oil; thaw as needed." },
+        { id: "dry", name: "Air dry or dehydrate", tip: "Hang small bundles out of direct sun." },
+      ]},
+      { plantId: "cucumber", methods: [
+        { id: "ferment", name: "Fermented pickles", tip: "Keep under brine; watch for safe fermentation signs." },
+        { id: "fridge", name: "Refrigerator pickles", tip: "Quick and safe for short-term use." },
+      ]},
+      { plantId: "bean", methods: [
+        { id: "freeze", name: "Blanch & freeze", tip: "Blanch 2–3 min, ice bath, pack dry." },
+        { id: "can", name: "Pressure can only", tip: "Low-acid veggies need pressure canning." },
+      ]},
+      { plantId: "pepper", methods: [
+        { id: "freeze", name: "Chop & freeze", tip: "No blanch needed for cooking later." },
+        { id: "dry", name: "String or dehydrate", tip: "Fully dry before storing airtight." },
+      ]},
+      { plantId: "carrot", methods: [
+        { id: "store", name: "Root cellar / fridge", tip: "Trim tops; store in damp sand or bags." },
+        { id: "freeze", name: "Blanch & freeze", tip: "Slice first for easy cooking." },
+      ]},
+      { plantId: "kale", methods: [
+        { id: "freeze", name: "Blanch & freeze", tip: "Great for soups all winter." },
+        { id: "dry", name: "Kale chips / dry leaf", tip: "Low heat until crisp." },
+      ]},
+      { plantId: "squash", methods: [
+        { id: "store", name: "Cure & store", tip: "Cure hard squash; keep cool and dry." },
+        { id: "freeze", name: "Roast & freeze puree", tip: "Perfect for soup bases." },
+      ]},
+      { plantId: "strawberry", methods: [
+        { id: "freeze", name: "Freeze whole or sliced", tip: "Tray-freeze then bag." },
+        { id: "can", name: "Jam / preserves", tip: "Use tested sugar ratios and processing times." },
+      ]},
+      { plantId: "herb", methods: [
+        { id: "dry", name: "Dry culinary herbs", tip: "Store in dark jars; label date." },
+        { id: "freeze", name: "Freeze in oil", tip: "Works for basil, parsley, cilantro." },
+      ]},
+      { plantId: "garlic", methods: [
+        { id: "store", name: "Cure & hang", tip: "Dry fully; keep cool with airflow." },
+      ]},
+      { plantId: "corn", methods: [
+        { id: "freeze", name: "Blanch & freeze kernels", tip: "Peak sweetness freezes well." },
+      ]},
+    ];
+
+    const HERBAL_NOTES = [
+      { plantId: "basil", uses: ["Culinary: pesto, sauces, salads", "Kitchen: flavor oil or vinegar"], caution: "Culinary use only in this app." },
+      { plantId: "lavender", uses: ["Culinary: teas, baked goods (small amounts)", "Household: dried sachets for drawers"], caution: "Not a substitute for medical care." },
+      { plantId: "thyme", uses: ["Culinary: roasted veg, soups, beans", "Kitchen: compound butters"], caution: "Culinary herb guidance only." },
+      { plantId: "oregano", uses: ["Culinary: pizza, tomato dishes, marinades"], caution: "Culinary use only." },
+      { plantId: "rosemary", uses: ["Culinary: potatoes, breads, grilled veg", "Household: aromatic simmer pots"], caution: "Culinary / household only." },
+      { plantId: "cilantro", uses: ["Culinary: salsa, curries, salads", "Also grow for seed (coriander)"], caution: "Culinary use only." },
+      { plantId: "parsley", uses: ["Culinary: garnish, tabbouleh, sauces", "High in everyday kitchen use"], caution: "Culinary use only." },
+      { plantId: "dill", uses: ["Culinary: pickles, fish, yogurt sauces", "Seed heads for brines"], caution: "Culinary use only." },
+      { plantId: "mint", uses: ["Culinary: teas, desserts, salads"], caution: "Aggressive spreader — pot it. Culinary only." },
+    ];
+
+    function plantsNeededForIngredient(ing) {
+      const y = Number(ing.yieldPerPlant) || 1;
+      const a = Number(ing.amount) || 0;
+      return Math.max(1, Math.ceil(a / y));
+    }
+
+    function growListFromRecipes(recipeIds) {
+      const map = {};
+      recipeIds.forEach(rid => {
+        const r = RECIPE_LIBRARY.find(x => x.id === rid);
+        if (!r) return;
+        r.ingredients.forEach(ing => {
+          if (!map[ing.plantId]) map[ing.plantId] = { plantId: ing.plantId, plants: 0, recipes: [] };
+          map[ing.plantId].plants = Math.max(map[ing.plantId].plants, plantsNeededForIngredient(ing));
+          if (!map[ing.plantId].recipes.includes(r.name)) map[ing.plantId].recipes.push(r.name);
+        });
+      });
+      return Object.values(map);
+    }
+
     // ========== COMPONENTS ==========
     function BottomNav({ active, setActive }) {
       const primary = [
         { id: "home", icon: "fa-home", label: "Home" },
         { id: "plan", icon: "fa-calendar-check", label: "Plan" },
+        { id: "kitchen", icon: "fa-utensils", label: "Kitchen" },
         { id: "layout", icon: "fa-th-large", label: "Layout" },
-        { id: "journal", icon: "fa-book", label: "Journal" },
         { id: "more", icon: "fa-ellipsis-h", label: "More" },
       ];
-      const moreIds = ["calendar", "rotate", "diagnose", "vault", "plants", "settings"];
+      const moreIds = ["journal", "calendar", "rotate", "diagnose", "vault", "plants", "settings"];
       const isMoreActive = moreIds.includes(active);
       return (
         <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-sage-200 safe-bottom z-50">
@@ -624,6 +900,7 @@
         { id: "diagnose", icon: "fa-stethoscope", label: "Diagnose", desc: "Symptom checker" },
         { id: "vault", icon: "fa-box", label: "Seed Vault", desc: "Inventory & expiry" },
         { id: "plants", icon: "fa-leaf", label: "Plant Library", desc: "40+ crops · schedules" },
+        { id: "journal", icon: "fa-book", label: "Journal", desc: "Notes & observations" },
         { id: "settings", icon: "fa-cog", label: "Settings", desc: "Zone, frost dates, backup" },
       ];
       return (
@@ -2035,6 +2312,258 @@
               </div>
             </div>
           </div>
+        </div>
+      );
+    }
+
+    // ========== PHASE 2 UI: Kitchen ==========
+    function KitchenScreen({ profile, planYear, placed, setPlaced, beds, setTasks, setSeeds, setActive }) {
+      const [tab, setTab] = useState("recipes"); // recipes | preserve | herbs
+      const [selected, setSelected] = useState(() => new Set());
+      const [detail, setDetail] = useState(null);
+      const [preservePlant, setPreservePlant] = useState("tomato");
+
+      const toggleRecipe = (id) => {
+        setSelected(prev => {
+          const n = new Set(prev);
+          if (n.has(id)) n.delete(id); else n.add(id);
+          return n;
+        });
+      };
+
+      const growList = useMemo(() => growListFromRecipes([...selected]), [selected]);
+
+      const planFromRecipes = () => {
+        if (!growList.length) {
+          alert("Select at least one recipe first.");
+          return;
+        }
+        const bedId = beds[0]?.id || "tomato";
+        const newItems = [];
+        const tasksToAdd = [];
+        growList.forEach((g, idx) => {
+          const pl = PLANT_LIBRARY.find(p => p.id === g.plantId);
+          if (!pl) return;
+          const sched = computePlantingSchedule(pl, profile);
+          if (!sched) return;
+          for (let i = 0; i < Math.min(g.plants, 12); i++) {
+            newItems.push({
+              id: Date.now() + idx * 100 + i + Math.random(),
+              bed: bedId,
+              plant: g.plantId,
+              plantedAt: sched.plantOutDate,
+              status: "planned",
+              year: planYear || new Date().getFullYear(),
+              method: sched.method,
+              sowDate: sched.sowDate,
+              transplantDate: sched.transplantDate,
+              harvestStart: sched.harvestStart,
+              fromRecipe: true,
+            });
+          }
+          tasksToAdd.push({
+            id: Date.now() + 500 + idx,
+            title: `Grow ${pl.name} for recipes`,
+            detail: `~${g.plants} plant(s) · sow ${sched.sowDate}`,
+            done: false,
+            icon: pl.icon || "🌱",
+            due: sched.sowDate,
+            year: planYear,
+          });
+        });
+        setPlaced(prev => [...prev, ...newItems]);
+        setTasks(prev => [...tasksToAdd, ...prev]);
+        setSeeds(prev => prev.map(s => {
+          const hit = growList.find(g => {
+            const pl = PLANT_LIBRARY.find(p => p.id === g.plantId);
+            return pl && (s.name || "").toLowerCase().includes(pl.name.toLowerCase());
+          });
+          if (!hit || s.qty <= 0) return s;
+          const qty = Math.max(0, s.qty - hit.plants);
+          return { ...s, qty, low: qty <= 3 };
+        }));
+        alert(`Added ${newItems.length} planting(s) to ${planYear} plan. Open Plan to review beds.`);
+        if (setActive) setActive("plan");
+      };
+
+      const preserveGuide = PRESERVE_GUIDES.find(p => p.plantId === preservePlant)
+        || PRESERVE_GUIDES.find(p => p.plantId === "herb");
+
+      // Ready-to-preserve: harvest window within 14 days
+      const readyPreserve = useMemo(() => {
+        const today = new Date();
+        today.setHours(12, 0, 0, 0);
+        return (placed || [])
+          .filter(p => p.harvestStart && (p.year || new Date().getFullYear()) === (planYear || new Date().getFullYear()))
+          .map(p => {
+            const h = new Date(p.harvestStart + "T12:00:00");
+            const days = Math.round((h - today) / 86400000);
+            const pl = PLANT_LIBRARY.find(x => x.id === p.plant);
+            const guide = PRESERVE_GUIDES.find(g => g.plantId === p.plant);
+            return { ...p, days, pl, guide };
+          })
+          .filter(x => x.days >= -7 && x.days <= 21 && x.guide)
+          .sort((a, b) => a.days - b.days);
+      }, [placed, planYear]);
+
+      return (
+        <div className="pb-24">
+          <Header title="Kitchen" />
+          <div className="px-4 pt-3 space-y-4">
+            <div className="flex gap-1 bg-white rounded-xl p-1 card-shadow">
+              {[
+                { id: "recipes", label: "Recipes" },
+                { id: "preserve", label: "Preserve" },
+                { id: "herbs", label: "Herbs" },
+              ].map(t => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setTab(t.id)}
+                  className={`flex-1 py-2 rounded-lg text-xs font-semibold ${
+                    tab === t.id ? "bg-sage-600 text-white" : "text-sage-600"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {tab === "recipes" && (
+              <>
+                <p className="text-xs text-sage-500">
+                  Select recipes you want to cook or put up. PlotPilot builds a grow list and can add plantings to your {planYear} plan.
+                </p>
+                <div className="space-y-2">
+                  {RECIPE_LIBRARY.map(r => (
+                    <div key={r.id} className={`bg-white rounded-xl p-3 card-shadow border-2 ${selected.has(r.id) ? "border-sage-500" : "border-transparent"}`}>
+                      <div className="flex items-start gap-2">
+                        <button type="button" onClick={() => toggleRecipe(r.id)} className="mt-1 text-sage-600">
+                          <i className={`fas ${selected.has(r.id) ? "fa-check-square" : "fa-square"} text-lg`}></i>
+                        </button>
+                        <button type="button" className="flex-1 text-left" onClick={() => setDetail(r)}>
+                          <p className="font-medium text-sm text-sage-800">{r.icon} {r.name}</p>
+                          <p className="text-[10px] text-sage-500">{r.servings} servings · {r.time} · {r.tags.join(", ")}</p>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {selected.size > 0 && (
+                  <div className="bg-sage-50 border border-sage-200 rounded-2xl p-4 space-y-2 sticky bottom-20">
+                    <p className="text-sm font-semibold text-sage-800">Grow list ({growList.length} crops)</p>
+                    {growList.map(g => {
+                      const pl = PLANT_LIBRARY.find(p => p.id === g.plantId);
+                      return (
+                        <div key={g.plantId} className="flex justify-between text-xs text-sage-700">
+                          <span>{pl?.icon} {pl?.name || g.plantId}</span>
+                          <span className="font-medium">~{g.plants} plant(s)</span>
+                        </div>
+                      );
+                    })}
+                    <button type="button" onClick={planFromRecipes} className="w-full mt-2 py-2.5 rounded-xl bg-sage-600 text-white text-sm font-medium">
+                      Add to {planYear} garden plan
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+
+            {tab === "preserve" && (
+              <>
+                {readyPreserve.length > 0 && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 space-y-2">
+                    <p className="text-xs font-semibold text-amber-900">Ready to preserve</p>
+                    {readyPreserve.slice(0, 5).map(x => (
+                      <div key={x.id} className="text-xs text-amber-900 flex justify-between">
+                        <span>{x.pl?.icon} {x.pl?.name}</span>
+                        <span>{x.days < 0 ? "harvest window open" : `in ${x.days}d`}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <label className="text-xs text-sage-500">Crop</label>
+                <select
+                  className="w-full border rounded-xl px-3 py-2 text-sm bg-white"
+                  value={preservePlant}
+                  onChange={e => setPreservePlant(e.target.value)}
+                >
+                  {PRESERVE_GUIDES.filter(g => g.plantId !== "herb").map(g => {
+                    const pl = PLANT_LIBRARY.find(p => p.id === g.plantId);
+                    return <option key={g.plantId} value={g.plantId}>{pl?.icon} {pl?.name || g.plantId}</option>;
+                  })}
+                </select>
+                <div className="space-y-2 mt-2">
+                  {(preserveGuide?.methods || []).map(m => (
+                    <div key={m.id} className="bg-white rounded-xl p-3 card-shadow">
+                      <p className="font-medium text-sm text-sage-800">{m.name}</p>
+                      <p className="text-xs text-sage-500 mt-1">{m.tip}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10px] text-sage-400">
+                  Always follow tested, up-to-date food preservation guidelines (e.g. USDA / extension services). PlotPilot is a planning aid, not a canning authority.
+                </p>
+              </>
+            )}
+
+            {tab === "herbs" && (
+              <>
+                <p className="text-xs text-sage-500">
+                  Culinary and household ideas only — not medical advice.
+                </p>
+                <div className="space-y-2">
+                  {HERBAL_NOTES.map(h => {
+                    const pl = PLANT_LIBRARY.find(p => p.id === h.plantId);
+                    return (
+                      <div key={h.plantId} className="bg-white rounded-xl p-3 card-shadow">
+                        <p className="font-medium text-sm text-sage-800">{pl?.icon || "🌿"} {pl?.name || h.plantId}</p>
+                        <ul className="mt-1 text-xs text-sage-600 list-disc pl-4 space-y-0.5">
+                          {h.uses.map((u, i) => <li key={i}>{u}</li>)}
+                        </ul>
+                        <p className="text-[10px] text-sage-400 mt-1">{h.caution}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+
+          {detail && (
+            <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4" onClick={() => setDetail(null)}>
+              <div className="bg-white rounded-2xl p-5 w-full max-w-sm max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                <p className="text-2xl text-center">{detail.icon}</p>
+                <h3 className="font-semibold text-sage-800 text-center text-lg">{detail.name}</h3>
+                <p className="text-xs text-sage-500 text-center mb-3">{detail.servings} servings · {detail.time}</p>
+                <p className="text-xs font-semibold text-sage-700 mb-1">Ingredients (garden-linked)</p>
+                <ul className="text-xs text-sage-600 space-y-1 mb-3">
+                  {detail.ingredients.map((ing, i) => {
+                    const pl = PLANT_LIBRARY.find(p => p.id === ing.plantId);
+                    return (
+                      <li key={i} className="flex justify-between">
+                        <span>{pl?.icon} {pl?.name || ing.plantId}</span>
+                        <span>{ing.amount} {ing.unit} · ~{plantsNeededForIngredient(ing)} plant(s)</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <p className="text-xs text-sage-600 mb-4">{detail.steps}</p>
+                <button
+                  type="button"
+                  className="w-full py-2.5 rounded-xl bg-sage-600 text-white text-sm font-medium mb-2"
+                  onClick={() => {
+                    setSelected(prev => new Set([...prev, detail.id]));
+                    setDetail(null);
+                  }}
+                >
+                  Add to grow selection
+                </button>
+                <button type="button" className="w-full py-2 text-sm text-sage-500" onClick={() => setDetail(null)}>Close</button>
+              </div>
+            </div>
+          )}
         </div>
       );
     }
@@ -3600,6 +4129,18 @@
               seeds={seeds}
               setSeeds={setSeeds}
               rotationHistory={rotationHistory}
+            />
+          )}
+          {active === "kitchen" && (
+            <KitchenScreen
+              profile={profile}
+              planYear={planYear}
+              placed={placed}
+              setPlaced={setPlaced}
+              beds={beds}
+              setTasks={setTasks}
+              setSeeds={setSeeds}
+              setActive={setActive}
             />
           )}
           {active === "layout" && (
