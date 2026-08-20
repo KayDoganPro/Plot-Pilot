@@ -75,25 +75,48 @@
     ];
 
     // germDays, daysToHarvest, fertilizeEveryDays, startWeeksBeforeFrost, transplantWeeksBeforeFrost
+    // spacingIn = inches between plants; method: indoor | direct; successionDays: 0 = none
     const PLANT_LIBRARY = [
-      { id: "tomato", name: "Tomato", scientific: "Solanum lycopersicum", type: "Vegetable", spacing: "24-36 in", sun: "Full sun", icon: "🍅", family: "Solanaceae", familyName: "Nightshade", germDays: 7, daysToHarvest: 75, fertilizeEveryDays: 21, startWeeksBeforeFrost: 6, transplantWeeksBeforeFrost: 1 },
-      { id: "basil", name: "Basil", scientific: "Ocimum basilicum", type: "Herb", spacing: "12-18 in", sun: "Full sun", icon: "🌿", family: "Lamiaceae", familyName: "Mint", germDays: 5, daysToHarvest: 30, fertilizeEveryDays: 28, startWeeksBeforeFrost: 4, transplantWeeksBeforeFrost: 0 },
-      { id: "marigold", name: "Marigold", scientific: "Tagetes spp.", type: "Flower", spacing: "8-12 in", sun: "Full sun", icon: "🌼", family: "Asteraceae", familyName: "Aster", germDays: 5, daysToHarvest: 50, fertilizeEveryDays: 30, startWeeksBeforeFrost: 4, transplantWeeksBeforeFrost: 1 },
-      { id: "lavender", name: "Lavender", scientific: "Lavandula angustifolia", type: "Herb", spacing: "12-18 in", sun: "Full sun", icon: "💜", family: "Lamiaceae", familyName: "Mint", germDays: 14, daysToHarvest: 90, fertilizeEveryDays: 45, startWeeksBeforeFrost: 8, transplantWeeksBeforeFrost: 2 },
-      { id: "lettuce", name: "Lettuce", scientific: "Lactuca sativa", type: "Vegetable", spacing: "6-12 in", sun: "Partial", icon: "🥬", family: "Asteraceae", familyName: "Aster", germDays: 4, daysToHarvest: 45, fertilizeEveryDays: 21, startWeeksBeforeFrost: 4, transplantWeeksBeforeFrost: 2 },
-      { id: "pepper", name: "Pepper", scientific: "Capsicum annuum", type: "Vegetable", spacing: "18-24 in", sun: "Full sun", icon: "🫑", family: "Solanaceae", familyName: "Nightshade", germDays: 10, daysToHarvest: 70, fertilizeEveryDays: 21, startWeeksBeforeFrost: 8, transplantWeeksBeforeFrost: 1 },
-      { id: "carrot", name: "Carrot", scientific: "Daucus carota", type: "Vegetable", spacing: "2-3 in", sun: "Full sun", icon: "🥕", family: "Apiaceae", familyName: "Umbellifer", germDays: 14, daysToHarvest: 70, fertilizeEveryDays: 30, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0 },
-      { id: "blueberry", name: "Blueberry", scientific: "Vaccinium corymbosum", type: "Fruit", spacing: "4-5 ft", sun: "Full sun", icon: "🫐", family: "Ericaceae", familyName: "Heath (perennial)", germDays: 30, daysToHarvest: 365, fertilizeEveryDays: 60, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0 },
-      { id: "cucumber", name: "Cucumber", scientific: "Cucumis sativus", type: "Vegetable", spacing: "12-18 in", sun: "Full sun", icon: "🥒", family: "Cucurbitaceae", familyName: "Gourd", germDays: 5, daysToHarvest: 55, fertilizeEveryDays: 21, startWeeksBeforeFrost: 3, transplantWeeksBeforeFrost: 1 },
-      { id: "zucchini", name: "Zucchini", scientific: "Cucurbita pepo", type: "Vegetable", spacing: "24-36 in", sun: "Full sun", icon: "🟢", family: "Cucurbitaceae", familyName: "Gourd", germDays: 6, daysToHarvest: 50, fertilizeEveryDays: 21, startWeeksBeforeFrost: 3, transplantWeeksBeforeFrost: 1 },
-      { id: "bean", name: "Bush Bean", scientific: "Phaseolus vulgaris", type: "Vegetable", spacing: "4-6 in", sun: "Full sun", icon: "🫘", family: "Fabaceae", familyName: "Legume", germDays: 7, daysToHarvest: 55, fertilizeEveryDays: 35, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0 },
-      { id: "onion", name: "Onion", scientific: "Allium cepa", type: "Vegetable", spacing: "4-6 in", sun: "Full sun", icon: "🧅", family: "Amaryllidaceae", familyName: "Allium", germDays: 10, daysToHarvest: 100, fertilizeEveryDays: 30, startWeeksBeforeFrost: 8, transplantWeeksBeforeFrost: 4 },
-      { id: "spinach", name: "Spinach", scientific: "Spinacia oleracea", type: "Vegetable", spacing: "4-6 in", sun: "Partial", icon: "🍃", family: "Amaranthaceae", familyName: "Amaranth", germDays: 7, daysToHarvest: 40, fertilizeEveryDays: 21, startWeeksBeforeFrost: 4, transplantWeeksBeforeFrost: 2 },
-      { id: "radish", name: "Radish", scientific: "Raphanus sativus", type: "Vegetable", spacing: "2 in", sun: "Full sun", icon: "🔴", family: "Brassicaceae", familyName: "Brassica", germDays: 4, daysToHarvest: 25, fertilizeEveryDays: 0, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0 },
-      { id: "kale", name: "Kale", scientific: "Brassica oleracea", type: "Vegetable", spacing: "12-18 in", sun: "Full sun", icon: "🥬", family: "Brassicaceae", familyName: "Brassica", germDays: 6, daysToHarvest: 55, fertilizeEveryDays: 28, startWeeksBeforeFrost: 5, transplantWeeksBeforeFrost: 2 },
-      { id: "cilantro", name: "Cilantro", scientific: "Coriandrum sativum", type: "Herb", spacing: "6-8 in", sun: "Partial", icon: "🌿", family: "Apiaceae", familyName: "Umbellifer", germDays: 8, daysToHarvest: 40, fertilizeEveryDays: 28, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0 },
-      { id: "strawberry", name: "Strawberry", scientific: "Fragaria × ananassa", type: "Fruit", spacing: "12 in", sun: "Full sun", icon: "🍓", family: "Rosaceae", familyName: "Rose", germDays: 14, daysToHarvest: 90, fertilizeEveryDays: 30, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0 },
-      { id: "corn", name: "Sweet Corn", scientific: "Zea mays", type: "Vegetable", spacing: "8-12 in", sun: "Full sun", icon: "🌽", family: "Poaceae", familyName: "Grass", germDays: 7, daysToHarvest: 80, fertilizeEveryDays: 21, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0 },
+      { id: "tomato", name: "Tomato", scientific: "Solanum lycopersicum", type: "Vegetable", spacing: "24-36 in", spacingIn: 24, sun: "Full sun", icon: "🍅", family: "Solanaceae", familyName: "Nightshade", germDays: 7, daysToHarvest: 75, fertilizeEveryDays: 21, startWeeksBeforeFrost: 6, transplantWeeksBeforeFrost: 1, method: "indoor", successionDays: 0 },
+      { id: "basil", name: "Basil", scientific: "Ocimum basilicum", type: "Herb", spacing: "12-18 in", spacingIn: 12, sun: "Full sun", icon: "🌿", family: "Lamiaceae", familyName: "Mint", germDays: 5, daysToHarvest: 30, fertilizeEveryDays: 28, startWeeksBeforeFrost: 4, transplantWeeksBeforeFrost: 0, method: "indoor", successionDays: 21 },
+      { id: "marigold", name: "Marigold", scientific: "Tagetes spp.", type: "Flower", spacing: "8-12 in", spacingIn: 10, sun: "Full sun", icon: "🌼", family: "Asteraceae", familyName: "Aster", germDays: 5, daysToHarvest: 50, fertilizeEveryDays: 30, startWeeksBeforeFrost: 4, transplantWeeksBeforeFrost: 1, method: "indoor", successionDays: 0 },
+      { id: "lavender", name: "Lavender", scientific: "Lavandula angustifolia", type: "Herb", spacing: "12-18 in", spacingIn: 18, sun: "Full sun", icon: "💜", family: "Lamiaceae", familyName: "Mint", germDays: 14, daysToHarvest: 90, fertilizeEveryDays: 45, startWeeksBeforeFrost: 8, transplantWeeksBeforeFrost: 2, method: "indoor", successionDays: 0 },
+      { id: "lettuce", name: "Lettuce", scientific: "Lactuca sativa", type: "Vegetable", spacing: "6-12 in", spacingIn: 8, sun: "Partial", icon: "🥬", family: "Asteraceae", familyName: "Aster", germDays: 4, daysToHarvest: 45, fertilizeEveryDays: 21, startWeeksBeforeFrost: 4, transplantWeeksBeforeFrost: 2, method: "direct", successionDays: 14 },
+      { id: "pepper", name: "Pepper", scientific: "Capsicum annuum", type: "Vegetable", spacing: "18-24 in", spacingIn: 18, sun: "Full sun", icon: "🫑", family: "Solanaceae", familyName: "Nightshade", germDays: 10, daysToHarvest: 70, fertilizeEveryDays: 21, startWeeksBeforeFrost: 8, transplantWeeksBeforeFrost: 1, method: "indoor", successionDays: 0 },
+      { id: "carrot", name: "Carrot", scientific: "Daucus carota", type: "Vegetable", spacing: "2-3 in", spacingIn: 3, sun: "Full sun", icon: "🥕", family: "Apiaceae", familyName: "Umbellifer", germDays: 14, daysToHarvest: 70, fertilizeEveryDays: 30, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0, method: "direct", successionDays: 21 },
+      { id: "blueberry", name: "Blueberry", scientific: "Vaccinium corymbosum", type: "Fruit", spacing: "4-5 ft", spacingIn: 48, sun: "Full sun", icon: "🫐", family: "Ericaceae", familyName: "Heath (perennial)", germDays: 30, daysToHarvest: 365, fertilizeEveryDays: 60, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0, method: "direct", successionDays: 0 },
+      { id: "cucumber", name: "Cucumber", scientific: "Cucumis sativus", type: "Vegetable", spacing: "12-18 in", spacingIn: 12, sun: "Full sun", icon: "🥒", family: "Cucurbitaceae", familyName: "Gourd", germDays: 5, daysToHarvest: 55, fertilizeEveryDays: 21, startWeeksBeforeFrost: 3, transplantWeeksBeforeFrost: 1, method: "indoor", successionDays: 0 },
+      { id: "zucchini", name: "Zucchini", scientific: "Cucurbita pepo", type: "Vegetable", spacing: "24-36 in", spacingIn: 36, sun: "Full sun", icon: "🟢", family: "Cucurbitaceae", familyName: "Gourd", germDays: 6, daysToHarvest: 50, fertilizeEveryDays: 21, startWeeksBeforeFrost: 3, transplantWeeksBeforeFrost: 1, method: "direct", successionDays: 0 },
+      { id: "bean", name: "Bush Bean", scientific: "Phaseolus vulgaris", type: "Vegetable", spacing: "4-6 in", spacingIn: 4, sun: "Full sun", icon: "🫘", family: "Fabaceae", familyName: "Legume", germDays: 7, daysToHarvest: 55, fertilizeEveryDays: 35, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0, method: "direct", successionDays: 14 },
+      { id: "onion", name: "Onion", scientific: "Allium cepa", type: "Vegetable", spacing: "4-6 in", spacingIn: 4, sun: "Full sun", icon: "🧅", family: "Amaryllidaceae", familyName: "Allium", germDays: 10, daysToHarvest: 100, fertilizeEveryDays: 30, startWeeksBeforeFrost: 8, transplantWeeksBeforeFrost: 4, method: "indoor", successionDays: 0 },
+      { id: "spinach", name: "Spinach", scientific: "Spinacia oleracea", type: "Vegetable", spacing: "4-6 in", spacingIn: 4, sun: "Partial", icon: "🍃", family: "Amaranthaceae", familyName: "Amaranth", germDays: 7, daysToHarvest: 40, fertilizeEveryDays: 21, startWeeksBeforeFrost: 4, transplantWeeksBeforeFrost: 2, method: "direct", successionDays: 14 },
+      { id: "radish", name: "Radish", scientific: "Raphanus sativus", type: "Vegetable", spacing: "2 in", spacingIn: 2, sun: "Full sun", icon: "🔴", family: "Brassicaceae", familyName: "Brassica", germDays: 4, daysToHarvest: 25, fertilizeEveryDays: 0, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0, method: "direct", successionDays: 10 },
+      { id: "kale", name: "Kale", scientific: "Brassica oleracea", type: "Vegetable", spacing: "12-18 in", spacingIn: 12, sun: "Full sun", icon: "🥬", family: "Brassicaceae", familyName: "Brassica", germDays: 6, daysToHarvest: 55, fertilizeEveryDays: 28, startWeeksBeforeFrost: 5, transplantWeeksBeforeFrost: 2, method: "indoor", successionDays: 0 },
+      { id: "cilantro", name: "Cilantro", scientific: "Coriandrum sativum", type: "Herb", spacing: "6-8 in", spacingIn: 6, sun: "Partial", icon: "🌿", family: "Apiaceae", familyName: "Umbellifer", germDays: 8, daysToHarvest: 40, fertilizeEveryDays: 28, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0, method: "direct", successionDays: 21 },
+      { id: "strawberry", name: "Strawberry", scientific: "Fragaria × ananassa", type: "Fruit", spacing: "12 in", spacingIn: 12, sun: "Full sun", icon: "🍓", family: "Rosaceae", familyName: "Rose", germDays: 14, daysToHarvest: 90, fertilizeEveryDays: 30, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0, method: "direct", successionDays: 0 },
+      { id: "corn", name: "Sweet Corn", scientific: "Zea mays", type: "Vegetable", spacing: "8-12 in", spacingIn: 10, sun: "Full sun", icon: "🌽", family: "Poaceae", familyName: "Grass", germDays: 7, daysToHarvest: 80, fertilizeEveryDays: 21, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0, method: "direct", successionDays: 14 },
+      { id: "broccoli", name: "Broccoli", scientific: "Brassica oleracea", type: "Vegetable", spacing: "18 in", spacingIn: 18, sun: "Full sun", icon: "🥦", family: "Brassicaceae", familyName: "Brassica", germDays: 5, daysToHarvest: 70, fertilizeEveryDays: 21, startWeeksBeforeFrost: 6, transplantWeeksBeforeFrost: 2, method: "indoor", successionDays: 0 },
+      { id: "cabbage", name: "Cabbage", scientific: "Brassica oleracea", type: "Vegetable", spacing: "18-24 in", spacingIn: 18, sun: "Full sun", icon: "🥬", family: "Brassicaceae", familyName: "Brassica", germDays: 7, daysToHarvest: 80, fertilizeEveryDays: 21, startWeeksBeforeFrost: 6, transplantWeeksBeforeFrost: 2, method: "indoor", successionDays: 0 },
+      { id: "beet", name: "Beet", scientific: "Beta vulgaris", type: "Vegetable", spacing: "3-4 in", spacingIn: 3, sun: "Full sun", icon: "🟣", family: "Amaranthaceae", familyName: "Amaranth", germDays: 7, daysToHarvest: 55, fertilizeEveryDays: 28, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0, method: "direct", successionDays: 21 },
+      { id: "pea", name: "Pea", scientific: "Pisum sativum", type: "Vegetable", spacing: "2-3 in", spacingIn: 3, sun: "Full sun", icon: "🟢", family: "Fabaceae", familyName: "Legume", germDays: 7, daysToHarvest: 60, fertilizeEveryDays: 0, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0, method: "direct", successionDays: 14 },
+      { id: "potato", name: "Potato", scientific: "Solanum tuberosum", type: "Vegetable", spacing: "12 in", spacingIn: 12, sun: "Full sun", icon: "🥔", family: "Solanaceae", familyName: "Nightshade", germDays: 14, daysToHarvest: 90, fertilizeEveryDays: 30, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0, method: "direct", successionDays: 0 },
+      { id: "garlic", name: "Garlic", scientific: "Allium sativum", type: "Vegetable", spacing: "4-6 in", spacingIn: 5, sun: "Full sun", icon: "🧄", family: "Amaryllidaceae", familyName: "Allium", germDays: 14, daysToHarvest: 240, fertilizeEveryDays: 45, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0, method: "direct", successionDays: 0 },
+      { id: "squash", name: "Winter Squash", scientific: "Cucurbita moschata", type: "Vegetable", spacing: "36 in", spacingIn: 36, sun: "Full sun", icon: "🎃", family: "Cucurbitaceae", familyName: "Gourd", germDays: 7, daysToHarvest: 95, fertilizeEveryDays: 21, startWeeksBeforeFrost: 3, transplantWeeksBeforeFrost: 1, method: "direct", successionDays: 0 },
+      { id: "melon", name: "Melon", scientific: "Cucumis melo", type: "Fruit", spacing: "24-36 in", spacingIn: 30, sun: "Full sun", icon: "🍈", family: "Cucurbitaceae", familyName: "Gourd", germDays: 7, daysToHarvest: 85, fertilizeEveryDays: 21, startWeeksBeforeFrost: 3, transplantWeeksBeforeFrost: 1, method: "indoor", successionDays: 0 },
+      { id: "eggplant", name: "Eggplant", scientific: "Solanum melongena", type: "Vegetable", spacing: "18-24 in", spacingIn: 18, sun: "Full sun", icon: "🍆", family: "Solanaceae", familyName: "Nightshade", germDays: 10, daysToHarvest: 75, fertilizeEveryDays: 21, startWeeksBeforeFrost: 8, transplantWeeksBeforeFrost: 1, method: "indoor", successionDays: 0 },
+      { id: "chard", name: "Swiss Chard", scientific: "Beta vulgaris", type: "Vegetable", spacing: "8-12 in", spacingIn: 10, sun: "Partial", icon: "🌈", family: "Amaranthaceae", familyName: "Amaranth", germDays: 7, daysToHarvest: 50, fertilizeEveryDays: 21, startWeeksBeforeFrost: 3, transplantWeeksBeforeFrost: 1, method: "direct", successionDays: 21 },
+      { id: "arugula", name: "Arugula", scientific: "Eruca vesicaria", type: "Vegetable", spacing: "4 in", spacingIn: 4, sun: "Partial", icon: "🥗", family: "Brassicaceae", familyName: "Brassica", germDays: 5, daysToHarvest: 30, fertilizeEveryDays: 0, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0, method: "direct", successionDays: 10 },
+      { id: "parsley", name: "Parsley", scientific: "Petroselinum crispum", type: "Herb", spacing: "6-8 in", spacingIn: 6, sun: "Partial", icon: "🌿", family: "Apiaceae", familyName: "Umbellifer", germDays: 14, daysToHarvest: 70, fertilizeEveryDays: 28, startWeeksBeforeFrost: 6, transplantWeeksBeforeFrost: 2, method: "indoor", successionDays: 0 },
+      { id: "dill", name: "Dill", scientific: "Anethum graveolens", type: "Herb", spacing: "8-12 in", spacingIn: 8, sun: "Full sun", icon: "🌿", family: "Apiaceae", familyName: "Umbellifer", germDays: 7, daysToHarvest: 40, fertilizeEveryDays: 0, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0, method: "direct", successionDays: 21 },
+      { id: "thyme", name: "Thyme", scientific: "Thymus vulgaris", type: "Herb", spacing: "10-12 in", spacingIn: 12, sun: "Full sun", icon: "🌿", family: "Lamiaceae", familyName: "Mint", germDays: 14, daysToHarvest: 90, fertilizeEveryDays: 45, startWeeksBeforeFrost: 6, transplantWeeksBeforeFrost: 2, method: "indoor", successionDays: 0 },
+      { id: "oregano", name: "Oregano", scientific: "Origanum vulgare", type: "Herb", spacing: "12 in", spacingIn: 12, sun: "Full sun", icon: "🌿", family: "Lamiaceae", familyName: "Mint", germDays: 8, daysToHarvest: 80, fertilizeEveryDays: 45, startWeeksBeforeFrost: 6, transplantWeeksBeforeFrost: 2, method: "indoor", successionDays: 0 },
+      { id: "rosemary", name: "Rosemary", scientific: "Salvia rosmarinus", type: "Herb", spacing: "24 in", spacingIn: 24, sun: "Full sun", icon: "🌿", family: "Lamiaceae", familyName: "Mint", germDays: 14, daysToHarvest: 90, fertilizeEveryDays: 60, startWeeksBeforeFrost: 10, transplantWeeksBeforeFrost: 2, method: "indoor", successionDays: 0 },
+      { id: "sunflower", name: "Sunflower", scientific: "Helianthus annuus", type: "Flower", spacing: "12-18 in", spacingIn: 12, sun: "Full sun", icon: "🌻", family: "Asteraceae", familyName: "Aster", germDays: 7, daysToHarvest: 80, fertilizeEveryDays: 30, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0, method: "direct", successionDays: 14 },
+      { id: "pumpkin", name: "Pumpkin", scientific: "Cucurbita pepo", type: "Vegetable", spacing: "36-48 in", spacingIn: 48, sun: "Full sun", icon: "🎃", family: "Cucurbitaceae", familyName: "Gourd", germDays: 7, daysToHarvest: 100, fertilizeEveryDays: 21, startWeeksBeforeFrost: 2, transplantWeeksBeforeFrost: 1, method: "direct", successionDays: 0 },
+      { id: "watermelon", name: "Watermelon", scientific: "Citrullus lanatus", type: "Fruit", spacing: "36 in", spacingIn: 36, sun: "Full sun", icon: "🍉", family: "Cucurbitaceae", familyName: "Gourd", germDays: 7, daysToHarvest: 85, fertilizeEveryDays: 21, startWeeksBeforeFrost: 3, transplantWeeksBeforeFrost: 1, method: "indoor", successionDays: 0 },
+      { id: "okra", name: "Okra", scientific: "Abelmoschus esculentus", type: "Vegetable", spacing: "12-18 in", spacingIn: 12, sun: "Full sun", icon: "🟢", family: "Malvaceae", familyName: "Mallow", germDays: 7, daysToHarvest: 55, fertilizeEveryDays: 21, startWeeksBeforeFrost: 2, transplantWeeksBeforeFrost: 0, method: "direct", successionDays: 0 },
+      { id: "sweetpotato", name: "Sweet Potato", scientific: "Ipomoea batatas", type: "Vegetable", spacing: "12-18 in", spacingIn: 18, sun: "Full sun", icon: "🍠", family: "Convolvulaceae", familyName: "Morning glory", germDays: 14, daysToHarvest: 100, fertilizeEveryDays: 30, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0, method: "direct", successionDays: 0 },
+      { id: "asparagus", name: "Asparagus", scientific: "Asparagus officinalis", type: "Vegetable", spacing: "12-18 in", spacingIn: 18, sun: "Full sun", icon: "🥬", family: "Asparagaceae", familyName: "Asparagus", germDays: 21, daysToHarvest: 730, fertilizeEveryDays: 60, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0, method: "direct", successionDays: 0 },
     ];
 
     // Family colors for visual badges
@@ -110,7 +133,53 @@
       Brassicaceae: "bg-emerald-100 text-emerald-800",
       Rosaceae: "bg-pink-100 text-pink-700",
       Poaceae: "bg-amber-100 text-amber-800",
+      Malvaceae: "bg-rose-100 text-rose-700",
+      Convolvulaceae: "bg-indigo-100 text-indigo-700",
+      Asparagaceae: "bg-cyan-100 text-cyan-800",
     };
+
+    // Frost-based planting schedule for a crop
+    function computePlantingSchedule(plant, profile, baseDate) {
+      const lastFrost = profile?.lastFrost
+        ? new Date(profile.lastFrost + "T12:00:00")
+        : addDays(new Date(), 30);
+      const pl = typeof plant === "string" ? PLANT_LIBRARY.find(p => p.id === plant) : plant;
+      if (!pl) return null;
+      const sow = pl.method === "indoor" && pl.startWeeksBeforeFrost > 0
+        ? addDays(lastFrost, -pl.startWeeksBeforeFrost * 7)
+        : (pl.startWeeksBeforeFrost > 0
+          ? addDays(lastFrost, -pl.startWeeksBeforeFrost * 7)
+          : addDays(lastFrost, pl.method === "direct" ? 7 : 0));
+      const transplant = pl.method === "indoor" && pl.transplantWeeksBeforeFrost != null
+        ? addDays(lastFrost, -pl.transplantWeeksBeforeFrost * 7)
+        : null;
+      const plantOut = transplant || (pl.method === "direct" ? sow : lastFrost);
+      const harvestStart = addDays(plantOut, pl.daysToHarvest || 60);
+      const harvestEnd = addDays(harvestStart, Math.min(30, Math.round((pl.daysToHarvest || 60) * 0.3)));
+      return {
+        plantId: pl.id,
+        method: pl.method || "direct",
+        sowDate: toISODate(sow),
+        transplantDate: transplant ? toISODate(transplant) : null,
+        plantOutDate: toISODate(plantOut),
+        harvestStart: toISODate(harvestStart),
+        harvestEnd: toISODate(harvestEnd),
+        successionDays: pl.successionDays || 0,
+      };
+    }
+
+    function bedCapacity(bed, spacingIn) {
+      const w = Number(bed.widthFt) || 4;
+      const l = Number(bed.lengthFt) || 8;
+      const space = Math.max(Number(spacingIn) || 12, 2) / 12; // feet
+      const cols = Math.max(1, Math.floor(w / space));
+      const rows = Math.max(1, Math.floor(l / space));
+      return cols * rows;
+    }
+
+    function getPlant(id, customPlants) {
+      return PLANT_LIBRARY.find(p => p.id === id) || (customPlants || []).find(p => p.id === id);
+    }
 
     // Date helpers
     const addDays = (date, days) => {
@@ -127,6 +196,169 @@
       const x = d instanceof Date ? d : new Date(d);
       return x.toISOString().slice(0, 10);
     };
+
+    // Weekly Garden Brief — auto actions from climate, plantings, vault, rotation
+    function buildWeeklyBrief({ placed, seeds, profile, rotationHistory, tasks }) {
+      const today = new Date();
+      today.setHours(12, 0, 0, 0);
+      const weekEnd = addDays(today, 7);
+      const items = [];
+      const existingTitles = new Set((tasks || []).filter(t => !t.done).map(t => (t.title || "").toLowerCase()));
+
+      const push = (item) => {
+        const key = (item.title || "").toLowerCase();
+        if (existingTitles.has(key)) return;
+        if (items.some(i => i.title.toLowerCase() === key)) return;
+        items.push(item);
+      };
+
+      // Frost window (profile dates within 7 days)
+      if (profile?.lastFrost) {
+        const lf = new Date(profile.lastFrost + "T12:00:00");
+        const diff = Math.round((lf - today) / 86400000);
+        if (diff >= 0 && diff <= 7) {
+          push({
+            id: "brief-last-frost",
+            title: "Last spring frost approaching",
+            detail: `${fmtDate(lf)} · harden off / hold tender transplants`,
+            icon: "❄️",
+            priority: "high",
+            source: "climate",
+          });
+        }
+      }
+      if (profile?.firstFrost) {
+        const ff = new Date(profile.firstFrost + "T12:00:00");
+        const diff = Math.round((ff - today) / 86400000);
+        if (diff >= 0 && diff <= 14) {
+          push({
+            id: "brief-first-frost",
+            title: "First fall frost within 2 weeks",
+            detail: `${fmtDate(ff)} · harvest tender crops, cover beds`,
+            icon: "🧊",
+            priority: "high",
+            source: "climate",
+          });
+        }
+      }
+
+      // Planted crops: fertilize / harvest due this week
+      (placed || []).forEach(item => {
+        if (item.status === "harvested" || !item.plantedAt) return;
+        const pl = PLANT_LIBRARY.find(p => p.id === item.plant);
+        if (!pl) return;
+        const planted = new Date(item.plantedAt + "T12:00:00");
+        if (pl.fertilizeEveryDays > 0) {
+          const due = addDays(planted, pl.fertilizeEveryDays);
+          if (due >= today && due <= weekEnd) {
+            push({
+              id: `brief-fert-${item.id}`,
+              title: `Fertilize ${pl.name}`,
+              detail: `Due ${fmtDate(due)} · ${BEDS.find(b => b.id === item.bed)?.name || item.bed}`,
+              icon: "🧪",
+              priority: "med",
+              source: "care",
+            });
+          }
+        }
+        if (pl.daysToHarvest && pl.daysToHarvest < 200) {
+          const harvest = addDays(planted, pl.daysToHarvest);
+          if (harvest >= today && harvest <= addDays(today, 14)) {
+            push({
+              id: `brief-harv-${item.id}`,
+              title: `Harvest window: ${pl.name}`,
+              detail: `Around ${fmtDate(harvest)} · ${BEDS.find(b => b.id === item.bed)?.name || item.bed}`,
+              icon: "🧺",
+              priority: "med",
+              source: "harvest",
+            });
+          }
+        }
+        // Germination check ~germDays after plant
+        if (pl.germDays) {
+          const germ = addDays(planted, pl.germDays);
+          if (germ >= today && germ <= weekEnd) {
+            push({
+              id: `brief-germ-${item.id}`,
+              title: `Check ${pl.name} germination`,
+              detail: `~${pl.germDays} days after planting`,
+              icon: "🌱",
+              priority: "low",
+              source: "care",
+            });
+          }
+        }
+      });
+
+      // Low seed stock
+      (seeds || []).filter(s => s.low || s.qty <= 3).forEach(s => {
+        push({
+          id: `brief-seed-${s.id}`,
+          title: `Restock ${s.name}`,
+          detail: `Only ${s.qty} left in vault`,
+          icon: "📦",
+          priority: "med",
+          source: "vault",
+        });
+      });
+
+      // Rotation: Solanaceae repeated in tomato/pepper beds recently
+      const year = today.getFullYear();
+      BEDS.forEach(bed => {
+        const hist = (rotationHistory && rotationHistory[bed.id]) || [];
+        const recentFamilies = new Set();
+        hist.forEach(h => {
+          if (year - h.year < ROTATION_YEARS) (h.families || []).forEach(f => recentFamilies.add(f));
+        });
+        const liveFamilies = (placed || [])
+          .filter(p => p.bed === bed.id && p.status !== "harvested")
+          .map(p => PLANT_LIBRARY.find(x => x.id === p.plant)?.family)
+          .filter(Boolean);
+        const conflicts = liveFamilies.filter(f => recentFamilies.has(f));
+        if (conflicts.length) {
+          push({
+            id: `brief-rot-${bed.id}`,
+            title: `Rotation risk: ${bed.name}`,
+            detail: `Same family within ${ROTATION_YEARS} years — consider swapping next season`,
+            icon: "🔄",
+            priority: "low",
+            source: "rotation",
+          });
+        }
+      });
+
+      // Empty beds nudge
+      BEDS.forEach(bed => {
+        const count = (placed || []).filter(p => p.bed === bed.id && p.status !== "harvested").length;
+        if (count === 0) {
+          push({
+            id: `brief-empty-${bed.id}`,
+            title: `${bed.name} is empty`,
+            detail: "Open Layout to plant something",
+            icon: "🪴",
+            priority: "low",
+            source: "layout",
+          });
+        }
+      });
+
+      const order = { high: 0, med: 1, low: 2 };
+      return items.sort((a, b) => (order[a.priority] ?? 9) - (order[b.priority] ?? 9)).slice(0, 8);
+    }
+
+    function requestNotifyPermission() {
+      if (!("Notification" in window)) return Promise.resolve("denied");
+      if (Notification.permission === "granted") return Promise.resolve("granted");
+      if (Notification.permission === "denied") return Promise.resolve("denied");
+      return Notification.requestPermission();
+    }
+
+    function sendLocalNotification(title, body) {
+      if (!("Notification" in window) || Notification.permission !== "granted") return;
+      try {
+        new Notification(title, { body, icon: "icon-192.png", tag: "plotpilot-" + title });
+      } catch (e) {}
+    }
 
     // Recommended wait years before repeating a family in the same bed
     const ROTATION_YEARS = 3;
@@ -330,23 +562,37 @@
       { id: 3, title: "Fertilize blueberries", detail: "Blueberry bed • 10 min", done: false, icon: "🧪" },
     ];
 
-    const BEDS = [
-      { id: "tomato", name: "Tomato Bed", color: "bg-red-100 border-red-300" },
-      { id: "herb", name: "Herb Border", color: "bg-green-100 border-green-300" },
-      { id: "pepper", name: "Pepper Bed", color: "bg-orange-100 border-orange-300" },
-      { id: "berry", name: "Blueberry Bed", color: "bg-blue-100 border-blue-300" },
+    const BED_COLORS = [
+      "bg-red-100 border-red-300",
+      "bg-green-100 border-green-300",
+      "bg-orange-100 border-orange-300",
+      "bg-blue-100 border-blue-300",
+      "bg-purple-100 border-purple-300",
+      "bg-amber-100 border-amber-300",
+      "bg-teal-100 border-teal-300",
+      "bg-lime-100 border-lime-300",
     ];
+
+    const DEFAULT_BEDS = [
+      { id: "tomato", name: "Tomato Bed", color: "bg-red-100 border-red-300", widthFt: 4, lengthFt: 8, sun: "Full sun" },
+      { id: "herb", name: "Herb Border", color: "bg-green-100 border-green-300", widthFt: 2, lengthFt: 10, sun: "Full sun" },
+      { id: "pepper", name: "Pepper Bed", color: "bg-orange-100 border-orange-300", widthFt: 4, lengthFt: 6, sun: "Full sun" },
+      { id: "berry", name: "Blueberry Bed", color: "bg-blue-100 border-blue-300", widthFt: 4, lengthFt: 8, sun: "Full sun" },
+    ];
+
+    // Legacy alias so older UI that references BEDS still works until fully migrated
+    const BEDS = DEFAULT_BEDS;
 
     // ========== COMPONENTS ==========
     function BottomNav({ active, setActive }) {
       const primary = [
         { id: "home", icon: "fa-home", label: "Home" },
+        { id: "plan", icon: "fa-calendar-check", label: "Plan" },
         { id: "layout", icon: "fa-th-large", label: "Layout" },
-        { id: "calendar", icon: "fa-calendar-alt", label: "Cal" },
         { id: "journal", icon: "fa-book", label: "Journal" },
         { id: "more", icon: "fa-ellipsis-h", label: "More" },
       ];
-      const moreIds = ["rotate", "diagnose", "vault", "plants", "settings"];
+      const moreIds = ["calendar", "rotate", "diagnose", "vault", "plants", "settings"];
       const isMoreActive = moreIds.includes(active);
       return (
         <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-sage-200 safe-bottom z-50">
@@ -373,10 +619,11 @@
 
     function MoreScreen({ setActive, profile, exportData }) {
       const links = [
+        { id: "calendar", icon: "fa-calendar-alt", label: "Season Calendar", desc: "Month view & frost timing" },
         { id: "rotate", icon: "fa-sync-alt", label: "Crop Rotation", desc: "Family history & next crops" },
         { id: "diagnose", icon: "fa-stethoscope", label: "Diagnose", desc: "Symptom checker" },
         { id: "vault", icon: "fa-box", label: "Seed Vault", desc: "Inventory & expiry" },
-        { id: "plants", icon: "fa-leaf", label: "Plant Library", desc: "Timelines & care info" },
+        { id: "plants", icon: "fa-leaf", label: "Plant Library", desc: "40+ crops · schedules" },
         { id: "settings", icon: "fa-cog", label: "Settings", desc: "Zone, frost dates, backup" },
       ];
       return (
@@ -442,11 +689,118 @@
       return { icon: "🌡️", label: "—" };
     };
 
-    function Dashboard({ tasks, setTasks, seeds, placed, setActive }) {
+    function Dashboard({ tasks, setTasks, seeds, placed, setActive, journal, customPlants, profile, rotationHistory }) {
       const lowStock = seeds.filter(s => s.low || s.qty <= 3).length;
       const toggleTask = (id) => {
         setTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
       };
+
+      const weeklyBrief = useMemo(
+        () => buildWeeklyBrief({ placed, seeds, profile, rotationHistory, tasks }),
+        [placed, seeds, profile, rotationHistory, tasks]
+      );
+
+      const addBriefAsTask = (item) => {
+        setTasks(prev => {
+          if (prev.some(t => !t.done && t.title === item.title)) return prev;
+          return [{
+            id: Date.now() + Math.random(),
+            title: item.title,
+            detail: item.detail,
+            done: false,
+            icon: item.icon,
+            due: toISODate(new Date()),
+          }, ...prev];
+        });
+      };
+
+      const addAllBriefTasks = () => {
+        weeklyBrief.forEach(addBriefAsTask);
+      };
+
+      const [globalQuery, setGlobalQuery] = useState("");
+      const searchResults = useMemo(() => {
+        const q = globalQuery.trim().toLowerCase();
+        if (q.length < 2) return [];
+        const results = [];
+
+        // Plants
+        [...PLANT_LIBRARY, ...(customPlants || [])].forEach(p => {
+          const hay = `${p.name} ${p.type || ""} ${p.familyName || ""} ${p.scientific || ""}`.toLowerCase();
+          if (hay.includes(q)) {
+            results.push({
+              id: `plant-${p.id}`,
+              kind: "Plant",
+              icon: p.icon || "🌱",
+              title: p.name,
+              detail: `${p.type || ""} · ${p.familyName || ""}`.trim(),
+              tab: "plants",
+            });
+          }
+        });
+
+        // Seeds
+        (seeds || []).forEach(s => {
+          if ((s.name || "").toLowerCase().includes(q) || (s.type || "").toLowerCase().includes(q)) {
+            results.push({
+              id: `seed-${s.id}`,
+              kind: "Seed",
+              icon: "📦",
+              title: s.name,
+              detail: `Qty ${s.qty}${s.low || s.qty <= 3 ? " · low stock" : ""}`,
+              tab: "vault",
+            });
+          }
+        });
+
+        // Tasks
+        (tasks || []).forEach(t => {
+          if ((t.title || "").toLowerCase().includes(q) || (t.detail || "").toLowerCase().includes(q)) {
+            results.push({
+              id: `task-${t.id}`,
+              kind: "Task",
+              icon: t.icon || "✅",
+              title: t.title,
+              detail: t.detail || (t.done ? "Done" : "Open"),
+              tab: "calendar",
+              taskId: t.id,
+            });
+          }
+        });
+
+        // Placed in beds
+        (placed || []).forEach(item => {
+          const pl = PLANT_LIBRARY.find(x => x.id === item.plant) || (customPlants || []).find(x => x.id === item.plant);
+          const bed = BEDS.find(b => b.id === item.bed);
+          const name = pl?.name || item.plant;
+          if (name.toLowerCase().includes(q) || (bed?.name || "").toLowerCase().includes(q)) {
+            results.push({
+              id: `placed-${item.id}`,
+              kind: "In garden",
+              icon: pl?.icon || "🌿",
+              title: name,
+              detail: bed?.name || item.bed,
+              tab: "layout",
+            });
+          }
+        });
+
+        // Journal
+        (journal || []).forEach(e => {
+          if ((e.text || "").toLowerCase().includes(q)) {
+            results.push({
+              id: `journal-${e.id}`,
+              kind: "Journal",
+              icon: "📓",
+              title: (e.text || "").slice(0, 60) + ((e.text || "").length > 60 ? "…" : ""),
+              detail: e.date || "",
+              tab: "journal",
+            });
+          }
+        });
+
+        return results.slice(0, 20);
+      }, [globalQuery, tasks, seeds, placed, journal, customPlants]);
 
       const [weather, setWeather] = useState(null);
       const [weatherLoading, setWeatherLoading] = useState(true);
@@ -583,6 +937,20 @@
         frostLevel === "risk" ? "Frost risk" :
         frostLevel === "chilly" ? "Chilly" :
         frostLevel === "low" ? "Low frost" : "—";
+
+      // One frost notification per day when risk is elevated
+      useEffect(() => {
+        if (frostLevel !== "likely" && frostLevel !== "risk") return;
+        const key = "pp_frost_notify_" + toISODate(new Date());
+        if (localStorage.getItem(key)) return;
+        if (Notification.permission === "granted") {
+          sendLocalNotification(
+            frostLevel === "likely" ? "Frost likely tonight" : "Frost risk tonight",
+            `Low around ${minT != null ? Math.round(minT) : "—"}°F — cover tomatoes, peppers & seedlings`
+          );
+          localStorage.setItem(key, "1");
+        }
+      }, [frostLevel, minT]);
 
       // Header badge styling by frost severity
       const frostBadgeClass =
@@ -748,6 +1116,118 @@
               </div>
             )}
 
+            {/* This week's garden brief */}
+            <section>
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="font-semibold text-sage-800 flex items-center gap-2">
+                  <span>📋</span> This week
+                </h2>
+                {weeklyBrief.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={addAllBriefTasks}
+                    className="text-xs text-sage-600 font-medium"
+                  >
+                    Add all to tasks
+                  </button>
+                )}
+              </div>
+              {!profile?.lastFrost && (
+                <button
+                  type="button"
+                  onClick={() => setActive && setActive("settings")}
+                  className="w-full mb-2 text-left bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-900"
+                >
+                  ⚠️ Set your frost dates in Settings for accurate sow/harvest timing →
+                </button>
+              )}
+              {weeklyBrief.length === 0 ? (
+                <div className="bg-white rounded-2xl p-4 card-shadow text-center">
+                  <p className="text-sm text-sage-600">You're clear for the next 7 days</p>
+                  <p className="text-xs text-sage-400 mt-1">Plant more or adjust frost dates to see suggestions</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {weeklyBrief.map(item => (
+                    <div
+                      key={item.id}
+                      className={`bg-white rounded-xl p-3 card-shadow flex items-start gap-3 border-l-4 ${
+                        item.priority === "high" ? "border-red-400" :
+                        item.priority === "med" ? "border-amber-400" : "border-sage-300"
+                      }`}
+                    >
+                      <span className="text-xl">{item.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm text-sage-800">{item.title}</p>
+                        <p className="text-xs text-sage-500">{item.detail}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => addBriefAsTask(item)}
+                        className="text-[10px] font-semibold text-sage-600 bg-sage-100 px-2 py-1 rounded-lg shrink-0"
+                      >
+                        + Task
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* Global search */}
+            <section>
+              <div className="relative">
+                <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-sage-400 text-sm"></i>
+                <input
+                  type="search"
+                  value={globalQuery}
+                  onChange={e => setGlobalQuery(e.target.value)}
+                  placeholder="Search plants, tasks, seeds, journal…"
+                  className="w-full bg-white border border-sage-200 rounded-xl pl-9 pr-9 py-2.5 text-sm card-shadow focus:outline-none focus:ring-2 focus:ring-sage-400"
+                />
+                {globalQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setGlobalQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-sage-400 text-sm"
+                    aria-label="Clear search"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+              {globalQuery.trim().length >= 2 && (
+                <div className="mt-2 bg-white rounded-2xl card-shadow overflow-hidden">
+                  {searchResults.length === 0 ? (
+                    <p className="text-sm text-sage-400 text-center py-4">No matches for “{globalQuery.trim()}”</p>
+                  ) : (
+                    <ul className="divide-y divide-sage-100 max-h-72 overflow-y-auto">
+                      {searchResults.map(r => (
+                        <li key={r.id}>
+                          <button
+                            type="button"
+                            className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-sage-50 transition"
+                            onClick={() => {
+                              if (r.taskId) toggleTask(r.taskId);
+                              setGlobalQuery("");
+                              if (setActive && r.tab) setActive(r.tab);
+                            }}
+                          >
+                            <span className="text-xl w-8 text-center">{r.icon}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-sage-800 truncate">{r.title}</p>
+                              <p className="text-[10px] text-sage-500 truncate">{r.kind}{r.detail ? ` · ${r.detail}` : ""}</p>
+                            </div>
+                            <i className="fas fa-chevron-right text-sage-300 text-xs"></i>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </section>
+
             {/* Today's Tasks */}
             <section>
               <div className="flex items-center justify-between mb-3">
@@ -879,7 +1359,9 @@
       );
     }
 
-    function LayoutPlanner({ placed, setPlaced, setTasks }) {
+    function LayoutPlanner({ placed, setPlaced, setTasks, beds, planYear, seeds, setSeeds }) {
+      const bedList = beds && beds.length ? beds : DEFAULT_BEDS;
+      const yearPlaced = (placed || []).filter(p => (p.year || new Date().getFullYear()) === (planYear || new Date().getFullYear()));
       const [dragPlantId, setDragPlantId] = useState(null);       // plant type being dragged from library
       const [dragPlacedId, setDragPlacedId] = useState(null);     // unique id of placed plant being moved
       const [dragOverBed, setDragOverBed] = useState(null);
@@ -993,16 +1475,33 @@
             pushUndo(placed);
             const plantInfo = PLANT_LIBRARY.find(p => p.id === data.plantId);
             const plantedAt = toISODate(new Date());
+            const planY = planYear || new Date().getFullYear();
+            const sched = computePlantingSchedule(plantInfo, JSON.parse(localStorage.getItem("pp_profile") || "{}"));
             const newItem = {
               id: Date.now() + Math.random(),
               bed: bedId,
               plant: data.plantId,
               plantedAt,
               status: "growing",
+              year: planY,
+              method: plantInfo?.method,
+              sowDate: sched?.sowDate,
+              transplantDate: sched?.transplantDate,
+              harvestStart: sched?.harvestStart,
             };
             setPlaced(prev => [...prev, newItem]);
             setJustDropped(newItem.id);
             setTimeout(() => setJustDropped(null), 600);
+            // Deplete matching seeds in vault
+            if (setSeeds && plantInfo) {
+              setSeeds(prev => prev.map(s => {
+                if ((s.name || "").toLowerCase().includes(plantInfo.name.toLowerCase()) && s.qty > 0) {
+                  const qty = Math.max(0, s.qty - 1);
+                  return { ...s, qty, low: qty <= 3 };
+                }
+                return s;
+              }));
+            }
             // Auto-create timeline tasks
             if (setTasks && plantInfo) {
               const tasksToAdd = [];
@@ -1101,8 +1600,8 @@
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                {BEDS.map(bed => {
-                  const bedPlants = placed.filter(p => p.bed === bed.id);
+                {bedList.map(bed => {
+                  const bedPlants = yearPlaced.filter(p => p.bed === bed.id);
                   const isOver = dragOverBed === bed.id;
                   return (
                     <div
@@ -1540,6 +2039,358 @@
       );
     }
 
+    // ========== PHASE 1: 3-year plan, schedules, succession, harvest ==========
+    function PlanScreen({
+      profile, planYear, setPlanYear, placed, setPlaced, beds, setBeds,
+      harvests, setHarvests, setTasks, seeds, setSeeds, rotationHistory,
+    }) {
+      const y0 = new Date().getFullYear();
+      const years = [y0, y0 + 1, y0 + 2];
+      const [showAdd, setShowAdd] = useState(false);
+      const [form, setForm] = useState({ plantId: "tomato", bedId: beds[0]?.id || "tomato", successions: 1 });
+      const [showBedForm, setShowBedForm] = useState(false);
+      const [bedForm, setBedForm] = useState({ name: "", widthFt: 4, lengthFt: 8, sun: "Full sun" });
+      const [harvestForm, setHarvestForm] = useState({ plantId: "tomato", bedId: "", qty: "", unit: "lb", notes: "" });
+
+      const yearPlaced = useMemo(
+        () => (placed || []).filter(p => (p.year || y0) === planYear),
+        [placed, planYear, y0]
+      );
+
+      const addPlanting = () => {
+        const pl = PLANT_LIBRARY.find(p => p.id === form.plantId);
+        if (!pl) return;
+        const sched = computePlantingSchedule(pl, profile);
+        if (!sched) return;
+        const count = Math.max(1, Math.min(8, Number(form.successions) || 1));
+        const interval = pl.successionDays > 0 ? pl.successionDays : 14;
+        const newItems = [];
+        for (let i = 0; i < count; i++) {
+          const offset = i * interval;
+          const sow = addDays(new Date(sched.sowDate + "T12:00:00"), offset);
+          const plantOut = addDays(new Date(sched.plantOutDate + "T12:00:00"), offset);
+          const harvest = addDays(new Date(sched.harvestStart + "T12:00:00"), offset);
+          newItems.push({
+            id: Date.now() + i + Math.random(),
+            bed: form.bedId,
+            plant: form.plantId,
+            plantedAt: toISODate(plantOut),
+            status: "planned",
+            year: planYear,
+            method: sched.method,
+            sowDate: toISODate(sow),
+            transplantDate: sched.transplantDate
+              ? toISODate(addDays(new Date(sched.transplantDate + "T12:00:00"), offset))
+              : null,
+            harvestStart: toISODate(harvest),
+            successionIndex: i + 1,
+            successionOf: count,
+          });
+        }
+        setPlaced(prev => [...prev, ...newItems]);
+
+        // Tasks for first succession
+        const first = newItems[0];
+        const tasksToAdd = [
+          {
+            id: Date.now() + 100,
+            title: `Sow ${pl.name}${sched.method === "indoor" ? " indoors" : ""}`,
+            detail: first.sowDate,
+            done: false,
+            icon: "🌱",
+            due: first.sowDate,
+            year: planYear,
+          },
+        ];
+        if (first.transplantDate) {
+          tasksToAdd.push({
+            id: Date.now() + 101,
+            title: `Transplant ${pl.name}`,
+            detail: first.transplantDate,
+            done: false,
+            icon: "🌿",
+            due: first.transplantDate,
+            year: planYear,
+          });
+        }
+        tasksToAdd.push({
+          id: Date.now() + 102,
+          title: `Harvest ${pl.name}`,
+          detail: first.harvestStart,
+          done: false,
+          icon: "🧺",
+          due: first.harvestStart,
+          year: planYear,
+        });
+        setTasks(prev => [...tasksToAdd, ...prev]);
+
+        // Deplete vault if matching seed name contains plant name
+        setSeeds(prev => prev.map(s => {
+          if ((s.name || "").toLowerCase().includes(pl.name.toLowerCase()) && s.qty > 0) {
+            const qty = Math.max(0, s.qty - count);
+            return { ...s, qty, low: qty <= 3 };
+          }
+          return s;
+        }));
+
+        setShowAdd(false);
+      };
+
+      const copyToNextYear = () => {
+        const next = planYear + 1;
+        if (next > y0 + 2) {
+          alert("Plan covers three years from this year.");
+          return;
+        }
+        const source = yearPlaced.filter(p => p.status !== "harvested");
+        if (!source.length) {
+          alert("No plantings to copy this year.");
+          return;
+        }
+        const copies = source.map((p, i) => {
+          const pl = PLANT_LIBRARY.find(x => x.id === p.plant);
+          const sched = computePlantingSchedule(pl, {
+            ...profile,
+            lastFrost: profile.lastFrost
+              ? `${next}-${profile.lastFrost.slice(5)}`
+              : profile.lastFrost,
+          });
+          return {
+            ...p,
+            id: Date.now() + i + Math.random(),
+            year: next,
+            status: "planned",
+            sowDate: sched?.sowDate || p.sowDate,
+            transplantDate: sched?.transplantDate || p.transplantDate,
+            plantedAt: sched?.plantOutDate || p.plantedAt,
+            harvestStart: sched?.harvestStart || p.harvestStart,
+          };
+        });
+        setPlaced(prev => [...prev, ...copies]);
+        setPlanYear(next);
+        alert(`Copied ${copies.length} planting(s) to ${next}. Check Rotate for family conflicts.`);
+      };
+
+      const addBed = () => {
+        if (!bedForm.name.trim()) return;
+        const id = "bed_" + Date.now();
+        setBeds(prev => [...prev, {
+          id,
+          name: bedForm.name.trim(),
+          widthFt: Number(bedForm.widthFt) || 4,
+          lengthFt: Number(bedForm.lengthFt) || 8,
+          sun: bedForm.sun,
+          color: BED_COLORS[prev.length % BED_COLORS.length],
+        }]);
+        setBedForm({ name: "", widthFt: 4, lengthFt: 8, sun: "Full sun" });
+        setShowBedForm(false);
+      };
+
+      const logHarvest = () => {
+        const qty = parseFloat(harvestForm.qty);
+        if (!qty || qty <= 0) return;
+        setHarvests(prev => [{
+          id: Date.now(),
+          date: toISODate(new Date()),
+          year: planYear,
+          plantId: harvestForm.plantId,
+          bedId: harvestForm.bedId || null,
+          qty,
+          unit: harvestForm.unit,
+          notes: harvestForm.notes || "",
+        }, ...prev]);
+        setHarvestForm(f => ({ ...f, qty: "", notes: "" }));
+      };
+
+      const yearHarvests = (harvests || []).filter(h => (h.year || y0) === planYear);
+
+      return (
+        <div className="pb-24">
+          <Header title="3-Year Plan" />
+          <div className="px-4 pt-4 space-y-4">
+            <div className="flex gap-2">
+              {years.map(y => (
+                <button
+                  key={y}
+                  type="button"
+                  onClick={() => setPlanYear(y)}
+                  className={`flex-1 py-2 rounded-xl text-sm font-semibold ${
+                    planYear === y ? "bg-sage-600 text-white" : "bg-white text-sage-700 card-shadow"
+                  }`}
+                >
+                  {y}
+                </button>
+              ))}
+            </div>
+
+            <div className="bg-sage-100 rounded-xl p-3 text-xs text-sage-700">
+              Schedules use your frost dates
+              {profile?.lastFrost ? ` (last spring frost ${profile.lastFrost})` : " — set them in Settings"}.
+              Succession repeats sowings every crop interval.
+            </div>
+
+            <div className="flex gap-2">
+              <button type="button" onClick={() => setShowAdd(true)} className="flex-1 py-2.5 rounded-xl bg-sage-600 text-white text-sm font-medium">
+                + Add planting
+              </button>
+              <button type="button" onClick={copyToNextYear} className="flex-1 py-2.5 rounded-xl border border-sage-300 text-sage-700 text-sm font-medium">
+                Copy → next year
+              </button>
+            </div>
+
+            <section>
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="font-semibold text-sage-800 text-sm">{planYear} plantings ({yearPlaced.length})</h3>
+              </div>
+              {yearPlaced.length === 0 ? (
+                <p className="text-sm text-sage-400 text-center py-6 bg-white rounded-2xl card-shadow">No plantings for {planYear}. Add one to build your schedule.</p>
+              ) : (
+                <div className="space-y-2">
+                  {yearPlaced.map(item => {
+                    const pl = PLANT_LIBRARY.find(p => p.id === item.plant);
+                    const bed = beds.find(b => b.id === item.bed);
+                    const cap = bed && pl ? bedCapacity(bed, pl.spacingIn) : null;
+                    return (
+                      <div key={item.id} className="bg-white rounded-xl p-3 card-shadow">
+                        <div className="flex items-start gap-2">
+                          <span className="text-2xl">{pl?.icon || "🌱"}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm text-sage-800">
+                              {pl?.name || item.plant}
+                              {item.successionOf > 1 && (
+                                <span className="text-xs text-sage-500 font-normal"> · succ. {item.successionIndex}/{item.successionOf}</span>
+                              )}
+                            </p>
+                            <p className="text-[10px] text-sage-500">{bed?.name || item.bed} · {item.method || pl?.method}</p>
+                            <div className="mt-1 grid grid-cols-2 gap-1 text-[10px] text-sage-600">
+                              <span>🌱 Sow {item.sowDate ? fmtDate(item.sowDate) : "—"}</span>
+                              <span>🌿 Out {item.plantedAt ? fmtDate(item.plantedAt) : "—"}</span>
+                              <span>🧺 Harvest {item.harvestStart ? fmtDate(item.harvestStart) : "—"}</span>
+                              <span>{cap != null ? `≈ ${cap} plants fit` : ""}</span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            className="text-sage-400 text-xs"
+                            onClick={() => {
+                              if (confirm("Remove this planting?")) {
+                                setPlaced(prev => prev.filter(p => p.id !== item.id));
+                              }
+                            }}
+                          >×</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+            <section>
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="font-semibold text-sage-800 text-sm">Beds</h3>
+                <button type="button" onClick={() => setShowBedForm(true)} className="text-xs text-sage-600 font-medium">+ Bed</button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {beds.map(b => (
+                  <div key={b.id} className={`${b.color} border rounded-xl p-2`}>
+                    <p className="text-xs font-semibold text-sage-800">{b.name}</p>
+                    <p className="text-[10px] text-sage-600">{b.widthFt}×{b.lengthFt} ft · {b.sun}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section>
+              <h3 className="font-semibold text-sage-800 text-sm mb-2">Harvest log ({planYear})</h3>
+              <div className="bg-white rounded-2xl p-3 card-shadow space-y-2 mb-2">
+                <div className="flex gap-2">
+                  <select className="flex-1 border rounded-lg px-2 py-1.5 text-xs" value={harvestForm.plantId} onChange={e => setHarvestForm(f => ({ ...f, plantId: e.target.value }))}>
+                    {PLANT_LIBRARY.map(p => <option key={p.id} value={p.id}>{p.icon} {p.name}</option>)}
+                  </select>
+                  <input className="w-16 border rounded-lg px-2 py-1.5 text-xs" placeholder="Qty" value={harvestForm.qty} onChange={e => setHarvestForm(f => ({ ...f, qty: e.target.value }))} />
+                  <select className="w-16 border rounded-lg px-1 py-1.5 text-xs" value={harvestForm.unit} onChange={e => setHarvestForm(f => ({ ...f, unit: e.target.value }))}>
+                    {["lb", "oz", "kg", "bunch", "each"].map(u => <option key={u}>{u}</option>)}
+                  </select>
+                </div>
+                <button type="button" onClick={logHarvest} className="w-full py-2 rounded-xl bg-sage-600 text-white text-xs font-medium">Log harvest</button>
+              </div>
+              {yearHarvests.length === 0 ? (
+                <p className="text-xs text-sage-400 text-center">No harvests logged yet</p>
+              ) : (
+                <div className="space-y-1">
+                  {yearHarvests.slice(0, 10).map(h => {
+                    const pl = PLANT_LIBRARY.find(p => p.id === h.plantId);
+                    return (
+                      <div key={h.id} className="flex justify-between text-xs bg-white rounded-lg px-2 py-1.5 card-shadow">
+                        <span>{pl?.icon} {pl?.name} · {h.qty} {h.unit}</span>
+                        <span className="text-sage-400">{fmtDate(h.date)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          </div>
+
+          {showAdd && (
+            <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
+              <div className="bg-white rounded-2xl p-5 w-full max-w-sm">
+                <h3 className="font-semibold text-sage-800 mb-3">Add planting ({planYear})</h3>
+                <label className="text-xs text-sage-500">Crop</label>
+                <select className="w-full border rounded-xl px-3 py-2 text-sm mb-2" value={form.plantId} onChange={e => setForm(f => ({ ...f, plantId: e.target.value }))}>
+                  {PLANT_LIBRARY.map(p => <option key={p.id} value={p.id}>{p.icon} {p.name} ({p.method})</option>)}
+                </select>
+                <label className="text-xs text-sage-500">Bed</label>
+                <select className="w-full border rounded-xl px-3 py-2 text-sm mb-2" value={form.bedId} onChange={e => setForm(f => ({ ...f, bedId: e.target.value }))}>
+                  {beds.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                </select>
+                <label className="text-xs text-sage-500">Succession plantings (1–8)</label>
+                <input type="number" min={1} max={8} className="w-full border rounded-xl px-3 py-2 text-sm mb-2" value={form.successions} onChange={e => setForm(f => ({ ...f, successions: e.target.value }))} />
+                {(() => {
+                  const pl = PLANT_LIBRARY.find(p => p.id === form.plantId);
+                  const sched = pl ? computePlantingSchedule(pl, profile) : null;
+                  if (!sched) return null;
+                  return (
+                    <div className="text-[10px] text-sage-600 bg-sage-50 rounded-lg p-2 mb-3">
+                      Sow {fmtDate(sched.sowDate)}
+                      {sched.transplantDate && ` · Transplant ${fmtDate(sched.transplantDate)}`}
+                      {" · Harvest ~"}{fmtDate(sched.harvestStart)}
+                      {pl.successionDays > 0 && ` · Every ${pl.successionDays} days`}
+                    </div>
+                  );
+                })()}
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setShowAdd(false)} className="flex-1 py-2.5 rounded-xl border text-sm">Cancel</button>
+                  <button type="button" onClick={addPlanting} className="flex-1 py-2.5 rounded-xl bg-sage-600 text-white text-sm font-medium">Add</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {showBedForm && (
+            <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
+              <div className="bg-white rounded-2xl p-5 w-full max-w-sm">
+                <h3 className="font-semibold text-sage-800 mb-3">New bed</h3>
+                <input className="w-full border rounded-xl px-3 py-2 text-sm mb-2" placeholder="Name" value={bedForm.name} onChange={e => setBedForm(f => ({ ...f, name: e.target.value }))} />
+                <div className="flex gap-2 mb-2">
+                  <input type="number" className="flex-1 border rounded-xl px-3 py-2 text-sm" placeholder="Width ft" value={bedForm.widthFt} onChange={e => setBedForm(f => ({ ...f, widthFt: e.target.value }))} />
+                  <input type="number" className="flex-1 border rounded-xl px-3 py-2 text-sm" placeholder="Length ft" value={bedForm.lengthFt} onChange={e => setBedForm(f => ({ ...f, lengthFt: e.target.value }))} />
+                </div>
+                <select className="w-full border rounded-xl px-3 py-2 text-sm mb-3" value={bedForm.sun} onChange={e => setBedForm(f => ({ ...f, sun: e.target.value }))}>
+                  {["Full sun", "Partial", "Shade"].map(s => <option key={s}>{s}</option>)}
+                </select>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setShowBedForm(false)} className="flex-1 py-2.5 rounded-xl border text-sm">Cancel</button>
+                  <button type="button" onClick={addBed} className="flex-1 py-2.5 rounded-xl bg-sage-600 text-white text-sm font-medium">Save bed</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
     function PlantsScreen({ customPlants, setCustomPlants }) {
       const [filter, setFilter] = useState("All");
       const [search, setSearch] = useState("");
@@ -1609,6 +2460,8 @@
                       <span>🧺 Harvest: ~{plant.daysToHarvest || "—"} days</span>
                       <span>🧪 Fertilize: {plant.fertilizeEveryDays ? `every ${plant.fertilizeEveryDays}d` : "—"}</span>
                       <span>📐 Spacing: {plant.spacing}</span>
+                      <span>📋 {plant.method === "indoor" ? "Start indoors" : "Direct sow"}</span>
+                      <span>🔁 {plant.successionDays ? `Succ. every ${plant.successionDays}d` : "No succession"}</span>
                     </div>
                   </div>
                 </div>
@@ -1726,12 +2579,37 @@
       );
     }
 
-    function SettingsScreen({ profile, setProfile, setShowOnboarding }) {
+    function SettingsScreen({
+      profile, setProfile, setShowOnboarding,
+      exportData, importData, resetDemo, clearGarden,
+    }) {
       const [form, setForm] = useState({ ...profile });
+      const [notifyState, setNotifyState] = useState(
+        typeof Notification !== "undefined" ? Notification.permission : "denied"
+      );
+      const fileRef = React.useRef(null);
+
       const save = () => {
         setProfile({ ...form, onboarded: true });
+        if (form.city) {
+          try {
+            const loc = JSON.parse(localStorage.getItem("pp_location") || "{}");
+            localStorage.setItem("pp_location", JSON.stringify({ ...loc, name: form.city }));
+          } catch (e) {}
+        }
         alert("Settings saved");
       };
+
+      const enableNotifications = async () => {
+        const p = await requestNotifyPermission();
+        setNotifyState(p);
+        if (p === "granted") {
+          sendLocalNotification("PlotPilot alerts on", "You'll get a notice when frost risk is high.");
+        } else {
+          alert("Notifications blocked. Enable them in browser site settings.");
+        }
+      };
+
       return (
         <div className="pb-24">
           <Header title="Settings" />
@@ -1758,16 +2636,65 @@
               </div>
               <button onClick={save} className="w-full py-2.5 rounded-xl bg-sage-600 text-white text-sm font-medium">Save</button>
             </div>
+
+            <div className="bg-white rounded-2xl p-4 card-shadow space-y-2">
+              <h3 className="font-semibold text-sage-800 text-sm">Notifications</h3>
+              <p className="text-xs text-sage-500">Frost risk alerts while the app is open (browser permission).</p>
+              <p className="text-[10px] text-sage-400">Status: {notifyState}</p>
+              <button type="button" onClick={enableNotifications} className="w-full py-2.5 rounded-xl border border-sage-300 text-sage-700 text-sm font-medium">
+                Enable frost alerts
+              </button>
+            </div>
+
+            <div className="bg-white rounded-2xl p-4 card-shadow space-y-2">
+              <h3 className="font-semibold text-sage-800 text-sm">Backup & data</h3>
+              <button type="button" onClick={exportData} className="w-full py-2.5 rounded-xl border border-sage-300 text-sage-700 text-sm font-medium">
+                📥 Export backup (JSON)
+              </button>
+              <button type="button" onClick={() => fileRef.current && fileRef.current.click()} className="w-full py-2.5 rounded-xl border border-sage-300 text-sage-700 text-sm font-medium">
+                📤 Import backup
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="application/json,.json"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files && e.target.files[0];
+                  if (file && importData) importData(file);
+                  e.target.value = "";
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm("Clear all beds, tasks, journal? Profile/zone is kept.")) clearGarden();
+                }}
+                className="w-full py-2.5 rounded-xl border border-amber-300 text-amber-800 text-sm font-medium"
+              >
+                Start empty garden
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm("Reload sample demo garden data?")) resetDemo();
+                }}
+                className="w-full py-2.5 rounded-xl border border-sage-200 text-sage-600 text-sm"
+              >
+                Restore demo sample data
+              </button>
+            </div>
+
             <button onClick={() => setShowOnboarding(true)} className="w-full py-2.5 rounded-xl border border-sage-300 text-sage-700 text-sm">
               Re-run onboarding
             </button>
-            <p className="text-[10px] text-sage-400 text-center">Data stays in this browser (localStorage)</p>
+            <p className="text-[10px] text-sage-400 text-center">Data stays in this browser (localStorage). Export often.</p>
           </div>
         </div>
       );
     }
 
-    function OnboardingModal({ profile, setProfile, onDone }) {
+    function OnboardingModal({ profile, setProfile, onDone, onStartEmpty, onStartDemo }) {
       const [step, setStep] = useState(1);
       const [form, setForm] = useState({
         city: profile.city || "",
@@ -1775,9 +2702,16 @@
         lastFrost: profile.lastFrost || "2026-04-15",
         firstFrost: profile.firstFrost || "2026-10-25",
       });
+      const [wantEmpty, setWantEmpty] = useState(false);
 
       const finish = () => {
+        if (!form.lastFrost || !form.firstFrost) {
+          alert("Frost dates help PlotPilot schedule planting. Please set both, or use the suggested defaults.");
+          return;
+        }
         setProfile({ ...form, onboarded: true });
+        if (wantEmpty && onStartEmpty) onStartEmpty();
+        else if (!wantEmpty && onStartDemo) onStartDemo();
         onDone();
       };
 
@@ -1786,9 +2720,9 @@
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm card-shadow">
             <p className="text-3xl text-center mb-2">🌱</p>
             <h2 className="text-lg font-bold text-sage-800 text-center mb-1">Welcome to PlotPilot</h2>
-            <p className="text-xs text-sage-500 text-center mb-4">A few details make schedules & weather smarter</p>
+            <p className="text-xs text-sage-500 text-center mb-4">Frost dates power your weekly plan</p>
             <div className="flex gap-1 mb-4">
-              {[1, 2].map(s => <div key={s} className={`h-1 flex-1 rounded-full ${step >= s ? "bg-sage-600" : "bg-sage-200"}`} />)}
+              {[1, 2, 3].map(s => <div key={s} className={`h-1 flex-1 rounded-full ${step >= s ? "bg-sage-600" : "bg-sage-200"}`} />)}
             </div>
             {step === 1 && (
               <div className="space-y-3">
@@ -1802,11 +2736,13 @@
                   <p className="text-[10px] text-sage-400 mt-1">Find it at planthardiness.ars.usda.gov</p>
                 </div>
                 <button onClick={() => setStep(2)} className="w-full py-3 rounded-xl bg-sage-600 text-white font-medium">Next</button>
-                <button onClick={finish} className="w-full text-xs text-sage-500">Skip for now</button>
               </div>
             )}
             {step === 2 && (
               <div className="space-y-3">
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-2.5 text-xs text-amber-900">
+                  Required for sow/transplant timing on the calendar and weekly brief.
+                </div>
                 <div>
                   <label className="text-xs text-sage-500">Average last spring frost</label>
                   <input type="date" className="w-full border rounded-xl px-3 py-2.5 text-sm mt-1" value={form.lastFrost} onChange={e => setForm(f => ({ ...f, lastFrost: e.target.value }))} />
@@ -1815,8 +2751,31 @@
                   <label className="text-xs text-sage-500">Average first fall frost</label>
                   <input type="date" className="w-full border rounded-xl px-3 py-2.5 text-sm mt-1" value={form.firstFrost} onChange={e => setForm(f => ({ ...f, firstFrost: e.target.value }))} />
                 </div>
-                <button onClick={finish} className="w-full py-3 rounded-xl bg-sage-600 text-white font-medium">Start gardening</button>
+                <button onClick={() => setStep(3)} className="w-full py-3 rounded-xl bg-sage-600 text-white font-medium">Next</button>
                 <button onClick={() => setStep(1)} className="w-full text-xs text-sage-500">Back</button>
+              </div>
+            )}
+            {step === 3 && (
+              <div className="space-y-3">
+                <p className="text-sm text-sage-700 font-medium">How do you want to start?</p>
+                <button
+                  type="button"
+                  onClick={() => setWantEmpty(false)}
+                  className={`w-full text-left p-3 rounded-xl border ${!wantEmpty ? "border-sage-600 bg-sage-50" : "border-sage-200"}`}
+                >
+                  <p className="font-medium text-sm text-sage-800">Sample garden</p>
+                  <p className="text-xs text-sage-500">Demo beds & plants so you can explore features</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWantEmpty(true)}
+                  className={`w-full text-left p-3 rounded-xl border ${wantEmpty ? "border-sage-600 bg-sage-50" : "border-sage-200"}`}
+                >
+                  <p className="font-medium text-sm text-sage-800">Empty garden</p>
+                  <p className="text-xs text-sage-500">Clear beds — build your own layout</p>
+                </button>
+                <button onClick={finish} className="w-full py-3 rounded-xl bg-sage-600 text-white font-medium">Start gardening</button>
+                <button onClick={() => setStep(2)} className="w-full text-xs text-sage-500">Back</button>
               </div>
             )}
           </div>
@@ -2515,6 +3474,15 @@
         const saved = localStorage.getItem("pp_custom_plants");
         return saved ? JSON.parse(saved) : [];
       });
+      const [beds, setBeds] = useState(() => {
+        const saved = localStorage.getItem("pp_beds");
+        return saved ? JSON.parse(saved) : DEFAULT_BEDS;
+      });
+      const [planYear, setPlanYear] = useState(() => new Date().getFullYear());
+      const [harvests, setHarvests] = useState(() => {
+        const saved = localStorage.getItem("pp_harvests");
+        return saved ? JSON.parse(saved) : [];
+      });
       const [showOnboarding, setShowOnboarding] = useState(() => {
         try {
           const saved = localStorage.getItem("pp_profile");
@@ -2530,11 +3498,23 @@
       useEffect(() => { localStorage.setItem("pp_profile", JSON.stringify(profile)); }, [profile]);
       useEffect(() => { localStorage.setItem("pp_journal", JSON.stringify(journal)); }, [journal]);
       useEffect(() => { localStorage.setItem("pp_custom_plants", JSON.stringify(customPlants)); }, [customPlants]);
+      useEffect(() => { localStorage.setItem("pp_beds", JSON.stringify(beds)); }, [beds]);
+      useEffect(() => { localStorage.setItem("pp_harvests", JSON.stringify(harvests)); }, [harvests]);
+
+      const DEMO_PLACED = [
+        { id: 1, bed: "tomato", plant: "tomato", plantedAt: toISODate(addDays(new Date(), -20)), status: "growing" },
+        { id: 2, bed: "tomato", plant: "basil", plantedAt: toISODate(addDays(new Date(), -14)), status: "growing" },
+        { id: 3, bed: "tomato", plant: "marigold", plantedAt: toISODate(addDays(new Date(), -10)), status: "growing" },
+        { id: 4, bed: "herb", plant: "lavender", plantedAt: toISODate(addDays(new Date(), -40)), status: "growing" },
+        { id: 5, bed: "herb", plant: "basil", plantedAt: toISODate(addDays(new Date(), -12)), status: "growing" },
+        { id: 6, bed: "pepper", plant: "pepper", plantedAt: toISODate(addDays(new Date(), -18)), status: "growing" },
+        { id: 7, bed: "berry", plant: "blueberry", plantedAt: toISODate(addDays(new Date(), -100)), status: "growing" },
+      ];
 
       const exportData = () => {
         const payload = {
           exportedAt: new Date().toISOString(),
-          profile, tasks, seeds, placed, rotationHistory, journal, customPlants,
+          profile, tasks, seeds, placed, rotationHistory, journal, customPlants, beds, harvests, planYear,
         };
         const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
@@ -2545,6 +3525,42 @@
         URL.revokeObjectURL(url);
       };
 
+      const importData = (file) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const data = JSON.parse(reader.result);
+            if (data.profile) setProfile(data.profile);
+            if (data.tasks) setTasks(data.tasks);
+            if (data.seeds) setSeeds(data.seeds);
+            if (data.placed) setPlaced(data.placed);
+            if (data.rotationHistory) setRotationHistory(data.rotationHistory);
+            if (data.journal) setJournal(data.journal);
+            if (data.customPlants) setCustomPlants(data.customPlants);
+            if (data.beds) setBeds(data.beds);
+            if (data.harvests) setHarvests(data.harvests);
+            alert("Backup imported.");
+          } catch (err) {
+            alert("Could not read that backup file.");
+          }
+        };
+        reader.readAsText(file);
+      };
+
+      const clearGarden = () => {
+        setPlaced([]);
+        setTasks([]);
+        setJournal([]);
+        setSeeds([]);
+      };
+
+      const resetDemo = () => {
+        setPlaced(DEMO_PLACED);
+        setTasks(INITIAL_TASKS);
+        setSeeds(INITIAL_SEEDS);
+        setJournal([]);
+      };
+
       return (
         <div className="min-h-screen max-w-lg mx-auto bg-sage-50 relative">
           {showOnboarding && (
@@ -2552,10 +3568,51 @@
               profile={profile}
               setProfile={setProfile}
               onDone={() => setShowOnboarding(false)}
+              onStartEmpty={clearGarden}
+              onStartDemo={resetDemo}
             />
           )}
-          {active === "home" && <Dashboard tasks={tasks} setTasks={setTasks} seeds={seeds} placed={placed} setActive={setActive} />}
-          {active === "layout" && <LayoutPlanner placed={placed} setPlaced={setPlaced} setTasks={setTasks} />}
+          {active === "home" && (
+            <Dashboard
+              tasks={tasks}
+              setTasks={setTasks}
+              seeds={seeds}
+              placed={placed}
+              setActive={setActive}
+              journal={journal}
+              customPlants={customPlants}
+              profile={profile}
+              rotationHistory={rotationHistory}
+            />
+          )}
+          {active === "plan" && (
+            <PlanScreen
+              profile={profile}
+              planYear={planYear}
+              setPlanYear={setPlanYear}
+              placed={placed}
+              setPlaced={setPlaced}
+              beds={beds}
+              setBeds={setBeds}
+              harvests={harvests}
+              setHarvests={setHarvests}
+              setTasks={setTasks}
+              seeds={seeds}
+              setSeeds={setSeeds}
+              rotationHistory={rotationHistory}
+            />
+          )}
+          {active === "layout" && (
+            <LayoutPlanner
+              placed={placed}
+              setPlaced={setPlaced}
+              setTasks={setTasks}
+              beds={beds}
+              planYear={planYear}
+              seeds={seeds}
+              setSeeds={setSeeds}
+            />
+          )}
           {active === "rotate" && (
             <CropRotationScreen
               placed={placed}
@@ -2569,7 +3626,15 @@
           {active === "plants" && <PlantsScreen customPlants={customPlants} setCustomPlants={setCustomPlants} />}
           {active === "journal" && <JournalScreen journal={journal} setJournal={setJournal} placed={placed} />}
           {active === "settings" && (
-            <SettingsScreen profile={profile} setProfile={setProfile} setShowOnboarding={setShowOnboarding} />
+            <SettingsScreen
+              profile={profile}
+              setProfile={setProfile}
+              setShowOnboarding={setShowOnboarding}
+              exportData={exportData}
+              importData={importData}
+              resetDemo={resetDemo}
+              clearGarden={clearGarden}
+            />
           )}
           {active === "more" && (
             <MoreScreen setActive={setActive} profile={profile} exportData={exportData} />
