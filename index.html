@@ -2,8 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>PlotPilot – Your Home Garden Command Center</title>
+
+  <!-- PWA / mobile app -->
+  <meta name="theme-color" content="#5c6e4d" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="PlotPilot" />
+  <meta name="application-name" content="PlotPilot" />
+  <meta name="description" content="Home garden layout, schedules, seed vault, rotation, and plant diagnostics." />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
@@ -429,7 +442,7 @@
       return { icon: "🌡️", label: "—" };
     };
 
-    function Dashboard({ tasks, setTasks, seeds, placed }) {
+    function Dashboard({ tasks, setTasks, seeds, placed, setActive }) {
       const lowStock = seeds.filter(s => s.low || s.qty <= 3).length;
       const toggleTask = (id) => {
         setTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
@@ -792,7 +805,11 @@
                     );
                   })}
                 </div>
-                <button className="w-full mt-3 text-sm text-sage-600 font-medium py-2 border border-sage-200 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => setActive && setActive("layout")}
+                  className="w-full mt-3 text-sm text-sage-600 font-medium py-2 border border-sage-200 rounded-xl hover:bg-sage-50 active:bg-sage-100 transition"
+                >
                   View full layout →
                 </button>
               </div>
@@ -2518,7 +2535,7 @@
               onDone={() => setShowOnboarding(false)}
             />
           )}
-          {active === "home" && <Dashboard tasks={tasks} setTasks={setTasks} seeds={seeds} placed={placed} />}
+          {active === "home" && <Dashboard tasks={tasks} setTasks={setTasks} seeds={seeds} placed={placed} setActive={setActive} />}
           {active === "layout" && <LayoutPlanner placed={placed} setPlaced={setPlaced} setTasks={setTasks} />}
           {active === "rotate" && (
             <CropRotationScreen
@@ -2545,6 +2562,17 @@
 
     const root = ReactDOM.createRoot(document.getElementById("root"));
     root.render(<App />);
+  </script>
+
+  <!-- Register service worker for offline / installable PWA -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch((err) => {
+          console.warn("Service worker registration failed:", err);
+        });
+      });
+    }
   </script>
 </body>
 </html>
