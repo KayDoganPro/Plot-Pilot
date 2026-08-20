@@ -754,7 +754,13 @@
                 <h2 className="font-semibold text-sage-800 flex items-center gap-2">
                   <i className="fas fa-tasks text-sage-500"></i> Today's Tasks
                 </h2>
-                <button className="text-xs text-sage-500">View all</button>
+                <button
+                  type="button"
+                  onClick={() => setActive && setActive("calendar")}
+                  className="text-xs text-sage-500 hover:text-sage-700 font-medium"
+                >
+                  View all
+                </button>
               </div>
               <div className="space-y-2">
                 {tasks.map(task => (
@@ -796,12 +802,17 @@
                       .map(p => PLANT_LIBRARY.find(pl => pl.id === p.plant)?.icon || "🌱")
                       .slice(0, 4);
                     return (
-                      <div key={bed.id} className={`${bed.color} border rounded-xl p-2 text-center`}>
+                      <button
+                        type="button"
+                        key={bed.id}
+                        onClick={() => setActive && setActive("layout")}
+                        className={`${bed.color} border rounded-xl p-2 text-center w-full hover:opacity-90 transition`}
+                      >
                         <div className="text-lg mb-1 min-h-[28px]">
                           {bedIcons.length > 0 ? bedIcons.join("") : <span className="text-sage-300 text-sm">empty</span>}
                         </div>
                         <p className="text-[10px] font-medium text-sage-700 leading-tight">{bed.name}</p>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
@@ -817,7 +828,11 @@
 
             {/* Seed Vault Alert + Harvest */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white rounded-2xl p-4 card-shadow">
+              <button
+                type="button"
+                onClick={() => setActive && setActive("vault")}
+                className="bg-white rounded-2xl p-4 card-shadow text-left hover:bg-sage-50 transition w-full"
+              >
                 <div className="flex items-center gap-2 mb-2">
                   <i className="fas fa-box text-sage-500"></i>
                   <span className="font-medium text-sm">Seed Vault</span>
@@ -828,10 +843,14 @@
                     {lowStock} low stock
                   </div>
                 ) : (
-                  <p className="text-xs text-sage-500">All good</p>
+                  <p className="text-xs text-sage-500">All good · Open →</p>
                 )}
-              </div>
-              <div className="bg-white rounded-2xl p-4 card-shadow">
+              </button>
+              <button
+                type="button"
+                onClick={() => setActive && setActive("calendar")}
+                className="bg-white rounded-2xl p-4 card-shadow text-left hover:bg-sage-50 transition w-full"
+              >
                 <div className="flex items-center gap-2 mb-2">
                   <i className="fas fa-calendar text-sage-500"></i>
                   <span className="font-medium text-sm">Next Harvest</span>
@@ -853,7 +872,7 @@
                     <p key={i} className="text-xs text-sage-600">{u.icon} {u.name} · {fmtDate(u.date)}</p>
                   ));
                 })()}
-              </div>
+              </button>
             </div>
           </div>
         </div>
