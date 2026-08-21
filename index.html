@@ -581,7 +581,7 @@
     ];
 
     /** Visual to-scale garden map (positions in % of yard) */
-    function GardenMap({ beds, placed, planYear, onSelectBed, selectedBedId, compact, onMoveBed }) {
+    function GardenMap({ beds, placed, planYear, onSelectBed, selectedBedId, compact }) {
       const y = planYear || new Date().getFullYear();
       const list = beds && beds.length ? beds : DEFAULT_BEDS;
       const maxW = Math.max(...list.map(b => Number(b.widthFt) || 4), 1);
@@ -589,38 +589,10 @@
       // Scale so largest bed is readable; positions use mapX/mapY % or auto-layout
       const scale = compact ? 8 : 12;
 
-      const moveBed = (e) => {
-        e.preventDefault();
-        if (!onMoveBed) return;
-        let data;
-        try { data = JSON.parse(e.dataTransfer.getData("text/plain")); } catch (err) { return; }
-        if (data?.type !== "bed" || !data.bedId) return;
-        const rect = e.currentTarget.getBoundingClientRect();
-        const draggedBed = list.find(bed => bed.id === data.bedId);
-        const bedWidth = Math.min(
-          Math.max(48, (Number(draggedBed?.widthFt) || 4) * scale),
-          rect.width * 0.46
-        );
-        const bedHeight = Math.max(36, (Number(draggedBed?.lengthFt) || 8) * scale * 0.7);
-        const bedWidthPercent = (bedWidth / rect.width) * 100;
-        const bedHeightPercent = (bedHeight / rect.height) * 100;
-        const pointerX = ((e.clientX - rect.left) / rect.width) * 100;
-        const pointerY = ((e.clientY - rect.top) / rect.height) * 100;
-        const grabXPercent = Number.isFinite(data.grabXPercent) ? data.grabXPercent : 0.5;
-        const grabYPercent = Number.isFinite(data.grabYPercent) ? data.grabYPercent : 0.5;
-        const x = Math.min(100 - bedWidthPercent, Math.max(0, pointerX - bedWidthPercent * grabXPercent));
-        const y = Math.min(100 - bedHeightPercent, Math.max(0, pointerY - bedHeightPercent * grabYPercent));
-        onMoveBed(data.bedId, x, y);
-      };
-
       return (
-        <div
-          className={`relative bg-emerald-50/80 border border-emerald-200 rounded-2xl overflow-hidden ${compact ? "h-40" : "h-56"}`}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={moveBed}
-        >
+        <div className={`relative bg-emerald-50/80 border border-emerald-200 rounded-2xl overflow-hidden ${compact ? "h-40" : "h-56"}`}>
           <div className="absolute top-1 left-2 text-[9px] text-emerald-700/70 font-medium z-10">Garden map · ft scale</div>
-          <div className="absolute bottom-1 right-2 text-[9px] text-emerald-600/60 z-10">Drop bed where you want it</div>
+          <div className="absolute bottom-1 right-2 text-[9px] text-emerald-600/60 z-10">Drag beds in Edit to place</div>
           {list.map((bed, i) => {
             const w = Number(bed.widthFt) || 4;
             const l = Number(bed.lengthFt) || 8;
@@ -635,17 +607,6 @@
                 key={bed.id}
                 type="button"
                 onClick={() => onSelectBed && onSelectBed(bed.id)}
-                draggable={!!onMoveBed}
-                onDragStart={(e) => {
-                  const bedRect = e.currentTarget.getBoundingClientRect();
-                  e.dataTransfer.setData("text/plain", JSON.stringify({
-                    type: "bed",
-                    bedId: bed.id,
-                    grabXPercent: bedRect.width ? (e.clientX - bedRect.left) / bedRect.width : 0.5,
-                    grabYPercent: bedRect.height ? (e.clientY - bedRect.top) / bedRect.height : 0.5,
-                  }));
-                  e.dataTransfer.effectAllowed = "move";
-                }}
                 title={`${bed.name} · ${w}×${l} ft · ${bed.sun}`}
                 className={`absolute border-2 rounded-lg shadow-sm flex flex-col items-center justify-center p-1 transition
                   ${bed.color} ${selected ? "ring-2 ring-sage-600 border-sage-600 z-20" : "border-sage-400/60 z-10"}
@@ -1732,11 +1693,6 @@
       const [editingBed, setEditingBed] = useState(null); // bed object being edited
       const [bedDraft, setBedDraft] = useState({ name: "", widthFt: 4, lengthFt: 8, sun: "Full sun", mapX: 10, mapY: 10 });
 
-      const moveBedOnMap = (bedId, mapX, mapY) => {
-        if (!setBeds) return;
-        setBeds(prev => prev.map(b => b.id === bedId ? { ...b, mapX, mapY } : b));
-      };
-
       const openEditBed = (bed) => {
         setEditingBed(bed);
         setBedDraft({
@@ -2032,11 +1988,10 @@
                     const b = bedList.find(x => x.id === id);
                     if (b) openEditBed(b);
                   }}
-                  onMoveBed={moveBedOnMap}
                   selectedBedId={editingBed?.id}
                 />
               )}
-              <p className="text-[10px] text-sage-400 mt-1">Drag a bed to reposition it. Tap a bed to edit its size or name.</p>
+              <p className="text-[10px] text-sage-400 mt-1">Tap a bed on the map to edit size, name, or map position.</p>
             </div>
 
             {/* Canvas / Beds */}
