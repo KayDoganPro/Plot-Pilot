@@ -1202,51 +1202,196 @@
 
     const PRESERVE_GUIDES = [
       { plantId: "tomato", methods: [
-        { id: "can", name: "Water-bath / pressure can", tip: "Use tested recipes; acidify as directed for safety." },
-        { id: "freeze", name: "Freeze sauce or whole", tip: "Cook down first for less freezer space." },
-        { id: "dry", name: "Sun or dehydrator", tip: "Oil-pack dried tomatoes for pantry use." },
+        { id: "can", name: "Water-bath can (acidified)", difficulty: "Medium", time: "2–4 hrs", equipment: ["Canner / large pot", "Jars + lids", "Jar lifter", "Lemon juice or citric acid"], safety: "Tomatoes need added acid. Use a current tested recipe (USDA / extension). Never invent times.",
+          steps: [
+            "Wash jars; keep hot until filling",
+            "Wash and core tomatoes; peel if recipe requires",
+            "Add acid per tested recipe (e.g. bottled lemon juice)",
+            "Pack jars leaving headspace in the recipe",
+            "Wipe rims, apply lids and rings fingertip-tight",
+            "Process in boiling-water bath for the exact time for your altitude",
+            "Cool 12–24 hrs undisturbed; check seals; label date",
+          ]},
+        { id: "freeze", name: "Freeze sauce or roasted", difficulty: "Easy", time: "1–2 hrs", equipment: ["Pots", "Freezer bags or containers"], safety: "Cool fully before freezing; leave headspace for expansion.",
+          steps: [
+            "Wash tomatoes; remove cores and bad spots",
+            "Roast or simmer into sauce / crush for sauce",
+            "Cool completely (ice bath speeds this)",
+            "Portion into bags or containers; label variety + date",
+            "Freeze flat; use within 8–12 months for best quality",
+          ]},
+        { id: "dry", name: "Dehydrate / sun-dry", difficulty: "Easy", time: "6–12 hrs", equipment: ["Dehydrator or oven", "Optional olive oil + jars"], safety: "Dry until leathery/brittle with no moisture pockets.",
+          steps: [
+            "Slice evenly (¼–½ inch)",
+            "Arrange in single layer; low heat / dehydrator setting for tomatoes",
+            "Dry until leathery with no damp centers",
+            "Cool; store airtight or oil-pack fully dried pieces",
+            "Label and keep cool and dark",
+          ]},
       ]},
       { plantId: "basil", methods: [
-        { id: "freeze", name: "Pesto cubes", tip: "Freeze in oil; thaw as needed." },
-        { id: "dry", name: "Air dry or dehydrate", tip: "Hang small bundles out of direct sun." },
+        { id: "freeze", name: "Pesto or oil cubes", difficulty: "Easy", time: "30–45 min", equipment: ["Blender", "Ice cube tray", "Freezer bags"], safety: "Culinary use only; freeze promptly.",
+          steps: [
+            "Wash and dry leaves thoroughly",
+            "Blend pesto (or pack leaves with oil)",
+            "Spoon into ice cube trays",
+            "Freeze solid; pop cubes into labeled bags",
+            "Use cubes straight from freezer in cooking",
+          ]},
+        { id: "dry", name: "Air dry or dehydrate", difficulty: "Easy", time: "3–10 days", equipment: ["String or dehydrator", "Dark jars"], safety: "Fully dry before jar storage to prevent mold.",
+          steps: [
+            "Harvest before flowering for best flavor",
+            "Rinse only if needed; pat dry",
+            "Hang small bundles or dehydrate on low",
+            "Crumble when crisp; store in dark airtight jars",
+            "Label date; use within a year for peak aroma",
+          ]},
       ]},
       { plantId: "cucumber", methods: [
-        { id: "ferment", name: "Fermented pickles", tip: "Keep under brine; watch for safe fermentation signs." },
-        { id: "fridge", name: "Refrigerator pickles", tip: "Quick and safe for short-term use." },
+        { id: "ferment", name: "Fermented pickles", difficulty: "Medium", time: "3–10 days", equipment: ["Crock or jar", "Weight", "Salt", "Spices"], safety: "Keep under brine. Discard if moldy, slimy, or foul-smelling. Follow trusted ferment guides.",
+          steps: [
+            "Wash cukes; trim blossom ends",
+            "Make brine (trusted ratio of salt to water)",
+            "Pack jar with cukes, garlic, dill, spices",
+            "Cover completely with brine; weight to keep submerged",
+            "Ferment at room temp; check daily; skim if needed",
+            "When sour enough, refrigerate to slow ferment",
+          ]},
+        { id: "fridge", name: "Refrigerator pickles", difficulty: "Easy", time: "30–60 min + chill", equipment: ["Jars", "Vinegar", "Sugar/salt", "Spices"], safety: "Not shelf-stable — keep refrigerated.",
+          steps: [
+            "Slice or spear cucumbers",
+            "Pack clean jars with cukes and spices",
+            "Heat vinegar brine per recipe; pour over",
+            "Cool, lid, and refrigerate",
+            "Best within a few weeks",
+          ]},
       ]},
       { plantId: "bean", methods: [
-        { id: "freeze", name: "Blanch & freeze", tip: "Blanch 2–3 min, ice bath, pack dry." },
-        { id: "can", name: "Pressure can only", tip: "Low-acid veggies need pressure canning." },
+        { id: "freeze", name: "Blanch & freeze", difficulty: "Easy", time: "45–90 min", equipment: ["Large pot", "Ice bath", "Freezer bags"], safety: "Blanching preserves color and texture.",
+          steps: [
+            "Wash; snap ends; cut to length",
+            "Boiling water blanch 2–3 minutes",
+            "Ice bath immediately; drain well",
+            "Pat dry; pack bags; remove air; label",
+            "Freeze flat",
+          ]},
+        { id: "can", name: "Pressure can only", difficulty: "Advanced", time: "2–3 hrs", equipment: ["Pressure canner", "Jars", "Lid lifter"], safety: "Low-acid vegetables require pressure canning. Never water-bath green beans. Use current tested times for your altitude.",
+          steps: [
+            "Use only a pressure canner (not water bath)",
+            "Follow a current tested recipe for pack style",
+            "Fill jars with headspace specified",
+            "Vent, pressurize, and process for full time",
+            "Cool naturally; check seals; store cool and dark",
+          ]},
       ]},
       { plantId: "pepper", methods: [
-        { id: "freeze", name: "Chop & freeze", tip: "No blanch needed for cooking later." },
-        { id: "dry", name: "String or dehydrate", tip: "Fully dry before storing airtight." },
+        { id: "freeze", name: "Chop & freeze", difficulty: "Easy", time: "20–40 min", equipment: ["Knife", "Bags"], safety: "Gloves recommended for hot peppers.",
+          steps: [
+            "Wash; remove stems and seeds if desired",
+            "Chop or slice",
+            "Pack raw into bags (no blanch needed for cooking)",
+            "Label heat level + variety; freeze",
+          ]},
+        { id: "dry", name: "String or dehydrate", difficulty: "Easy", time: "1–3 days", equipment: ["Dehydrator or string", "Airtight jars"], safety: "Must be fully dry and brittle before sealing.",
+          steps: [
+            "Wash; dry surfaces",
+            "String whole (ristras) or slice for dehydrator",
+            "Dry until brittle — no soft spots",
+            "Store whole or crush to flakes; airtight + dark",
+          ]},
       ]},
       { plantId: "carrot", methods: [
-        { id: "store", name: "Root cellar / fridge", tip: "Trim tops; store in damp sand or bags." },
-        { id: "freeze", name: "Blanch & freeze", tip: "Slice first for easy cooking." },
+        { id: "store", name: "Root cellar / fridge", difficulty: "Easy", time: "30 min", equipment: ["Bins or bags", "Damp sand optional"], safety: "Remove tops so roots don’t wilt.",
+          steps: [
+            "Harvest; twist or cut tops close to crown",
+            "Brush off soil — don’t wash if long-storing",
+            "Pack in damp sand, sawdust, or perforated bags",
+            "Keep cold and humid; check monthly for soft roots",
+          ]},
+        { id: "freeze", name: "Blanch & freeze", difficulty: "Easy", time: "45–90 min", equipment: ["Pot", "Ice bath", "Bags"], safety: "Blanch before freezing.",
+          steps: [
+            "Wash, peel if desired, slice or dice",
+            "Blanch 2–3 minutes; ice bath; drain",
+            "Pack bags; label; freeze",
+          ]},
       ]},
       { plantId: "kale", methods: [
-        { id: "freeze", name: "Blanch & freeze", tip: "Great for soups all winter." },
-        { id: "dry", name: "Kale chips / dry leaf", tip: "Low heat until crisp." },
+        { id: "freeze", name: "Blanch & freeze", difficulty: "Easy", time: "30–60 min", equipment: ["Pot", "Ice bath", "Bags"], safety: "Cool quickly after blanch.",
+          steps: [
+            "Wash; strip leaves from tough stems",
+            "Blanch 2 minutes; ice bath",
+            "Squeeze out water; pack bags; freeze",
+          ]},
+        { id: "dry", name: "Kale chips / dry leaf", difficulty: "Easy", time: "2–4 hrs", equipment: ["Oven or dehydrator"], safety: "Store only when fully crisp.",
+          steps: [
+            "Wash and dry leaves",
+            "Tear into pieces; optional light oil + salt for chips",
+            "Low oven or dehydrator until crisp",
+            "Cool; store airtight",
+          ]},
       ]},
       { plantId: "squash", methods: [
-        { id: "store", name: "Cure & store", tip: "Cure hard squash; keep cool and dry." },
-        { id: "freeze", name: "Roast & freeze puree", tip: "Perfect for soup bases." },
+        { id: "store", name: "Cure & store (winter)", difficulty: "Easy", time: "1–2 weeks cure", equipment: ["Warm dry space", "Cool storage"], safety: "Cure hard-skinned types; don’t store damaged fruit.",
+          steps: [
+            "Harvest with stem attached when mature",
+            "Cure in warm dry place 7–14 days (type-dependent)",
+            "Wipe clean; store cool, dry, with airflow",
+            "Check monthly; use soft ones first",
+          ]},
+        { id: "freeze", name: "Roast & freeze puree", difficulty: "Easy", time: "1–2 hrs", equipment: ["Oven", "Containers"], safety: "Cool before freezing.",
+          steps: [
+            "Halve; remove seeds; roast until soft",
+            "Scoop flesh; mash or puree",
+            "Cool; portion; freeze with headspace",
+          ]},
       ]},
       { plantId: "strawberry", methods: [
-        { id: "freeze", name: "Freeze whole or sliced", tip: "Tray-freeze then bag." },
-        { id: "can", name: "Jam / preserves", tip: "Use tested sugar ratios and processing times." },
-      ]},
-      { plantId: "herb", methods: [
-        { id: "dry", name: "Dry culinary herbs", tip: "Store in dark jars; label date." },
-        { id: "freeze", name: "Freeze in oil", tip: "Works for basil, parsley, cilantro." },
+        { id: "freeze", name: "Tray-freeze", difficulty: "Easy", time: "30 min + freeze", equipment: ["Tray", "Bags"], safety: "Use firm ripe berries.",
+          steps: [
+            "Wash; hull; drain well",
+            "Spread on tray; freeze solid",
+            "Bag; label; return to freezer",
+          ]},
+        { id: "can", name: "Jam / preserves", difficulty: "Medium", time: "1–2 hrs", equipment: ["Pot", "Jars", "Sugar", "Pectin if recipe calls"], safety: "Use tested jam recipes and process times.",
+          steps: [
+            "Crush berries; measure fruit and sugar per recipe",
+            "Cook to gel stage or follow pectin instructions",
+            "Fill hot jars; process if recipe requires",
+            "Cool; check seals; label",
+          ]},
       ]},
       { plantId: "garlic", methods: [
-        { id: "store", name: "Cure & hang", tip: "Dry fully; keep cool with airflow." },
+        { id: "store", name: "Cure & hang", difficulty: "Easy", time: "2–4 weeks cure", equipment: ["Airy shade", "Mesh or string"], safety: "Fully cure before tight storage.",
+          steps: [
+            "Harvest when tops yellow; keep wrappers on",
+            "Cure in shade with airflow 2–4 weeks",
+            "Trim roots and tops; store cool, dry, ventilated",
+            "Save best bulbs for next year’s seed stock",
+          ]},
       ]},
       { plantId: "corn", methods: [
-        { id: "freeze", name: "Blanch & freeze kernels", tip: "Peak sweetness freezes well." },
+        { id: "freeze", name: "Blanch & freeze kernels", difficulty: "Easy", time: "1–2 hrs", equipment: ["Pot", "Ice bath", "Bags"], safety: "Process soon after picking for sweetness.",
+          steps: [
+            "Husk; remove silk",
+            "Blanch ears 4 minutes (or kernels briefly)",
+            "Ice bath; cut kernels from cob",
+            "Pack bags; freeze flat",
+          ]},
+      ]},
+      { plantId: "herb", methods: [
+        { id: "dry", name: "Dry culinary herbs", difficulty: "Easy", time: "3–14 days", equipment: ["String or dehydrator", "Jars"], safety: "Culinary drying only.",
+          steps: [
+            "Harvest in morning after dew dries",
+            "Bundle or screen-dry out of sun",
+            "When crisp, strip leaves; jar dark and airtight",
+            "Label herb + date",
+          ]},
+        { id: "freeze", name: "Freeze in oil", difficulty: "Easy", time: "20–40 min", equipment: ["Tray or cubes", "Oil"], safety: "Use food-grade oil; freeze promptly.",
+          steps: [
+            "Chop clean herbs",
+            "Pack into trays with oil to cover",
+            "Freeze; transfer to labeled bags",
+          ]},
       ]},
     ];
 
@@ -2075,6 +2220,8 @@
       // Mobile-friendly: multi-select plants, then tap a bed to plant
       const [selectedPlantIds, setSelectedPlantIds] = useState([]);
       const [layoutTypeFilter, setLayoutTypeFilter] = useState("All");
+      const [varietyPickerCrop, setVarietyPickerCrop] = useState(null); // crop id for variety multi-select sheet
+      const [pickerSelected, setPickerSelected] = useState([]); // variety ids in sheet
 
       const togglePlantSelect = (plantId) => {
         setSelectedPlantIds(prev =>
@@ -2558,26 +2705,28 @@
                           </p>
                         )}
                         {bedPlants.map(item => {
-                          const plant = PLANT_LIBRARY.find(pl => pl.id === item.plant);
+                          const plant = resolvePlant(item.plant) || PLANT_LIBRARY.find(pl => pl.id === item.plant);
                           const harvested = item.status === "harvested";
+                          const label = plant?.variety || plant?.name || item.plant;
                           return (
                             <div
                               key={item.id}
                               draggable={!harvested}
                               onDragStart={(e) => onPlacedDragStart(e, item)}
                               onDragEnd={onDragEnd}
-                              className={`relative group text-2xl bg-white/80 rounded-lg px-1.5 py-1 shadow-sm cursor-grab active:cursor-grabbing
+                              className={`relative group bg-white/90 rounded-lg px-1.5 py-1 shadow-sm cursor-grab active:cursor-grabbing max-w-[72px]
                                 ${justDropped === item.id ? "animate-bounce" : ""}
                                 ${dragPlacedId === item.id ? "opacity-40" : ""}
                                 ${harvested ? "opacity-40 grayscale" : ""}`}
-                              title={`${plant?.name}${harvested ? " (harvested)" : ""} – drag to move`}
+                              title={`${label}${harvested ? " (harvested)" : ""} – drag to move · double-tap remove`}
                               onDoubleClick={() => removePlant(item.id)}
                               onContextMenu={(e) => {
                                 e.preventDefault();
                                 setPlantStatus(item.id, harvested ? "growing" : "harvested");
                               }}
                             >
-                              {plant?.icon}
+                              <div className="text-xl text-center leading-none">{plant?.icon}</div>
+                              <p className="text-[8px] leading-tight text-sage-700 text-center mt-0.5 line-clamp-2 font-medium">{label}</p>
                               {harvested && <span className="absolute -bottom-1 left-0 right-0 text-[8px] text-center text-sage-600">✓</span>}
                               <button
                                 onClick={(e) => { e.stopPropagation(); removePlant(item.id); }}
@@ -2595,7 +2744,7 @@
               </div>
 
               <p className="text-center text-xs text-sage-400 mt-3">
-                Drag to plant · Right-click = harvest · Undo available
+                Multi-select varieties · tap bed to plant · × removes
               </p>
             </div>
 
@@ -2658,8 +2807,8 @@
             </div>
             <p className="text-xs text-sage-500 mb-2">
               {selectedPlantIds.length
-                ? `Selected ${selectedPlantIds.length} — tap a bed to plant`
-                : "Tap crop to select · long list of varieties under More → Plants"}
+                ? `Selected ${selectedPlantIds.length} — tap a bed to plant (multi-variety OK)`
+                : "Tap a crop → pick varieties (or generic) → tap a bed"}
             </p>
             <div className="flex gap-1.5 overflow-x-auto pb-2 mb-2">
               {["Vegetable", "Herb", "Fruit", "Flower", "Cover"].map(t => (
@@ -2673,16 +2822,44 @@
                 >{t}</button>
               ))}
             </div>
+            {selectedPlantIds.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-2">
+                {selectedPlantIds.map(id => {
+                  const pl = resolvePlant(id) || PLANT_LIBRARY.find(p => p.id === id);
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => togglePlantSelect(id)}
+                      className="text-[10px] bg-sage-100 text-sage-800 px-2 py-1 rounded-lg flex items-center gap-1"
+                    >
+                      {pl?.icon} {pl?.variety || pl?.name || id}
+                      <span className="text-sage-400">×</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             <div className="grid grid-cols-4 gap-2">
               {PLANT_LIBRARY.filter(p => layoutTypeFilter === "All" || p.type === layoutTypeFilter).map(plant => {
                 const isSuggested = suggestions.some(s => s.id === plant.id && s.score > 0);
                 const isSelected = selectedPlantIds.includes(plant.id)
                   || selectedPlantIds.some(id => id.startsWith(plant.id + "__"));
+                const varCount = (VARIETY_RAW[plant.id] || []).length;
                 return (
                   <button
                     type="button"
                     key={plant.id}
-                    onClick={() => togglePlantSelect(plant.id)}
+                    onClick={() => {
+                      if (varCount > 0) {
+                        setVarietyPickerCrop(plant.id);
+                        setPickerSelected(
+                          selectedPlantIds.filter(id => id === plant.id || id.startsWith(plant.id + "__"))
+                        );
+                      } else {
+                        togglePlantSelect(plant.id);
+                      }
+                    }}
                     className={`bg-white rounded-xl p-2 card-shadow text-center plant-card transition relative
                       ${isSelected ? "ring-2 ring-sage-600 bg-sage-50 scale-[0.98]" : "hover:shadow-md active:scale-95"}
                       ${isSuggested && !isSelected ? "ring-2 ring-green-400 bg-green-50" : ""}`}
@@ -2692,14 +2869,83 @@
                     )}
                     <div className="text-2xl mb-1 select-none">{plant.icon}</div>
                     <p className="text-[10px] font-medium leading-tight select-none">{plant.name}</p>
-                    {(VARIETY_RAW[plant.id] || []).length > 0 && (
-                      <p className="text-[8px] text-sage-400">{(VARIETY_RAW[plant.id] || []).length} var.</p>
+                    {varCount > 0 && (
+                      <p className="text-[8px] text-sage-500 font-medium">{varCount} varieties</p>
                     )}
                   </button>
                 );
               })}
             </div>
           </div>
+
+          {varietyPickerCrop && (() => {
+            const parent = PLANT_LIBRARY.find(p => p.id === varietyPickerCrop);
+            const vars = VARIETY_LIBRARY.filter(v => v.cropId === varietyPickerCrop);
+            const togglePick = (id) => {
+              setPickerSelected(prev =>
+                prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+              );
+            };
+            return (
+              <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
+                <div className="bg-white rounded-2xl p-4 w-full max-w-sm max-h-[85vh] overflow-y-auto">
+                  <h3 className="font-semibold text-sage-800 mb-1">{parent?.icon} {parent?.name} varieties</h3>
+                  <p className="text-[10px] text-sage-500 mb-3">Select one or many. Same bed can hold multiple varieties.</p>
+                  <button
+                    type="button"
+                    onClick={() => togglePick(varietyPickerCrop)}
+                    className={`w-full text-left px-3 py-2.5 rounded-xl mb-2 border text-sm ${
+                      pickerSelected.includes(varietyPickerCrop) ? "border-sage-600 bg-sage-50 ring-1 ring-sage-400" : "border-sage-100"
+                    }`}
+                  >
+                    Generic {parent?.name} (no named variety)
+                  </button>
+                  <div className="space-y-1.5 mb-4">
+                    {vars.map(v => (
+                      <button
+                        type="button"
+                        key={v.id}
+                        onClick={() => togglePick(v.id)}
+                        className={`w-full text-left px-3 py-2 rounded-xl border text-sm flex justify-between items-center ${
+                          pickerSelected.includes(v.id) ? "border-sage-600 bg-sage-50 ring-1 ring-sage-400" : "border-sage-100"
+                        }`}
+                      >
+                        <span>
+                          <span className="font-medium text-sage-800">{v.variety}</span>
+                          <span className="block text-[10px] text-sage-400">
+                            {v.sources === "EB" ? "Eden Brothers" : v.sources === "SSE" ? "Seed Savers" : "Both"}
+                          </span>
+                        </span>
+                        {pickerSelected.includes(v.id) && <span className="text-sage-600 font-bold">✓</span>}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 sticky bottom-0 bg-white pt-1">
+                    <button
+                      type="button"
+                      onClick={() => { setVarietyPickerCrop(null); setPickerSelected([]); }}
+                      className="flex-1 py-2.5 rounded-xl border text-sm"
+                    >Cancel</button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // Replace this crop's previous selection with picker choices
+                        setSelectedPlantIds(prev => {
+                          const without = prev.filter(id => id !== varietyPickerCrop && !id.startsWith(varietyPickerCrop + "__"));
+                          return [...without, ...pickerSelected];
+                        });
+                        setVarietyPickerCrop(null);
+                        setPickerSelected([]);
+                      }}
+                      className="flex-1 py-2.5 rounded-xl bg-sage-600 text-white text-sm font-medium"
+                    >
+                      Add {pickerSelected.length || 0} to selection
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {editingBed && (
             <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
@@ -3034,6 +3280,9 @@
     // ========== PHASE 2 UI: Kitchen ==========
     function KitchenScreen({ profile, planYear, setPlanYear, placed, setPlaced, beds, setTasks, setSeeds, setActive }) {
       const [tab, setTab] = useState("recipes"); // recipes | preserve | herbs
+      const [preserveMethodId, setPreserveMethodId] = useState(null);
+      const [preserveStepDone, setPreserveStepDone] = useState({}); // key: `${plantId}:${methodId}` -> boolean[]
+      const [preserveStepIndex, setPreserveStepIndex] = useState(0);
       const [selected, setSelected] = useState(() => new Set());
       const [detail, setDetail] = useState(null);
       const [preservePlant, setPreservePlant] = useState("tomato");
@@ -3249,43 +3498,203 @@
               </>
             )}
 
-            {tab === "preserve" && (
+            {tab === "preserve" && (() => {
+              const methods = preserveGuide?.methods || [];
+              const activeMethod = methods.find(m => m.id === preserveMethodId) || null;
+              const stepKey = activeMethod ? `${preservePlant}:${activeMethod.id}` : null;
+              const doneArr = stepKey ? (preserveStepDone[stepKey] || (activeMethod.steps || []).map(() => false)) : [];
+              const doneCount = doneArr.filter(Boolean).length;
+              const totalSteps = activeMethod?.steps?.length || 0;
+              const progress = totalSteps ? Math.round((doneCount / totalSteps) * 100) : 0;
+
+              const toggleStep = (idx) => {
+                if (!stepKey || !activeMethod) return;
+                setPreserveStepDone(prev => {
+                  const cur = prev[stepKey] || activeMethod.steps.map(() => false);
+                  const next = [...cur];
+                  next[idx] = !next[idx];
+                  return { ...prev, [stepKey]: next };
+                });
+              };
+
+              const schedulePreserveTask = () => {
+                if (!activeMethod || !setTasks) return;
+                const pl = PLANT_LIBRARY.find(p => p.id === preservePlant);
+                setTasks(prev => [{
+                  id: Date.now() + Math.random(),
+                  title: `Preserve ${pl?.name || preservePlant}: ${activeMethod.name}`,
+                  detail: `${totalSteps} steps · ${activeMethod.difficulty || ""} · ${activeMethod.time || ""}`,
+                  done: false,
+                  icon: "🫙",
+                  due: toISODate(new Date()),
+                  year: planYear,
+                }, ...prev]);
+                alert("Added to your task list for today.");
+              };
+
+              return (
               <>
                 {readyPreserve.length > 0 && (
                   <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 space-y-2">
                     <p className="text-xs font-semibold text-amber-900">Ready to preserve</p>
                     {readyPreserve.slice(0, 5).map(x => (
-                      <div key={x.id} className="text-xs text-amber-900 flex justify-between">
+                      <button
+                        key={x.id}
+                        type="button"
+                        className="w-full text-xs text-amber-900 flex justify-between hover:bg-amber-100/80 rounded-lg px-1 py-0.5"
+                        onClick={() => {
+                          const pid = x.pl?.cropId || x.pl?.id || x.plant;
+                          if (PRESERVE_GUIDES.some(g => g.plantId === pid)) {
+                            setPreservePlant(pid);
+                            setPreserveMethodId(null);
+                          }
+                        }}
+                      >
                         <span>{x.pl?.icon} {x.pl?.name}</span>
                         <span>{x.days < 0 ? "harvest window open" : `in ${x.days}d`}</span>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}
-                <label className="text-xs text-sage-500">Crop</label>
-                <select
-                  className="w-full border rounded-xl px-3 py-2 text-sm bg-white"
-                  value={preservePlant}
-                  onChange={e => setPreservePlant(e.target.value)}
-                >
-                  {PRESERVE_GUIDES.filter(g => g.plantId !== "herb").map(g => {
+
+                <label className="text-xs text-sage-500">1. Choose crop</label>
+                <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+                  {PRESERVE_GUIDES.map(g => {
                     const pl = PLANT_LIBRARY.find(p => p.id === g.plantId);
-                    return <option key={g.plantId} value={g.plantId}>{pl?.icon} {pl?.name || g.plantId}</option>;
+                    const selected = preservePlant === g.plantId;
+                    return (
+                      <button
+                        key={g.plantId}
+                        type="button"
+                        onClick={() => { setPreservePlant(g.plantId); setPreserveMethodId(null); setPreserveStepIndex(0); }}
+                        className={`shrink-0 px-3 py-2 rounded-xl text-xs font-medium ${
+                          selected ? "bg-sage-600 text-white" : "bg-white text-sage-700 card-shadow"
+                        }`}
+                      >
+                        {pl?.icon || "🌿"} {pl?.name || g.plantId}
+                      </button>
+                    );
                   })}
-                </select>
-                <div className="space-y-2 mt-2">
-                  {(preserveGuide?.methods || []).map(m => (
-                    <div key={m.id} className="bg-white rounded-xl p-3 card-shadow">
-                      <p className="font-medium text-sm text-sage-800">{m.name}</p>
-                      <p className="text-xs text-sage-500 mt-1">{m.tip}</p>
-                    </div>
+                </div>
+
+                <label className="text-xs text-sage-500 mt-2 block">2. Choose process</label>
+                <div className="space-y-2">
+                  {methods.map(m => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => { setPreserveMethodId(m.id); setPreserveStepIndex(0); }}
+                      className={`w-full text-left bg-white rounded-xl p-3 card-shadow border-2 transition ${
+                        preserveMethodId === m.id ? "border-sage-600" : "border-transparent"
+                      }`}
+                    >
+                      <div className="flex justify-between items-start gap-2">
+                        <p className="font-medium text-sm text-sage-800">{m.name}</p>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded shrink-0 ${
+                          m.difficulty === "Easy" ? "bg-green-100 text-green-800"
+                          : m.difficulty === "Advanced" ? "bg-red-100 text-red-800"
+                          : "bg-amber-100 text-amber-900"
+                        }`}>{m.difficulty || "—"}</span>
+                      </div>
+                      <p className="text-[10px] text-sage-500 mt-1">⏱ {m.time || "—"} · {m.steps?.length || 0} steps</p>
+                    </button>
                   ))}
                 </div>
+
+                {activeMethod && (
+                  <div className="bg-white rounded-2xl p-4 card-shadow space-y-3 mt-2">
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-semibold text-sage-800 text-sm">{activeMethod.name}</h3>
+                      <button type="button" onClick={() => setPreserveMethodId(null)} className="text-[10px] text-sage-500">Close</button>
+                    </div>
+
+                    {/* Progress */}
+                    <div>
+                      <div className="flex justify-between text-[10px] text-sage-500 mb-1">
+                        <span>{doneCount} / {totalSteps} steps</span>
+                        <span>{progress}%</span>
+                      </div>
+                      <div className="h-2 bg-sage-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-sage-600 transition-all" style={{ width: `${progress}%` }} />
+                      </div>
+                    </div>
+
+                    {activeMethod.safety && (
+                      <div className="bg-amber-50 border border-amber-200 rounded-xl p-2.5 text-[10px] text-amber-950">
+                        <p className="font-semibold mb-0.5">Safety</p>
+                        <p>{activeMethod.safety}</p>
+                      </div>
+                    )}
+
+                    {activeMethod.equipment && (
+                      <div>
+                        <p className="text-[10px] font-semibold text-sage-600 uppercase tracking-wide mb-1">Equipment checklist</p>
+                        <div className="flex flex-wrap gap-1">
+                          {activeMethod.equipment.map(eq => (
+                            <span key={eq} className="text-[10px] bg-sage-50 text-sage-700 px-2 py-1 rounded-lg border border-sage-100">{eq}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <p className="text-[10px] font-semibold text-sage-600 uppercase tracking-wide mb-2">Step-by-step</p>
+                      <div className="space-y-2">
+                        {(activeMethod.steps || []).map((step, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => toggleStep(idx)}
+                            className={`w-full flex gap-2 items-start text-left rounded-xl px-2.5 py-2 border ${
+                              doneArr[idx] ? "bg-emerald-50 border-emerald-200" : "bg-sage-50 border-sage-100"
+                            }`}
+                          >
+                            <span className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                              doneArr[idx] ? "bg-emerald-600 text-white" : "bg-white border border-sage-300 text-sage-500"
+                            }`}>
+                              {doneArr[idx] ? "✓" : idx + 1}
+                            </span>
+                            <span className={`text-xs ${doneArr[idx] ? "text-emerald-900 line-through" : "text-sage-800"}`}>{step}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!stepKey || !activeMethod) return;
+                          setPreserveStepDone(prev => ({
+                            ...prev,
+                            [stepKey]: activeMethod.steps.map(() => true),
+                          }));
+                        }}
+                        className="flex-1 py-2 rounded-xl border text-xs font-medium text-sage-700"
+                      >
+                        Mark all done
+                      </button>
+                      <button
+                        type="button"
+                        onClick={schedulePreserveTask}
+                        className="flex-1 py-2 rounded-xl bg-sage-600 text-white text-xs font-medium"
+                      >
+                        Add to tasks
+                      </button>
+                    </div>
+
+                    {progress === 100 && (
+                      <p className="text-center text-xs text-emerald-700 font-medium">All steps checked — great work. Label and store safely.</p>
+                    )}
+                  </div>
+                )}
+
                 <p className="text-[10px] text-sage-400">
-                  Always follow tested, up-to-date food preservation guidelines (e.g. USDA / extension services). PlotPilot is a planning aid, not a canning authority.
+                  Always follow tested, current food-preservation guidelines (e.g. USDA / your local extension). PlotPilot is a planning checklist — not a substitute for official canning instructions or food-safety advice.
                 </p>
               </>
-            )}
+              );
+            })()}
 
             {tab === "herbs" && (
               <>
@@ -3355,7 +3764,7 @@
       const y0 = new Date().getFullYear();
       const years = [y0, y0 + 1, y0 + 2];
       const [showAdd, setShowAdd] = useState(false);
-      const [form, setForm] = useState({ plantId: "tomato", bedId: beds[0]?.id || "tomato", successions: 1 });
+      const [form, setForm] = useState({ cropId: "pepper", plantIds: ["pepper"], bedId: beds[0]?.id || "tomato", successions: 1 });
       const [showBedForm, setShowBedForm] = useState(false);
       const [editingBedId, setEditingBedId] = useState(null);
       const [bedForm, setBedForm] = useState({ name: "", widthFt: 4, lengthFt: 8, sun: "Full sun", mapX: 10, mapY: 10 });
@@ -3368,35 +3777,39 @@
       );
 
       const addPlanting = () => {
-        const pl = PLANT_LIBRARY.find(p => p.id === form.plantId);
-        if (!pl) return;
-        const sched = computePlantingSchedule(pl, profile);
-        if (!sched) return;
-        const count = Math.max(1, Math.min(8, Number(form.successions) || 1));
-        const interval = pl.successionDays > 0 ? pl.successionDays : 14;
+        const ids = (form.plantIds && form.plantIds.length) ? form.plantIds : [form.cropId || form.plantId || "tomato"];
         const newItems = [];
-        for (let i = 0; i < count; i++) {
-          const offset = i * interval;
-          const sow = addDays(new Date(sched.sowDate + "T12:00:00"), offset);
-          const plantOut = addDays(new Date(sched.plantOutDate + "T12:00:00"), offset);
-          const harvest = addDays(new Date(sched.harvestStart + "T12:00:00"), offset);
-          newItems.push({
-            id: Date.now() + i + Math.random(),
-            bed: form.bedId,
-            plant: form.plantId,
-            plantedAt: toISODate(plantOut),
-            status: "planned",
-            year: planYear,
-            method: sched.method,
-            sowDate: toISODate(sow),
-            transplantDate: sched.transplantDate
-              ? toISODate(addDays(new Date(sched.transplantDate + "T12:00:00"), offset))
-              : null,
-            harvestStart: toISODate(harvest),
-            successionIndex: i + 1,
-            successionOf: count,
-          });
-        }
+        ids.forEach((plantId, vi) => {
+          const pl = resolvePlant(plantId) || PLANT_LIBRARY.find(p => p.id === plantId);
+          if (!pl) return;
+          const sched = computePlantingSchedule(pl, profile);
+          if (!sched) return;
+          const count = Math.max(1, Math.min(8, Number(form.successions) || 1));
+          const interval = pl.successionDays > 0 ? pl.successionDays : 14;
+          for (let i = 0; i < count; i++) {
+            const offset = i * interval;
+            const sow = addDays(new Date(sched.sowDate + "T12:00:00"), offset);
+            const plantOut = addDays(new Date(sched.plantOutDate + "T12:00:00"), offset);
+            const harvest = addDays(new Date(sched.harvestStart + "T12:00:00"), offset);
+            newItems.push({
+              id: Date.now() + vi * 100 + i + Math.random(),
+              bed: form.bedId,
+              plant: plantId,
+              plantedAt: toISODate(plantOut),
+              status: "planned",
+              year: planYear,
+              method: sched.method,
+              sowDate: toISODate(sow),
+              transplantDate: sched.transplantDate
+                ? toISODate(addDays(new Date(sched.transplantDate + "T12:00:00"), offset))
+                : null,
+              harvestStart: toISODate(harvest),
+              successionIndex: i + 1,
+              successionOf: count,
+            });
+          }
+        });
+        if (!newItems.length) return;
         setPlaced(prev => [...prev, ...newItems]);
 
         // Tasks for first succession
@@ -3991,20 +4404,68 @@
 
           {showAdd && (
             <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
-              <div className="bg-white rounded-2xl p-5 w-full max-w-sm">
+              <div className="bg-white rounded-2xl p-5 w-full max-w-sm max-h-[90vh] overflow-y-auto">
                 <h3 className="font-semibold text-sage-800 mb-3">Add planting ({planYear})</h3>
-                <label className="text-xs text-sage-500">Crop</label>
-                <select className="w-full border rounded-xl px-3 py-2 text-sm mb-2" value={form.plantId} onChange={e => setForm(f => ({ ...f, plantId: e.target.value }))}>
-                  {PLANT_LIBRARY.map(p => <option key={p.id} value={p.id}>{p.icon} {p.name} ({p.method})</option>)}
+                <label className="text-xs text-sage-500">Crop type</label>
+                <select
+                  className="w-full border rounded-xl px-3 py-2 text-sm mb-2"
+                  value={form.cropId || "pepper"}
+                  onChange={e => {
+                    const cropId = e.target.value;
+                    setForm(f => ({ ...f, cropId, plantIds: [cropId] }));
+                  }}
+                >
+                  {PLANT_LIBRARY.map(p => <option key={p.id} value={p.id}>{p.icon} {p.name}</option>)}
                 </select>
+                {(VARIETY_RAW[form.cropId] || []).length > 0 && (
+                  <>
+                    <label className="text-xs text-sage-500">Varieties (multi-select)</label>
+                    <div className="max-h-40 overflow-y-auto border rounded-xl p-2 mb-2 space-y-1">
+                      <label className="flex items-center gap-2 text-xs py-1">
+                        <input
+                          type="checkbox"
+                          checked={(form.plantIds || []).includes(form.cropId)}
+                          onChange={() => {
+                            setForm(f => {
+                              const ids = f.plantIds || [];
+                              const has = ids.includes(f.cropId);
+                              return { ...f, plantIds: has ? ids.filter(x => x !== f.cropId) : [...ids, f.cropId] };
+                            });
+                          }}
+                        />
+                        Generic (no named variety)
+                      </label>
+                      {VARIETY_LIBRARY.filter(v => v.cropId === form.cropId).map(v => (
+                        <label key={v.id} className="flex items-center gap-2 text-xs py-1">
+                          <input
+                            type="checkbox"
+                            checked={(form.plantIds || []).includes(v.id)}
+                            onChange={() => {
+                              setForm(f => {
+                                const ids = f.plantIds || [];
+                                const has = ids.includes(v.id);
+                                return { ...f, plantIds: has ? ids.filter(x => x !== v.id) : [...ids, v.id] };
+                              });
+                            }}
+                          />
+                          <span className="flex-1">{v.variety}</span>
+                          <span className="text-[9px] text-sage-400">{v.sources}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-sage-400 mb-2">
+                      {(form.plantIds || []).length} selected — all go in the same bed
+                    </p>
+                  </>
+                )}
                 <label className="text-xs text-sage-500">Bed</label>
                 <select className="w-full border rounded-xl px-3 py-2 text-sm mb-2" value={form.bedId} onChange={e => setForm(f => ({ ...f, bedId: e.target.value }))}>
                   {beds.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                 </select>
-                <label className="text-xs text-sage-500">Succession plantings (1–8)</label>
+                <label className="text-xs text-sage-500">Succession plantings (1–8) per variety</label>
                 <input type="number" min={1} max={8} className="w-full border rounded-xl px-3 py-2 text-sm mb-2" value={form.successions} onChange={e => setForm(f => ({ ...f, successions: e.target.value }))} />
                 {(() => {
-                  const pl = PLANT_LIBRARY.find(p => p.id === form.plantId);
+                  const pl = resolvePlant((form.plantIds || [])[0]) || PLANT_LIBRARY.find(p => p.id === form.cropId);
                   const sched = pl ? computePlantingSchedule(pl, profile) : null;
                   if (!sched) return null;
                   return (
@@ -4012,13 +4473,14 @@
                       Sow {fmtDate(sched.sowDate)}
                       {sched.transplantDate && ` · Transplant ${fmtDate(sched.transplantDate)}`}
                       {" · Harvest ~"}{fmtDate(sched.harvestStart)}
-                      {pl.successionDays > 0 && ` · Every ${pl.successionDays} days`}
                     </div>
                   );
                 })()}
                 <div className="flex gap-2">
                   <button type="button" onClick={() => setShowAdd(false)} className="flex-1 py-2.5 rounded-xl border text-sm">Cancel</button>
-                  <button type="button" onClick={addPlanting} className="flex-1 py-2.5 rounded-xl bg-sage-600 text-white text-sm font-medium">Add</button>
+                  <button type="button" onClick={addPlanting} className="flex-1 py-2.5 rounded-xl bg-sage-600 text-white text-sm font-medium">
+                    Add {(form.plantIds || []).length || 1} planting(s)
+                  </button>
                 </div>
               </div>
             </div>
