@@ -3482,7 +3482,7 @@
       );
     }
 
-    function SeedVault({ seeds, setSeeds, placed, harvests, customPlants, profile, setProfile }) {
+    function SeedVault({ seeds, setSeeds, placed, harvests, customPlants, profile, setProfile, beds }) {
       const [tab, setTab] = useState("inventory"); // inventory | guide | save
       const [filter, setFilter] = useState("All");
       const [search, setSearch] = useState("");
@@ -3577,12 +3577,21 @@
         setShowAdd(false);
       };
 
-      const adjustQty = (id, delta) => {
+      const applyQty = (id, nextQty) => {
+        const qty = Math.max(0, Math.round(Number(nextQty) * 100) / 100);
+        if (Number.isNaN(qty)) return;
         setSeeds(prev => prev.map(s => {
           if (s.id !== id) return s;
-          const qty = Math.max(0, Math.round((Number(s.qty) + delta) * 100) / 100);
-          return { ...s, qty, low: s.measure === "weight" ? qty <= 1 : qty <= 10 };
+          const updated = { ...s, qty, low: s.measure === "weight" ? qty <= 1 : qty <= 10 };
+          setDetailSeed(ds => (ds && ds.id === id ? { ...ds, qty: updated.qty, low: updated.low } : ds));
+          return updated;
         }));
+      };
+
+      const adjustQty = (id, delta) => {
+        const current = (seeds || []).find(s => s.id === id) || detailSeed;
+        if (!current) return;
+        applyQty(id, Number(current.qty || 0) + delta);
       };
 
       const removeSeed = (id) => {
@@ -3591,9 +3600,27 @@
         setDetailSeed(null);
       };
 
-      // Harvested plantings that can become saved seed
+      const bedName = (bedId) => {
+        if (!bedId) return "Unassigned bed";
+        const b = (beds || []).find(x => x.id === bedId);
+        if (b?.name) return b.name;
+        // Fallback: never show raw ids like bed_123 — title-case known defaults
+        if (typeof bedId === "string" && bedId.startsWith("bed_")) return "Custom bed";
+        return String(bedId).replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      };
+
+      // Harvested or past-harvest-window plantings that can become saved seed
       const harvestCandidates = useMemo(() => {
-        return (placed || []).filter(p => p.status === "harvested" || (p.harvestStart && new Date(p.harvestStart) <= new Date()));
+        const now = new Date();
+        return (placed || []).filter(p => {
+          if (p.isCoverCrop || p.isBedPrep) return false;
+          if (p.status === "harvested") return true;
+          if (p.harvestStart) {
+            const h = new Date(p.harvestStart + "T12:00:00");
+            if (!isNaN(h) && h <= now) return true;
+          }
+          return false;
+        });
       }, [placed]);
 
       const saveSeedFromPlanting = (item) => {
@@ -3603,6 +3630,7 @@
         if (qtyStr == null) return;
         const qty = Math.max(0, parseFloat(qtyStr) || 0);
         const measure = defaultMeasure;
+        const bn = bedName(item.bed);
         setSeeds(prev => [...prev, {
           id: Date.now() + Math.random(),
           name: pl.name,
@@ -3619,7 +3647,7 @@
           source: "saved",
           yearSaved: new Date().getFullYear(),
           fromPlantingId: item.id,
-          notes: `Saved from garden ${item.bed || ""}`.trim(),
+          notes: `Saved from ${bn}`,
         }]);
         alert("Added to Seed Vault as saved seed.");
         setTab("inventory");
@@ -3755,12 +3783,21 @@
                 ) : (
                   harvestCandidates.map(item => {
                     const pl = resolvePlant(item.plant, customPlants) || PLANT_LIBRARY.find(p => p.id === item.plant);
+                    const title = pl?.variety
+                      ? `${pl.cropName || pl.name?.split("—")[0]?.trim() || "Crop"} — ${pl.variety}`
+                      : (pl?.name || item.plant);
+                    const bn = bedName(item.bed);
+                    const statusLabel = item.status === "harvested"
+                      ? "Harvested"
+                      : (item.harvestStart ? "Harvest window open" : "Growing");
                     return (
                       <div key={item.id} className="bg-white rounded-xl p-3 card-shadow flex items-center gap-3">
                         <span className="text-2xl">{pl?.icon || "🌱"}</span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-sage-800">{pl?.variety || pl?.name || item.plant}</p>
-                          <p className="text-[10px] text-sage-500">{item.bed} · {item.status}</p>
+                          <p className="text-sm font-medium text-sage-800 leading-tight">{title}</p>
+                          <p className="text-[10px] text-sage-500 mt-0.5">
+                            {pl?.type || "Crop"} · {bn} · {statusLabel}
+                          </p>
                         </div>
                         <button type="button" onClick={() => saveSeedFromPlanting(item)} className="text-xs bg-sage-600 text-white px-3 py-2 rounded-xl font-medium shrink-0">
                           Save seed
@@ -3790,33 +3827,55 @@
           </div>
 
           {detailSeed && (() => {
-            const care = getSeedCareGuide(detailSeed.plantId || detailSeed.varietyId);
-            const pl = care.plant || resolvePlant(detailSeed.varietyId || detailSeed.plantId, customPlants);
+            // Always prefer live inventory row so +/- and manual edits show immediately
+            const live = (seeds || []).find(s => s.id === detailSeed.id) || detailSeed;
+            const care = getSeedCareGuide(live.plantId || live.varietyId);
+            const pl = care.plant || resolvePlant(live.varietyId || live.plantId, customPlants);
+            const step = live.measure === "weight" ? 0.1 : 1;
+            const unitLabel = live.unit || (live.measure === "weight" ? weightUnit : countUnit);
             return (
               <div className="fixed inset-0 bg-black/40 z-[100] flex items-end sm:items-center justify-center px-4 pt-4 pb-24" onClick={() => setDetailSeed(null)}>
                 <div className="bg-white rounded-2xl w-full max-w-sm max-h-[min(85vh,calc(100dvh-7rem))] flex flex-col shadow-xl" onClick={e => e.stopPropagation()}>
                   <div className="p-4 pb-2 shrink-0 flex gap-3">
                     <span className="text-4xl">{pl?.icon || "🌱"}</span>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-sage-800 leading-tight">{detailSeed.name}</h3>
-                      <p className="text-[10px] text-sage-500">{detailSeed.type} · {detailSeed.source || "inventory"}</p>
+                      <h3 className="font-semibold text-sage-800 leading-tight">{live.name}</h3>
+                      <p className="text-[10px] text-sage-500">{live.type} · {live.source || "inventory"}</p>
                     </div>
                     <button type="button" onClick={() => setDetailSeed(null)} className="text-sage-400">✕</button>
                   </div>
                   <div className="px-4 overflow-y-auto flex-1 min-h-0 space-y-3 pb-2">
-                    <div className="flex items-center justify-between bg-sage-50 rounded-xl p-3">
-                      <div>
-                        <p className="text-[10px] text-sage-500">On hand</p>
-                        <p className="text-lg font-bold text-sage-800">{formatQty(detailSeed)}</p>
+                    <div className="bg-sage-50 rounded-xl p-3 space-y-2">
+                      <p className="text-[10px] text-sage-500">On hand</p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => adjustQty(live.id, -step)}
+                          className="w-10 h-10 rounded-full bg-white border border-sage-200 text-sage-700 text-lg font-bold shrink-0"
+                        >−</button>
+                        <div className="flex-1 flex items-center gap-1.5">
+                          <input
+                            type="number"
+                            min={0}
+                            step={step}
+                            inputMode="decimal"
+                            value={live.qty}
+                            onChange={e => applyQty(live.id, e.target.value)}
+                            className="w-full text-center text-lg font-bold text-sage-800 bg-white border border-sage-200 rounded-xl px-2 py-2 outline-none focus:ring-2 focus:ring-sage-300"
+                          />
+                          <span className="text-xs text-sage-600 font-medium shrink-0 w-10">{unitLabel}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => adjustQty(live.id, step)}
+                          className="w-10 h-10 rounded-full bg-white border border-sage-200 text-sage-700 text-lg font-bold shrink-0"
+                        >+</button>
                       </div>
-                      <div className="flex gap-2">
-                        <button type="button" onClick={() => adjustQty(detailSeed.id, detailSeed.measure === "weight" ? -0.1 : -1)} className="w-9 h-9 rounded-full bg-white border text-sage-700 font-bold">−</button>
-                        <button type="button" onClick={() => adjustQty(detailSeed.id, detailSeed.measure === "weight" ? 0.1 : 1)} className="w-9 h-9 rounded-full bg-white border text-sage-700 font-bold">+</button>
-                      </div>
+                      <p className="text-[10px] text-sage-400 text-center">Tap the number to type a new quantity</p>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="bg-sage-50 rounded-xl p-2"><p className="text-[10px] text-sage-500">Germ rate</p><p className="font-medium">{detailSeed.germRate != null ? `${detailSeed.germRate}%` : "—"}</p></div>
-                      <div className="bg-sage-50 rounded-xl p-2"><p className="text-[10px] text-sage-500">Best by</p><p className="font-medium">{detailSeed.expires || "—"}</p></div>
+                      <div className="bg-sage-50 rounded-xl p-2"><p className="text-[10px] text-sage-500">Germ rate</p><p className="font-medium">{live.germRate != null ? `${live.germRate}%` : "—"}</p></div>
+                      <div className="bg-sage-50 rounded-xl p-2"><p className="text-[10px] text-sage-500">Best by</p><p className="font-medium">{live.expires || "—"}</p></div>
                       <div className="bg-sage-50 rounded-xl p-2"><p className="text-[10px] text-sage-500">Sun</p><p className="font-medium">{care.sun || "—"}</p></div>
                       <div className="bg-sage-50 rounded-xl p-2"><p className="text-[10px] text-sage-500">Spacing</p><p className="font-medium">{care.spacing || "—"}</p></div>
                     </div>
@@ -3831,10 +3890,10 @@
                         <p className="text-[11px] text-sage-600 leading-relaxed">{block.b}</p>
                       </div>
                     ))}
-                    {detailSeed.notes && <p className="text-[10px] text-sage-500">Notes: {detailSeed.notes}</p>}
+                    {live.notes && <p className="text-[10px] text-sage-500">Notes: {live.notes}</p>}
                   </div>
                   <div className="p-4 pt-2 border-t flex gap-2 shrink-0">
-                    <button type="button" onClick={() => removeSeed(detailSeed.id)} className="flex-1 py-2.5 rounded-xl border border-red-200 text-red-700 text-sm font-medium">Delete</button>
+                    <button type="button" onClick={() => removeSeed(live.id)} className="flex-1 py-2.5 rounded-xl border border-red-200 text-red-700 text-sm font-medium">Delete</button>
                     <button type="button" onClick={() => setDetailSeed(null)} className="flex-1 py-2.5 rounded-xl bg-sage-600 text-white text-sm font-medium">Done</button>
                   </div>
                 </div>
@@ -6784,6 +6843,7 @@
               customPlants={customPlants}
               profile={profile}
               setProfile={setProfile}
+              beds={beds}
             />
           )}
           {active === "calendar" && <CalendarScreen profile={profile} placed={placed} tasks={tasks} />}
