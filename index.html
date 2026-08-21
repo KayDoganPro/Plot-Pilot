@@ -1151,11 +1151,14 @@
       blueberry:{ tomato: 0, basil: 0, marigold: 0, lavender: 0, lettuce: 0, pepper: 0, carrot: 0 },
     };
 
-    const INITIAL_TASKS = [
-      { id: 1, title: "Water tomato bed", detail: "2 beds • 15 min", done: false, icon: "💧" },
-      { id: 2, title: "Start pepper seeds indoors", detail: "Seed tray • 20 min", done: false, icon: "🌱" },
-      { id: 3, title: "Fertilize blueberries", detail: "Blueberry bed • 10 min", done: false, icon: "🧪" },
-    ];
+    const INITIAL_TASKS = (() => {
+      const today = toISODate(new Date());
+      return [
+        { id: 1, title: "Water tomato bed", detail: "2 beds • 15 min", done: false, icon: "💧", due: today },
+        { id: 2, title: "Start pepper seeds indoors", detail: "Seed tray • 20 min", done: false, icon: "🌱", due: today },
+        { id: 3, title: "Fertilize blueberries", detail: "Blueberry bed • 10 min", done: false, icon: "🧪", due: today },
+      ];
+    })();
 
     const BED_COLORS = [
       "bg-red-100 border-red-300",
@@ -1810,6 +1813,21 @@
       const toggleTask = (id) => {
         setTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
       };
+      const [expandToday, setExpandToday] = useState(false);
+      const [expandOverdue, setExpandOverdue] = useState(false);
+      const TASK_PREVIEW = 4;
+
+      const todayISO = toISODate(new Date());
+      const taskLists = useMemo(() => {
+        const open = (tasks || []).filter(t => !t.done);
+        const overdue = open
+          .filter(t => t.due && t.due < todayISO)
+          .sort((a, b) => String(a.due).localeCompare(String(b.due)));
+        const today = open
+          .filter(t => t.due === todayISO)
+          .sort((a, b) => String(a.title || "").localeCompare(String(b.title || "")));
+        return { overdue, today };
+      }, [tasks, todayISO]);
 
       const weeklyBrief = useMemo(
         () => buildWeeklyBrief({ placed, seeds, profile, rotationHistory, tasks }),
@@ -2344,43 +2362,109 @@
               )}
             </section>
 
-            {/* Today's Tasks */}
-            <section>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold text-sage-800 flex items-center gap-2">
-                  <i className="fas fa-tasks text-sage-500"></i> Today's Tasks
-                </h2>
-                <button
-                  type="button"
-                  onClick={() => setActive && setActive("calendar")}
-                  className="text-xs text-sage-500 hover:text-sage-700 font-medium"
-                >
-                  View all
-                </button>
-              </div>
-              <div className="space-y-2">
-                {tasks.map(task => (
-                  <div
-                    key={task.id}
-                    onClick={() => toggleTask(task.id)}
-                    className={`flex items-center gap-3 bg-white rounded-xl p-3 card-shadow cursor-pointer transition ${
-                      task.done ? "opacity-60" : ""
-                    }`}
-                  >
-                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                      task.done ? "bg-sage-500 border-sage-500 text-white" : "border-sage-300"
-                    }`}>
-                      {task.done && <i className="fas fa-check text-xs"></i>}
-                    </div>
-                    <div className="flex-1">
-                      <p className={`font-medium ${task.done ? "line-through text-sage-400" : "text-sage-800"}`}>
-                        {task.title}
-                      </p>
-                      <p className="text-xs text-sage-500">{task.detail}</p>
-                    </div>
-                    <span className="text-xl">{task.icon}</span>
+            {/* Overdue + Today's Tasks */}
+            <section className="space-y-4">
+              {taskLists.overdue.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="font-semibold text-sage-800 flex items-center gap-2">
+                      <span className="text-red-500">⏰</span> Overdue
+                      <span className="text-[10px] font-medium bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full">
+                        {taskLists.overdue.length}
+                      </span>
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={() => setActive && setActive("calendar")}
+                      className="text-xs text-sage-500 hover:text-sage-700 font-medium"
+                    >
+                      Calendar
+                    </button>
                   </div>
-                ))}
+                  <div className="space-y-2">
+                    {(expandOverdue ? taskLists.overdue : taskLists.overdue.slice(0, TASK_PREVIEW)).map(task => (
+                      <div
+                        key={task.id}
+                        onClick={() => toggleTask(task.id)}
+                        className="flex items-center gap-3 bg-white rounded-xl p-3 card-shadow cursor-pointer border border-red-100"
+                      >
+                        <div className="w-6 h-6 rounded-full border-2 border-red-300 flex items-center justify-center shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sage-800 truncate">{task.title}</p>
+                          <p className="text-xs text-red-600">
+                            Due {task.due}{task.detail ? ` · ${task.detail}` : ""}
+                          </p>
+                        </div>
+                        <span className="text-xl shrink-0">{task.icon || "⚠️"}</span>
+                      </div>
+                    ))}
+                    {taskLists.overdue.length > TASK_PREVIEW && (
+                      <button
+                        type="button"
+                        onClick={() => setExpandOverdue(v => !v)}
+                        className="w-full py-2 text-xs font-medium text-red-700 bg-red-50 rounded-xl"
+                      >
+                        {expandOverdue ? "Show less" : `See ${taskLists.overdue.length - TASK_PREVIEW} more overdue`}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="font-semibold text-sage-800 flex items-center gap-2">
+                    <i className="fas fa-tasks text-sage-500"></i> Today's Tasks
+                    {taskLists.today.length > 0 && (
+                      <span className="text-[10px] font-medium bg-sage-100 text-sage-700 px-1.5 py-0.5 rounded-full">
+                        {taskLists.today.length}
+                      </span>
+                    )}
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => setActive && setActive("calendar")}
+                    className="text-xs text-sage-500 hover:text-sage-700 font-medium"
+                  >
+                    View all
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {taskLists.today.length === 0 ? (
+                    <div className="bg-white rounded-xl p-4 card-shadow text-center">
+                      <p className="text-sm text-sage-600">Nothing due today</p>
+                      <p className="text-[10px] text-sage-400 mt-1">
+                        {taskLists.overdue.length > 0
+                          ? "Clear overdue items above, or open Calendar for upcoming work."
+                          : "You're caught up — check Calendar for later this week."}
+                      </p>
+                    </div>
+                  ) : (
+                    (expandToday ? taskLists.today : taskLists.today.slice(0, TASK_PREVIEW)).map(task => (
+                      <div
+                        key={task.id}
+                        onClick={() => toggleTask(task.id)}
+                        className="flex items-center gap-3 bg-white rounded-xl p-3 card-shadow cursor-pointer"
+                      >
+                        <div className="w-6 h-6 rounded-full border-2 border-sage-300 flex items-center justify-center shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sage-800 truncate">{task.title}</p>
+                          <p className="text-xs text-sage-500 truncate">{task.detail || "Due today"}</p>
+                        </div>
+                        <span className="text-xl shrink-0">{task.icon}</span>
+                      </div>
+                    ))
+                  )}
+                  {taskLists.today.length > TASK_PREVIEW && (
+                    <button
+                      type="button"
+                      onClick={() => setExpandToday(v => !v)}
+                      className="w-full py-2 text-xs font-medium text-sage-700 bg-sage-50 rounded-xl"
+                    >
+                      {expandToday ? "Show less" : `See ${taskLists.today.length - TASK_PREVIEW} more for today`}
+                    </button>
+                  )}
+                </div>
               </div>
             </section>
 
