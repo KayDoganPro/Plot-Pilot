@@ -119,6 +119,206 @@
       { id: "asparagus", name: "Asparagus", scientific: "Asparagus officinalis", type: "Vegetable", spacing: "12-18 in", spacingIn: 18, sun: "Full sun", icon: "🥬", family: "Asparagaceae", familyName: "Asparagus", germDays: 21, daysToHarvest: 730, fertilizeEveryDays: 60, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0, method: "direct", successionDays: 0 },
     ];
 
+    /**
+     * Variety catalog curated from popular Eden Brothers (EB) & Seed Savers Exchange (SSE) listings.
+     * Format: [slug, displayName, sources] — sources: "EB" | "SSE" | "Both"
+     * Not a live scrape of entire catalogs (2000+ SKUs change yearly); expand anytime.
+     */
+    const VARIETY_RAW = {
+      tomato: [
+        ["brandywine", "Brandywine", "SSE"], ["amish-paste", "Amish Paste", "SSE"], ["cherokee-purple", "Cherokee Purple", "Both"],
+        ["black-krim", "Black Krim", "Both"], ["paul-robeson", "Paul Robeson", "SSE"], ["kelloggs-breakfast", "Kellogg's Breakfast", "SSE"],
+        ["roma", "Roma", "EB"], ["san-marzano", "San Marzano", "Both"], ["cherry-red", "Small Red Cherry", "EB"],
+        ["black-cherry", "Black Cherry", "SSE"], ["green-grape", "Green Grape", "SSE"], ["isis-candy", "Isis Candy Cherry", "SSE"],
+        ["dester", "Dester", "SSE"], ["federle", "Federle", "SSE"], ["black-sea-man", "Black Sea Man", "SSE"],
+        ["silvery-fir-tree", "Silvery Fir Tree", "SSE"], ["wapsipinicon-peach", "Wapsipinicon Peach", "SSE"],
+        ["eva-purple-ball", "Eva Purple Ball", "SSE"], ["wisconsin-55", "Wisconsin 55", "SSE"], ["trophy", "Trophy", "SSE"],
+        ["cherry-roma", "Cherry Roma", "SSE"], ["rosso-sicilian", "Rosso Sicilian", "SSE"], ["beefsteak", "Beefsteak", "EB"],
+        ["early-girl", "Early Girl", "EB"], ["celebrity", "Celebrity", "EB"], ["sungold", "Sun Gold", "EB"],
+        ["indigo-rose", "Indigo Rose", "EB"], ["mortgage-lifter", "Mortgage Lifter", "Both"], ["german-johnson", "German Johnson", "SSE"],
+      ],
+      pepper: [
+        ["california-wonder", "California Wonder", "EB"], ["shishito", "Shishito", "SSE"], ["fish", "Fish Pepper", "SSE"],
+        ["jalapeno", "Jalapeño", "Both"], ["cayenne", "Cayenne", "EB"], ["habanero", "Habanero", "EB"],
+        ["marconi-red", "Marconi Red", "SSE"], ["sheepnose-pimento", "Sheepnose Pimento", "SSE"],
+        ["ancho", "Ancho Gigantea", "SSE"], ["fatalii", "Fatalii", "SSE"], ["bell-rainbow", "Rainbow Sweet Bell", "EB"],
+        ["mini-yellow-bell", "Miniature Yellow Bell", "SSE"], ["cayennetta", "Cayennetta", "EB"],
+        ["hungarian-wax", "Hungarian Wax", "Both"], ["serrano", "Serrano", "EB"], ["poblano", "Poblano", "EB"],
+      ],
+      lettuce: [
+        ["buttercrunch", "Buttercrunch", "EB"], ["forellenschluss", "Forellenschluss", "SSE"], ["jebousek", "Jebousek", "SSE"],
+        ["grandma-hadley", "Grandma Hadley's", "SSE"], ["speckled", "Speckled", "SSE"], ["red-velvet", "Red Velvet", "SSE"],
+        ["winter-density", "Winter Density", "SSE"], ["aunt-maes-bibb", "Aunt Mae's Bibb", "SSE"],
+        ["garden-blend", "Garden Blend", "EB"], ["romaine", "Romaine", "EB"], ["oakleaf", "Oakleaf", "EB"],
+        ["lollo-rosso", "Lollo Rosso", "EB"], ["iceberg", "Iceberg", "EB"], ["black-seeded-simpson", "Black Seeded Simpson", "Both"],
+      ],
+      carrot: [
+        ["danvers-126", "Danvers 126", "EB"], ["rainbow-blend", "Rainbow Blend", "EB"], ["dragon", "Dragon", "SSE"],
+        ["nantes", "Nantes", "Both"], ["imperator", "Imperator", "EB"], ["cosmic-purple", "Cosmic Purple", "EB"],
+        ["solar-yellow", "Solar Yellow", "SSE"], ["little-finger", "Little Finger", "EB"], ["bolero", "Bolero", "EB"],
+      ],
+      cucumber: [
+        ["spacemaster", "Spacemaster", "EB"], ["quick-snack", "Kitchen Minis Quick Snack", "EB"],
+        ["boothbys-blonde", "Boothby's Blonde", "SSE"], ["suyo-long", "Suyo Long", "SSE"],
+        ["miniature-white", "Miniature White", "SSE"], ["russian-pickling", "Russian Pickling", "SSE"],
+        ["mexican-sour-gherkin", "Mexican Sour Gherkin", "SSE"], ["a-c-pickling", "A & C Pickling", "SSE"],
+        ["marketmore", "Marketmore 76", "Both"], ["national-pickling", "National Pickling", "EB"], ["bushy", "Bushy", "SSE"],
+      ],
+      bean: [
+        ["contender", "Contender Bush", "EB"], ["provider", "Provider", "EB"], ["blue-lake", "Blue Lake", "Both"],
+        ["rattlesnake", "Rattlesnake Snap", "SSE"], ["kelvedon-marvel", "Kelvedon Marvel Runner", "SSE"],
+        ["arikara-yellow", "Arikara Yellow", "SSE"], ["fin-de-bagnol", "Fin de Bagnol", "SSE"],
+        ["kentucky-wonder", "Kentucky Wonder", "Both"], ["dragon-tongue", "Dragon Tongue", "SSE"],
+        ["cherokee-trail", "Cherokee Trail of Tears", "SSE"], ["royal-burgundy", "Royal Burgundy", "EB"],
+      ],
+      pea: [
+        ["sugar-snap", "Sugar Snap", "EB"], ["sugar-ann", "Sugar Ann", "EB"], ["sugar-daddy", "Sugar Daddy", "EB"],
+        ["tom-thumb", "Tom Thumb", "SSE"], ["lincoln", "Lincoln", "Both"], ["alaska", "Alaska", "EB"],
+        ["green-arrow", "Green Arrow", "EB"], ["oregon-sugar-pod", "Oregon Sugar Pod", "EB"],
+      ],
+      corn: [
+        ["glass-gem", "Glass Gem", "SSE"], ["golden-bantam", "Golden Bantam", "Both"], ["honey-select", "Honey Select", "EB"],
+        ["peaches-cream", "Peaches and Cream", "EB"], ["bloody-butcher", "Bloody Butcher", "SSE"],
+        ["country-gentleman", "Country Gentleman", "SSE"], ["silver-queen", "Silver Queen", "EB"],
+      ],
+      beet: [
+        ["detroit-dark-red", "Detroit Dark Red", "Both"], ["chioggia", "Chioggia", "Both"], ["albino", "Albino", "SSE"],
+        ["golden", "Golden", "EB"], ["cylindra", "Cylindra", "EB"], ["bulls-blood", "Bull's Blood", "SSE"],
+      ],
+      kale: [
+        ["dwarf-blue-curled", "Dwarf Blue Curled", "SSE"], ["lacinato", "Lacinato (Dinosaur)", "Both"],
+        ["red-russian", "Red Russian", "Both"], ["winterbor", "Winterbor", "EB"], ["scarlet", "Scarlet", "EB"],
+      ],
+      spinach: [
+        ["bloomsdale", "Bloomsdale", "EB"], ["space", "Space", "EB"], ["tyee", "Tyee", "EB"],
+        ["giant-winter", "Giant Winter", "SSE"], ["matador", "Matador", "EB"],
+      ],
+      radish: [
+        ["french-breakfast", "French Breakfast", "SSE"], ["cherry-belle", "Cherry Belle", "Both"],
+        ["holmes-royal-red", "Holmes Royal Red", "SSE"], ["white-icicle", "White Icicle", "EB"],
+        ["watermelon", "Watermelon Radish", "EB"], ["daikon", "Daikon", "EB"],
+      ],
+      zucchini: [
+        ["black-beauty", "Black Beauty", "EB"], ["costata-romanesco", "Costata Romanesco", "SSE"],
+        ["golden", "Golden Zucchini", "EB"], ["cocozelle", "Cocozelle", "SSE"],
+      ],
+      squash: [
+        ["butternut", "Waltham Butternut", "Both"], ["fordhook-acorn", "Fordhook Acorn", "SSE"],
+        ["dostal", "Dostal", "SSE"], ["tennessee-sweet-potato", "Tennessee Sweet Potato Squash", "SSE"],
+        ["delicata", "Delicata", "Both"], ["spaghetti", "Spaghetti Squash", "EB"],
+      ],
+      pumpkin: [
+        ["fairytale", "Fairytale", "EB"], ["howden", "Howden", "EB"], ["cinderella", "Rouge Vif d'Etampes", "SSE"],
+        ["small-sugar", "Small Sugar", "Both"], ["jack-be-little", "Jack Be Little", "EB"],
+      ],
+      watermelon: [
+        ["moon-stars", "Moon & Stars", "SSE"], ["blacktail-mountain", "Blacktail Mountain", "SSE"],
+        ["orangeglo", "Orangeglo", "SSE"], ["golden-midget", "Golden Midget", "SSE"],
+        ["crimson-sweet", "Crimson Sweet", "EB"], ["sugar-baby", "Sugar Baby", "EB"],
+      ],
+      melon: [
+        ["ha-ogen", "Ha'Ogen", "SSE"], ["emerald-gem", "Emerald Gem", "SSE"], ["amish", "Amish Melon", "SSE"],
+        ["pride-of-wisconsin", "Pride of Wisconsin", "SSE"], ["hale-best", "Hale's Best", "EB"],
+        ["minnesota-midget", "Minnesota Midget", "SSE"],
+      ],
+      eggplant: [
+        ["diamond", "Diamond", "SSE"], ["florida-high-bush", "Florida High Bush", "SSE"],
+        ["black-beauty", "Black Beauty", "EB"], ["ichiban", "Ichiban", "EB"], ["rosa-bianca", "Rosa Bianca", "SSE"],
+      ],
+      onion: [
+        ["newburg", "Newburg", "SSE"], ["yellow-sweet-spanish", "Yellow Sweet Spanish", "EB"],
+        ["red-burgundy", "Red Burgundy", "EB"], ["cipollini", "Cipollini", "EB"], ["walla-walla", "Walla Walla", "EB"],
+      ],
+      garlic: [
+        ["chesnok-red", "Chesnok Red", "EB"], ["music", "Music", "Both"], ["german-extra-hardy", "German Extra Hardy", "EB"],
+        ["inchelium-red", "Inchelium Red", "SSE"],
+      ],
+      broccoli: [
+        ["calabrese", "Calabrese", "Both"], ["waltham-29", "Waltham 29", "EB"], ["di-cicco", "Di Cicco", "SSE"],
+        ["belstar", "Belstar", "EB"],
+      ],
+      cabbage: [
+        ["early-jersey", "Early Jersey Wakefield", "Both"], ["brunswick", "Brunswick", "SSE"],
+        ["red-acre", "Red Acre", "EB"], ["savoy", "Savoy", "EB"],
+      ],
+      chard: [
+        ["five-color-silverbeet", "Five Color Silverbeet", "SSE"], ["fordhook-giant", "Fordhook Giant", "SSE"],
+        ["bright-lights", "Bright Lights", "EB"], ["rhubarb", "Rhubarb Chard", "EB"],
+      ],
+      basil: [
+        ["genovese", "Genovese", "EB"], ["sweet", "Sweet Basil", "EB"], ["thai", "Thai Basil", "EB"],
+        ["purple-ruffles", "Purple Ruffles", "EB"], ["lemon", "Lemon Basil", "EB"], ["holy", "Holy Basil", "EB"],
+      ],
+      cilantro: [
+        ["long-standing", "Long Standing", "EB"], ["santo", "Santo", "EB"], ["slow-bolt", "Slow Bolt", "Both"],
+      ],
+      parsley: [
+        ["italian-flat", "Italian Flat Leaf", "Both"], ["curly", "Curly Parsley", "EB"], ["gigante", "Gigante d'Italia", "SSE"],
+      ],
+      dill: [
+        ["bouquet", "Bouquet", "EB"], ["mammoth", "Mammoth", "Both"], ["fernleaf", "Fernleaf", "EB"],
+      ],
+      thyme: [
+        ["english", "English Thyme", "EB"], ["creeping", "Creeping Thyme", "EB"], ["lemon", "Lemon Thyme", "EB"],
+      ],
+      oregano: [
+        ["greek", "Greek Oregano", "EB"], ["italian", "Italian Oregano", "EB"],
+      ],
+      rosemary: [
+        ["arp", "Arp", "EB"], ["tuscany-blue", "Tuscany Blue", "EB"],
+      ],
+      lavender: [
+        ["munstead", "Munstead", "EB"], ["hidcote", "Hidcote", "EB"], ["grosso", "Grosso", "EB"],
+      ],
+      sunflower: [
+        ["mammoth", "Mammoth", "EB"], ["autumn-beauty", "Autumn Beauty", "EB"], ["teddy-bear", "Teddy Bear", "EB"],
+        ["evening-sun", "Evening Sun", "EB"], ["russian-giant", "Russian Giant", "Both"],
+      ],
+      marigold: [
+        ["french-mix", "French Mix", "EB"], ["african-tall", "African Tall", "EB"], ["signet", "Signet", "EB"],
+      ],
+      potato: [
+        ["yukon-gold", "Yukon Gold", "Both"], ["russet-burbank", "Russet Burbank", "EB"],
+        ["purple-majesty", "Purple Majesty", "EB"], ["red-norland", "Red Norland", "Both"],
+      ],
+      okra: [
+        ["clemson-spineless", "Clemson Spineless", "Both"], ["red-burgundy", "Red Burgundy", "SSE"],
+        ["star-of-david", "Star of David", "SSE"],
+      ],
+    };
+
+    // Expand varieties into full plant entries (inherit timing from parent crop)
+    const VARIETY_LIBRARY = (() => {
+      const out = [];
+      Object.keys(VARIETY_RAW).forEach(cropId => {
+        const parent = PLANT_LIBRARY.find(p => p.id === cropId);
+        if (!parent) return;
+        VARIETY_RAW[cropId].forEach(([slug, vname, sources]) => {
+          out.push({
+            ...parent,
+            id: `${cropId}__${slug}`,
+            name: `${parent.name} — ${vname}`,
+            variety: vname,
+            cropId,
+            cropName: parent.name,
+            sources,
+            isVariety: true,
+          });
+        });
+      });
+      return out;
+    })();
+
+    // Full selectable library: base crops + varieties
+    const FULL_PLANT_LIBRARY = [...PLANT_LIBRARY, ...VARIETY_LIBRARY];
+
+    function resolvePlant(id, customPlants) {
+      return FULL_PLANT_LIBRARY.find(p => p.id === id)
+        || PLANT_LIBRARY.find(p => p.id === id)
+        || (customPlants || []).find(p => p.id === id)
+        || null;
+    }
+
     // Family colors for visual badges
     const FAMILY_COLORS = {
       Solanaceae: "bg-red-100 text-red-700",
@@ -178,7 +378,7 @@
     }
 
     function getPlant(id, customPlants) {
-      return PLANT_LIBRARY.find(p => p.id === id) || (customPlants || []).find(p => p.id === id);
+      return resolvePlant(id, customPlants);
     }
 
     // Date helpers
@@ -571,7 +771,26 @@
       "bg-amber-100 border-amber-300",
       "bg-teal-100 border-teal-300",
       "bg-lime-100 border-lime-300",
+      "bg-pink-100 border-pink-300",
+      "bg-sky-100 border-sky-300",
+      "bg-rose-100 border-rose-300",
+      "bg-yellow-100 border-yellow-300",
     ];
+
+    const BED_COLOR_LABELS = {
+      "bg-red-100 border-red-300": "Red",
+      "bg-green-100 border-green-300": "Green",
+      "bg-orange-100 border-orange-300": "Orange",
+      "bg-blue-100 border-blue-300": "Blue",
+      "bg-purple-100 border-purple-300": "Purple",
+      "bg-amber-100 border-amber-300": "Amber",
+      "bg-teal-100 border-teal-300": "Teal",
+      "bg-lime-100 border-lime-300": "Lime",
+      "bg-pink-100 border-pink-300": "Pink",
+      "bg-sky-100 border-sky-300": "Sky",
+      "bg-rose-100 border-rose-300": "Rose",
+      "bg-yellow-100 border-yellow-300": "Yellow",
+    };
 
     const DEFAULT_BEDS = [
       { id: "tomato", name: "Tomato Bed", color: "bg-red-100 border-red-300", widthFt: 4, lengthFt: 8, sun: "Full sun", mapX: 5, mapY: 5 },
@@ -1728,9 +1947,10 @@
       const [undoStack, setUndoStack] = useState([]);
       const [showMap, setShowMap] = useState(true);
       const [editingBed, setEditingBed] = useState(null); // bed object being edited
-      const [bedDraft, setBedDraft] = useState({ name: "", widthFt: 4, lengthFt: 8, sun: "Full sun", mapX: 10, mapY: 10 });
+      const [bedDraft, setBedDraft] = useState({ name: "", widthFt: 4, lengthFt: 8, sun: "Full sun", mapX: 10, mapY: 10, color: BED_COLORS[0] });
       // Mobile-friendly: multi-select plants, then tap a bed to plant
       const [selectedPlantIds, setSelectedPlantIds] = useState([]);
+      const [layoutTypeFilter, setLayoutTypeFilter] = useState("All");
 
       const togglePlantSelect = (plantId) => {
         setSelectedPlantIds(prev =>
@@ -1741,13 +1961,17 @@
       const clearPlantSelection = () => setSelectedPlantIds([]);
 
       const placePlantOnBed = (plantId, bedId) => {
-        const plantInfo = PLANT_LIBRARY.find(p => p.id === plantId);
+        const plantInfo = resolvePlant(plantId) || PLANT_LIBRARY.find(p => p.id === plantId);
         if (!plantInfo) return false;
-        const bedPlants = placed.filter(p => p.bed === bedId).map(p => p.plant);
-        const conflicts = bedPlants.filter(pid => getRelation(plantId, pid) < 0);
+        const cropKey = plantInfo.cropId || plantInfo.id;
+        const bedCropKeys = placed.filter(p => p.bed === bedId).map(p => {
+          const pl = resolvePlant(p.plant);
+          return pl?.cropId || p.plant;
+        });
+        const conflicts = bedCropKeys.filter(pid => getRelation(cropKey, pid) < 0);
         if (conflicts.length > 0) {
           const names = conflicts.map(c => PLANT_LIBRARY.find(p => p.id === c)?.name || c).join(", ");
-          if (!confirm(`⚠️ ${plantInfo.name} may conflict with: ${names}.\n\nPlant anyway?`)) return false;
+          if (!confirm(`⚠️ ${plantInfo.variety || plantInfo.name} may conflict with: ${names}.\n\nPlant anyway?`)) return false;
         }
         const plantedAt = toISODate(new Date());
         const planY = planYear || new Date().getFullYear();
@@ -1812,7 +2036,7 @@
           sun: bed.sun || "Full sun",
           mapX: bed.mapX != null ? bed.mapX : 10,
           mapY: bed.mapY != null ? bed.mapY : 10,
-          color: bed.color,
+          color: bed.color || BED_COLORS[0],
         });
       };
 
@@ -1824,6 +2048,7 @@
           widthFt: Math.max(1, Number(bedDraft.widthFt) || 4),
           lengthFt: Math.max(1, Number(bedDraft.lengthFt) || 8),
           sun: bedDraft.sun,
+          color: bedDraft.color || b.color,
           mapX: Math.min(90, Math.max(0, Number(bedDraft.mapX) || 0)),
           mapY: Math.min(85, Math.max(0, Number(bedDraft.mapY) || 0)),
         } : b));
@@ -2300,22 +2525,35 @@
               </div>
             )}
 
-            {/* Plant Library – multi-select then tap bed */}
+            {/* Plant Library – multi-select crop or expand variety */}
             <div className="flex justify-between items-center mb-1">
               <h3 className="font-semibold text-sage-800">Plant Library</h3>
               {selectedPlantIds.length > 0 && (
                 <button type="button" onClick={clearPlantSelection} className="text-xs text-sage-600 font-medium">Clear ({selectedPlantIds.length})</button>
               )}
             </div>
-            <p className="text-xs text-sage-500 mb-3">
+            <p className="text-xs text-sage-500 mb-2">
               {selectedPlantIds.length
-                ? `Selected ${selectedPlantIds.length} — tap a bed on the map or list to plant`
-                : "Tap to select plants (multi-select), then tap a bed"}
+                ? `Selected ${selectedPlantIds.length} — tap a bed to plant`
+                : "Tap crop to select · long list of varieties under More → Plants"}
             </p>
+            <div className="flex gap-1.5 overflow-x-auto pb-2 mb-2">
+              {["Vegetable", "Herb", "Fruit", "Flower"].map(t => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setLayoutTypeFilter(layoutTypeFilter === t ? "All" : t)}
+                  className={`px-2.5 py-1 rounded-full text-[10px] font-medium whitespace-nowrap ${
+                    layoutTypeFilter === t ? "bg-sage-600 text-white" : "bg-white text-sage-600 card-shadow"
+                  }`}
+                >{t}</button>
+              ))}
+            </div>
             <div className="grid grid-cols-4 gap-2">
-              {PLANT_LIBRARY.map(plant => {
+              {PLANT_LIBRARY.filter(p => layoutTypeFilter === "All" || p.type === layoutTypeFilter).map(plant => {
                 const isSuggested = suggestions.some(s => s.id === plant.id && s.score > 0);
-                const isSelected = selectedPlantIds.includes(plant.id);
+                const isSelected = selectedPlantIds.includes(plant.id)
+                  || selectedPlantIds.some(id => id.startsWith(plant.id + "__"));
                 return (
                   <button
                     type="button"
@@ -2330,6 +2568,9 @@
                     )}
                     <div className="text-2xl mb-1 select-none">{plant.icon}</div>
                     <p className="text-[10px] font-medium leading-tight select-none">{plant.name}</p>
+                    {(VARIETY_RAW[plant.id] || []).length > 0 && (
+                      <p className="text-[8px] text-sage-400">{(VARIETY_RAW[plant.id] || []).length} var.</p>
+                    )}
                   </button>
                 );
               })}
@@ -2357,6 +2598,18 @@
                 <select className="w-full border rounded-xl px-3 py-2 text-sm mb-2" value={bedDraft.sun} onChange={e => setBedDraft(f => ({ ...f, sun: e.target.value }))}>
                   {["Full sun", "Partial", "Shade"].map(s => <option key={s}>{s}</option>)}
                 </select>
+                <label className="text-xs text-sage-500">Bed color</label>
+                <div className="grid grid-cols-6 gap-2 mb-3 mt-1">
+                  {BED_COLORS.map(c => (
+                    <button
+                      key={c}
+                      type="button"
+                      title={BED_COLOR_LABELS[c] || c}
+                      onClick={() => setBedDraft(f => ({ ...f, color: c }))}
+                      className={`h-9 rounded-lg border-2 ${c} ${bedDraft.color === c ? "ring-2 ring-sage-600 scale-105" : "opacity-90"}`}
+                    />
+                  ))}
+                </div>
                 <div className="flex gap-2 mb-3">
                   <div className="flex-1">
                     <label className="text-xs text-sage-500">Map left %</label>
@@ -3106,7 +3359,7 @@
 
       const openNewBed = () => {
         setEditingBedId(null);
-        setBedForm({ name: "", widthFt: 4, lengthFt: 8, sun: "Full sun", mapX: 10, mapY: 10 });
+        setBedForm({ name: "", widthFt: 4, lengthFt: 8, sun: "Full sun", mapX: 10, mapY: 10, color: BED_COLORS[0] });
         setShowBedForm(true);
       };
 
@@ -3119,6 +3372,7 @@
           sun: b.sun || "Full sun",
           mapX: b.mapX != null ? b.mapX : 10,
           mapY: b.mapY != null ? b.mapY : 10,
+          color: b.color || BED_COLORS[0],
         });
         setShowBedForm(true);
       };
@@ -3132,6 +3386,7 @@
             widthFt: Math.max(1, Number(bedForm.widthFt) || 4),
             lengthFt: Math.max(1, Number(bedForm.lengthFt) || 8),
             sun: bedForm.sun,
+            color: bedForm.color || b.color,
             mapX: Math.min(90, Math.max(0, Number(bedForm.mapX) || 0)),
             mapY: Math.min(85, Math.max(0, Number(bedForm.mapY) || 0)),
           } : b));
@@ -3143,12 +3398,12 @@
             widthFt: Math.max(1, Number(bedForm.widthFt) || 4),
             lengthFt: Math.max(1, Number(bedForm.lengthFt) || 8),
             sun: bedForm.sun,
-            color: BED_COLORS[prev.length % BED_COLORS.length],
+            color: bedForm.color || BED_COLORS[prev.length % BED_COLORS.length],
             mapX: Math.min(90, Math.max(0, Number(bedForm.mapX) || 10)),
             mapY: Math.min(85, Math.max(0, Number(bedForm.mapY) || 10)),
           }]);
         }
-        setBedForm({ name: "", widthFt: 4, lengthFt: 8, sun: "Full sun", mapX: 10, mapY: 10 });
+        setBedForm({ name: "", widthFt: 4, lengthFt: 8, sun: "Full sun", mapX: 10, mapY: 10, color: BED_COLORS[0] });
         setEditingBedId(null);
         setShowBedForm(false);
       };
@@ -3384,6 +3639,18 @@
                 <select className="w-full border rounded-xl px-3 py-2 text-sm mb-2" value={bedForm.sun} onChange={e => setBedForm(f => ({ ...f, sun: e.target.value }))}>
                   {["Full sun", "Partial", "Shade"].map(s => <option key={s}>{s}</option>)}
                 </select>
+                <label className="text-xs text-sage-500">Bed color</label>
+                <div className="grid grid-cols-6 gap-2 mb-3 mt-1">
+                  {BED_COLORS.map(c => (
+                    <button
+                      key={c}
+                      type="button"
+                      title={BED_COLOR_LABELS[c] || c}
+                      onClick={() => setBedForm(f => ({ ...f, color: c }))}
+                      className={`h-9 rounded-lg border-2 ${c} ${(bedForm.color || BED_COLORS[0]) === c ? "ring-2 ring-sage-600 scale-105" : "opacity-90"}`}
+                    />
+                  ))}
+                </div>
                 <div className="flex gap-2 mb-3">
                   <div className="flex-1">
                     <label className="text-xs text-sage-500">Map left %</label>
@@ -3408,15 +3675,25 @@
     function PlantsScreen({ customPlants, setCustomPlants }) {
       const [filter, setFilter] = useState("All");
       const [search, setSearch] = useState("");
+      const [sourceFilter, setSourceFilter] = useState("All"); // All | EB | SSE | Both
+      const [openCrop, setOpenCrop] = useState(null);
       const [showAdd, setShowAdd] = useState(false);
       const [newPlant, setNewPlant] = useState({ name: "", type: "Vegetable", icon: "🌱", germDays: 7, daysToHarvest: 60 });
-      const allPlants = [...PLANT_LIBRARY, ...(customPlants || [])];
       const types = ["All", "Vegetable", "Herb", "Fruit", "Flower"];
-      const filtered = allPlants.filter(p => {
-        if (filter !== "All" && p.type !== filter) return false;
-        if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
-        return true;
-      });
+
+      const crops = useMemo(() => {
+        return PLANT_LIBRARY.filter(p => filter === "All" || p.type === filter)
+          .filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase())
+            || (VARIETY_RAW[p.id] || []).some(([, vn]) => vn.toLowerCase().includes(search.toLowerCase())));
+      }, [filter, search]);
+
+      const varietiesFor = (cropId) => {
+        return VARIETY_LIBRARY.filter(v => v.cropId === cropId).filter(v => {
+          if (sourceFilter === "All") return true;
+          if (sourceFilter === "Both") return v.sources === "Both" || (v.sources && v.sources.includes("EB") && v.sources.includes("SSE"));
+          return v.sources === sourceFilter || v.sources === "Both";
+        }).filter(v => !search || v.variety.toLowerCase().includes(search.toLowerCase()) || v.name.toLowerCase().includes(search.toLowerCase()));
+      };
 
       const addCustom = () => {
         if (!newPlant.name.trim()) return;
@@ -3437,16 +3714,21 @@
         setNewPlant({ name: "", type: "Vegetable", icon: "🌱", germDays: 7, daysToHarvest: 60 });
       };
 
+      const varietyCount = VARIETY_LIBRARY.length;
+
       return (
         <div className="pb-24">
           <Header title="Plant Library" right={
             <button onClick={() => setShowAdd(true)} className="text-xs bg-sage-600 text-white px-2.5 py-1.5 rounded-lg font-medium">+ Add</button>
           } />
           <div className="px-4 pt-4 space-y-3">
+            <p className="text-[10px] text-sage-500">
+              {PLANT_LIBRARY.length} crops · {varietyCount} varieties (Eden Brothers & Seed Savers inspired). Pick type → expand crop → choose variety.
+            </p>
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search plants…"
+              placeholder="Search crop or variety…"
               className="w-full border border-sage-200 rounded-xl px-3 py-2 text-sm"
             />
             <div className="flex gap-1.5 overflow-x-auto pb-1">
@@ -3457,31 +3739,78 @@
                 </button>
               ))}
             </div>
-            {filtered.map(plant => (
+            <div className="flex gap-1.5 overflow-x-auto pb-1">
+              {["All", "EB", "SSE", "Both"].map(s => (
+                <button key={s} type="button" onClick={() => setSourceFilter(s)}
+                  className={`px-2.5 py-1 rounded-full text-[10px] font-medium ${sourceFilter === s ? "bg-amber-600 text-white" : "bg-white text-sage-600 card-shadow"}`}>
+                  {s === "All" ? "All sources" : s === "EB" ? "Eden Brothers" : s === "SSE" ? "Seed Savers" : "Both catalogs"}
+                </button>
+              ))}
+            </div>
+
+            {crops.map(plant => {
+              const vars = varietiesFor(plant.id);
+              const isOpen = openCrop === plant.id;
+              return (
+                <div key={plant.id} className="bg-white rounded-2xl card-shadow overflow-hidden">
+                  <button
+                    type="button"
+                    className="w-full p-4 flex gap-3 text-left"
+                    onClick={() => setOpenCrop(isOpen ? null : plant.id)}
+                  >
+                    <div className="text-3xl">{plant.icon}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start gap-2">
+                        <h3 className="font-semibold text-sage-800">{plant.name}</h3>
+                        <span className="text-[10px] text-sage-500 shrink-0">{vars.length} var. {isOpen ? "▲" : "▼"}</span>
+                      </div>
+                      <p className="text-xs text-sage-400 italic">{plant.scientific}</p>
+                      <div className="flex flex-wrap gap-1 mt-1 text-[10px]">
+                        <span className="bg-sage-100 text-sage-600 px-2 py-0.5 rounded">{plant.type}</span>
+                        <span className={`px-2 py-0.5 rounded ${FAMILY_COLORS[plant.family] || "bg-sage-100"}`}>{plant.familyName}</span>
+                      </div>
+                    </div>
+                  </button>
+                  {isOpen && (
+                    <div className="px-4 pb-4 border-t border-sage-100 pt-2 space-y-1.5">
+                      <div className="grid grid-cols-2 gap-1 text-[10px] text-sage-600 mb-2">
+                        <span>🌱 Germ {plant.germDays}d</span>
+                        <span>🧺 ~{plant.daysToHarvest}d harvest</span>
+                        <span>📐 {plant.spacing}</span>
+                        <span>{plant.method === "indoor" ? "Start indoors" : "Direct sow"}</span>
+                      </div>
+                      <p className="text-[10px] font-semibold text-sage-500 uppercase tracking-wide">Varieties</p>
+                      {vars.length === 0 ? (
+                        <p className="text-xs text-sage-400">No varieties for this source filter</p>
+                      ) : vars.map(v => (
+                        <div key={v.id} className="flex items-center justify-between bg-sage-50 rounded-xl px-3 py-2">
+                          <div>
+                            <p className="text-sm font-medium text-sage-800">{v.variety}</p>
+                            <p className="text-[10px] text-sage-500">
+                              {v.sources === "EB" ? "Eden Brothers" : v.sources === "SSE" ? "Seed Savers" : "Eden Brothers · Seed Savers"}
+                            </p>
+                          </div>
+                          <span className="text-[9px] bg-white px-1.5 py-0.5 rounded text-sage-500">{v.sources}</span>
+                        </div>
+                      ))}
+                      {(customPlants || []).filter(c => c.type === plant.type).length > 0 && openCrop === plant.id && null}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {(customPlants || []).filter(p => filter === "All" || p.type === filter).map(plant => (
               <div key={plant.id} className="bg-white rounded-2xl p-4 card-shadow">
                 <div className="flex gap-3">
-                  <div className="text-4xl">{plant.icon}</div>
-                  <div className="flex-1 min-w-0">
+                  <div className="text-3xl">{plant.icon}</div>
+                  <div>
                     <h3 className="font-semibold text-sage-800">{plant.name}</h3>
-                    <p className="text-xs text-sage-400 italic mb-1">{plant.scientific}</p>
-                    <div className="flex flex-wrap gap-1.5 text-[10px] mb-2">
-                      <span className="bg-sage-100 text-sage-600 px-2 py-0.5 rounded">{plant.type}</span>
-                      <span className={`px-2 py-0.5 rounded ${FAMILY_COLORS[plant.family] || "bg-sage-100 text-sage-600"}`}>{plant.familyName}</span>
-                      <span className="bg-sage-100 text-sage-600 px-2 py-0.5 rounded">{plant.sun}</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-1 text-[10px] text-sage-600">
-                      <span>🌱 Germ: {plant.germDays || "—"} days</span>
-                      <span>🧺 Harvest: ~{plant.daysToHarvest || "—"} days</span>
-                      <span>🧪 Fertilize: {plant.fertilizeEveryDays ? `every ${plant.fertilizeEveryDays}d` : "—"}</span>
-                      <span>📐 Spacing: {plant.spacing}</span>
-                      <span>📋 {plant.method === "indoor" ? "Start indoors" : "Direct sow"}</span>
-                      <span>🔁 {plant.successionDays ? `Succ. every ${plant.successionDays}d` : "No succession"}</span>
-                    </div>
+                    <p className="text-[10px] text-sage-400">Custom</p>
                   </div>
                 </div>
               </div>
             ))}
-            {filtered.length === 0 && <p className="text-center text-sage-400 text-sm py-8">No plants match</p>}
+            {crops.length === 0 && <p className="text-center text-sage-400 text-sm py-8">No plants match</p>}
           </div>
 
           {showAdd && (
