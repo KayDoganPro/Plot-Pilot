@@ -3452,13 +3452,13 @@
           alert("Plan covers three years from this year.");
           return;
         }
-        const source = yearPlaced.filter(p => p.status !== "harvested");
+        const source = yearPlaced.filter(p => p.status !== "harvested" && !p.isCoverCrop && !p.isBedPrep);
         if (!source.length) {
           alert("No plantings to copy this year.");
           return;
         }
         const copies = source.map((p, i) => {
-          const pl = PLANT_LIBRARY.find(x => x.id === p.plant);
+          const pl = resolvePlant(p.plant) || PLANT_LIBRARY.find(x => x.id === p.plant);
           const sched = computePlantingSchedule(pl, {
             ...profile,
             lastFrost: profile.lastFrost
@@ -3479,6 +3479,255 @@
         setPlaced(prev => [...prev, ...copies]);
         setPlanYear(next);
         alert(`Copied ${copies.length} planting(s) to ${next}. Check Rotate for family conflicts.`);
+      };
+
+      // Families recently in a bed (history + current year plantings)
+      const recentFamiliesForBed = (bedId, throughYear) => {
+        const fams = new Set();
+        const hist = (rotationHistory && rotationHistory[bedId]) || [];
+        hist.forEach(h => {
+          if (throughYear - h.year < ROTATION_YEARS && throughYear - h.year >= 0) {
+            (h.families || []).forEach(f => fams.add(f));
+          }
+        });
+        (placed || []).filter(p => p.bed === bedId && (p.year || y0) <= throughYear && (p.year || y0) > throughYear - ROTATION_YEARS)
+          .forEach(p => {
+            const pl = resolvePlant(p.plant) || PLANT_LIBRARY.find(x => x.id === p.plant);
+            if (pl?.family && pl.family !== "Ericaceae") fams.add(pl.family);
+          });
+        return fams;
+      };
+
+      // Prefer rotation order when picking next crop family
+      const ROTATION_PREF = ["Fabaceae", "Brassicaceae", "Apiaceae", "Amaryllidaceae", "Cucurbitaceae", "Asteraceae", "Amaranthaceae", "Poaceae", "Lamiaceae", "Solanaceae"];
+
+      const pickCropForBed = (bedId, avoidFamilies, usedCropIds) => {
+        const annuals = PLANT_LIBRARY.filter(p =>
+          p.type === "Vegetable" || p.type === "Herb" || p.type === "Fruit"
+        ).filter(p => p.family !== "Ericaceae" && p.id !== "blueberry" && p.id !== "asparagus" && p.id !== "strawberry");
+
+        // Prefer families not recently used, weighted by rotation preference
+        const ranked = annuals
+          .filter(p => !avoidFamilies.has(p.family))
+          .filter(p => !usedCropIds.has(p.id))
+          .map(p => {
+            const prefIdx = ROTATION_PREF.indexOf(p.family);
+            return { p, score: prefIdx >= 0 ? prefIdx : 20 };
+          })
+          .sort((a, b) => a.score - b.score);
+
+        if (ranked.length) return ranked[0].p;
+
+        // Fallback: any crop not same family as most recent
+        const fallback = annuals.find(p => !avoidFamilies.has(p.family));
+        return fallback || annuals[0] || null;
+      };
+
+      /** Auto-fill next year with rotation-aware crops per bed */
+      const suggestRotationForNextYears = () => {
+        const targets = [planYear + 1, planYear + 2].filter(y => y <= y0 + 2);
+        if (!targets.length) {
+          alert("Already at the end of the 3-year plan window.");
+          return;
+        }
+        if (!beds.length) {
+          alert("Add beds first.");
+          return;
+        }
+
+        const newItems = [];
+        const tasksToAdd = [];
+        const usedThisPass = new Set();
+
+        targets.forEach(targetYear => {
+          const profileY = {
+            ...profile,
+            lastFrost: profile?.lastFrost && profile.lastFrost.length >= 10
+              ? `${targetYear}-${profile.lastFrost.slice(5)}`
+              : profile?.lastFrost,
+            firstFrost: profile?.firstFrost && profile.firstFrost.length >= 10
+              ? `${targetYear}-${profile.firstFrost.slice(5)}`
+              : profile?.firstFrost,
+          };
+
+          // Clear existing suggested rotation for that year? only add if bed empty for that year
+          beds.forEach((bed, bi) => {
+            const already = (placed || []).some(p =>
+              p.bed === bed.id && (p.year || y0) === targetYear && !p.isCoverCrop && !p.isBedPrep
+            );
+            if (already) return; // don't overwrite manual plan
+
+            const avoid = recentFamiliesForBed(bed.id, targetYear - 1);
+            // Also avoid families we're about to plant in this batch for same year other beds less critical
+            const crop = pickCropForBed(bed.id, avoid, usedThisPass);
+            if (!crop) return;
+            usedThisPass.add(crop.id);
+
+            const sched = computePlantingSchedule(crop, profileY);
+            if (!sched) return;
+
+            newItems.push({
+              id: Date.now() + bi + targetYear + Math.random(),
+              bed: bed.id,
+              plant: crop.id,
+              plantedAt: sched.plantOutDate,
+              status: "planned",
+              year: targetYear,
+              method: sched.method,
+              sowDate: sched.sowDate,
+              transplantDate: sched.transplantDate,
+              harvestStart: sched.harvestStart,
+              fromRotationSuggest: true,
+            });
+
+            tasksToAdd.push({
+              id: Date.now() + 8000 + bi + targetYear,
+              title: `Sow ${crop.name} (${bed.name})`,
+              detail: `${targetYear} rotation plan · ${sched.sowDate}`,
+              done: false,
+              icon: crop.icon || "🌱",
+              due: sched.sowDate,
+              year: targetYear,
+            });
+          });
+        });
+
+        if (!newItems.length) {
+          alert("Every bed already has crops for the next year(s), or no safe rotation pick was found. Clear a year or edit beds, then try again.");
+          return;
+        }
+
+        setPlaced(prev => [...prev, ...newItems]);
+        setTasks(prev => [...tasksToAdd, ...prev]);
+        setPlanYear(targets[0]);
+        alert(`Suggested ${newItems.length} rotation planting(s) across ${targets.join(" & ")}. Review each bed and adjust as needed.`);
+      };
+
+      /** End-of-season bed prep tasks + optional cover crop */
+      const planSeasonEndPrep = (withCover) => {
+        if (!beds.length) {
+          alert("Add beds first.");
+          return;
+        }
+        const ff = profile?.firstFrost
+          ? new Date(profile.firstFrost + "T12:00:00")
+          : addDays(new Date(), 60);
+        // Prep window: 1–2 weeks before first frost through shortly after
+        const clearDate = toISODate(addDays(ff, -10));
+        const amendDate = toISODate(addDays(ff, -3));
+        const coverSow = toISODate(addDays(ff, -14)); // cover often sown before hard freeze
+
+        const coverOptions = PLANT_LIBRARY.filter(p => p.type === "Cover");
+        const defaultCover = coverOptions.find(p => p.id === "rye")
+          || coverOptions.find(p => p.id === "clover")
+          || coverOptions.find(p => p.id === "buckwheat")
+          || coverOptions[0];
+
+        const tasksToAdd = [];
+        const plantings = [];
+
+        beds.forEach((bed, i) => {
+          tasksToAdd.push({
+            id: Date.now() + i * 10 + 1,
+            title: `Clear & remove spent crops — ${bed.name}`,
+            detail: `End of ${planYear} · pull plants, weeds; compost disease-free material`,
+            done: false,
+            icon: "🧹",
+            due: clearDate,
+            year: planYear,
+            isBedPrep: true,
+          });
+          tasksToAdd.push({
+            id: Date.now() + i * 10 + 2,
+            title: `Amend soil — ${bed.name}`,
+            detail: `Compost / manure / minerals for next season · after clear-out`,
+            done: false,
+            icon: "🪴",
+            due: amendDate,
+            year: planYear,
+            isBedPrep: true,
+          });
+          tasksToAdd.push({
+            id: Date.now() + i * 10 + 3,
+            title: `Note this year’s crops for rotation — ${bed.name}`,
+            detail: `Log season under Crop Rotation so next year avoids same families`,
+            done: false,
+            icon: "📓",
+            due: clearDate,
+            year: planYear,
+            isBedPrep: true,
+          });
+
+          if (withCover && defaultCover) {
+            // Prefer winter-hardy covers late season: rye, vetch, clover; buckwheat only if early
+            let cover = defaultCover;
+            const month = ff.getMonth(); // 0-11
+            if (month >= 8) {
+              // Sept+ → rye / vetch / clover
+              cover = coverOptions.find(p => p.id === "rye")
+                || coverOptions.find(p => p.id === "vetch")
+                || coverOptions.find(p => p.id === "clover")
+                || defaultCover;
+            } else {
+              cover = coverOptions.find(p => p.id === "buckwheat")
+                || coverOptions.find(p => p.id === "oats")
+                || defaultCover;
+            }
+
+            plantings.push({
+              id: Date.now() + i * 10 + 5 + Math.random(),
+              bed: bed.id,
+              plant: cover.id,
+              plantedAt: coverSow,
+              status: "planned",
+              year: planYear,
+              method: "direct",
+              sowDate: coverSow,
+              transplantDate: null,
+              harvestStart: null,
+              isCoverCrop: true,
+              fromBedPrep: true,
+            });
+            tasksToAdd.push({
+              id: Date.now() + i * 10 + 4,
+              title: `Sow cover crop ${cover.name} — ${bed.name}`,
+              detail: `Protect soil over winter · terminate before spring planting`,
+              done: false,
+              icon: "🌱",
+              due: coverSow,
+              year: planYear,
+              isBedPrep: true,
+            });
+          }
+        });
+
+        // Spring: terminate cover before planting
+        if (withCover) {
+          const springTerm = profile?.lastFrost
+            ? toISODate(addDays(new Date(profile.lastFrost + "T12:00:00"), -14))
+            : toISODate(addDays(new Date(), 120));
+          beds.forEach((bed, i) => {
+            tasksToAdd.push({
+              id: Date.now() + 5000 + i,
+              title: `Terminate cover crop — ${bed.name}`,
+              detail: `Cut / turn in 2+ weeks before spring transplants (${planYear + 1})`,
+              done: false,
+              icon: "✂️",
+              due: springTerm,
+              year: planYear + 1,
+              isBedPrep: true,
+            });
+          });
+        }
+
+        setTasks(prev => [...tasksToAdd, ...prev]);
+        if (plantings.length) setPlaced(prev => [...prev, ...plantings]);
+
+        alert(
+          withCover
+            ? `Added bed-prep tasks for ${beds.length} bed(s) plus cover-crop sowings. Check tasks and Plan list.`
+            : `Added end-of-season prep tasks for ${beds.length} bed(s) (no cover crop).`
+        );
       };
 
       const openNewBed = () => {
@@ -3593,6 +3842,36 @@
               </button>
             </div>
 
+            <div className="bg-white rounded-2xl p-3 card-shadow space-y-2">
+              <p className="text-xs font-semibold text-sage-800">Rotation & season wrap-up</p>
+              <p className="text-[10px] text-sage-500">
+                Suggest fills empty beds in future years with different plant families. Bed prep schedules clear-out and soil work before frost.
+              </p>
+              <button
+                type="button"
+                onClick={suggestRotationForNextYears}
+                className="w-full py-2.5 rounded-xl bg-emerald-700 text-white text-sm font-medium"
+              >
+                Suggest crop rotation (autofill next years)
+              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => planSeasonEndPrep(false)}
+                  className="flex-1 py-2 rounded-xl border border-sage-300 text-sage-700 text-xs font-medium"
+                >
+                  Prep beds (no cover)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => planSeasonEndPrep(true)}
+                  className="flex-1 py-2 rounded-xl bg-sage-100 text-sage-800 text-xs font-medium border border-sage-200"
+                >
+                  Prep beds + cover crop
+                </button>
+              </div>
+            </div>
+
             <section>
               <div className="flex justify-between items-center mb-2">
                 <h3 className="font-semibold text-sage-800 text-sm">{planYear} plantings ({yearPlaced.length})</h3>
@@ -3602,16 +3881,18 @@
               ) : (
                 <div className="space-y-2">
                   {yearPlaced.map(item => {
-                    const pl = PLANT_LIBRARY.find(p => p.id === item.plant);
+                    const pl = resolvePlant(item.plant) || PLANT_LIBRARY.find(p => p.id === item.plant);
                     const bed = beds.find(b => b.id === item.bed);
                     const cap = bed && pl ? bedCapacity(bed, pl.spacingIn) : null;
                     return (
-                      <div key={item.id} className="bg-white rounded-xl p-3 card-shadow">
+                      <div key={item.id} className={`rounded-xl p-3 card-shadow ${item.isCoverCrop ? "bg-lime-50 border border-lime-200" : "bg-white"}`}>
                         <div className="flex items-start gap-2">
                           <span className="text-2xl">{pl?.icon || "🌱"}</span>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-sm text-sage-800">
                               {pl?.name || item.plant}
+                              {item.isCoverCrop && <span className="text-[10px] text-lime-700 font-normal"> · cover crop</span>}
+                              {item.fromRotationSuggest && <span className="text-[10px] text-emerald-700 font-normal"> · rotation pick</span>}
                               {item.successionOf > 1 && (
                                 <span className="text-xs text-sage-500 font-normal"> · succ. {item.successionIndex}/{item.successionOf}</span>
                               )}
