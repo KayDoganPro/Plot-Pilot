@@ -1850,34 +1850,42 @@
 
     // ========== COMPONENTS ==========
     const TAB_CATALOG = [
-      { id: "plan", icon: "fa-calendar-check", label: "Plan", desc: "Planting schedule & years" },
-      { id: "kitchen", icon: "fa-utensils", label: "Kitchen", desc: "Recipes & preserve guides" },
-      { id: "layout", icon: "fa-th-large", label: "Layout", desc: "Beds & visual map" },
-      { id: "calendar", icon: "fa-calendar-alt", label: "Calendar", desc: "Month view & frost timing" },
-      { id: "vault", icon: "fa-box", label: "Seed Vault", desc: "Inventory & seed saving" },
-      { id: "plants", icon: "fa-leaf", label: "Plant Library", desc: "Crops, varieties & timing" },
-      { id: "rotate", icon: "fa-sync-alt", label: "Crop Rotation", desc: "Family history & next crops" },
-      { id: "diagnose", icon: "fa-stethoscope", label: "Diagnose", desc: "Symptom checker" },
-      { id: "journal", icon: "fa-book", label: "Journal", desc: "Notes & observations" },
+      { id: "plan", icon: "fa-calendar-check", label: "Plan", short: "Plan", desc: "Planting schedule & years" },
+      { id: "kitchen", icon: "fa-utensils", label: "Kitchen", short: "Kitchen", desc: "Recipes & preserve guides" },
+      { id: "layout", icon: "fa-th-large", label: "Layout", short: "Layout", desc: "Beds & visual map" },
+      { id: "calendar", icon: "fa-calendar-alt", label: "Calendar", short: "Calendar", desc: "Month view & frost timing" },
+      { id: "vault", icon: "fa-box", label: "Seed Vault", short: "Vault", desc: "Inventory & seed saving" },
+      { id: "plants", icon: "fa-leaf", label: "Plant Library", short: "Plants", desc: "Crops, varieties & timing" },
+      { id: "rotate", icon: "fa-sync-alt", label: "Crop Rotation", short: "Rotate", desc: "Family history & next crops" },
+      { id: "diagnose", icon: "fa-stethoscope", label: "Diagnose", short: "Diagnose", desc: "Symptom checker" },
+      { id: "journal", icon: "fa-book", label: "Journal", short: "Journal", desc: "Notes & observations" },
     ];
     const DEFAULT_NAV_SLOTS = ["plan", "kitchen", "layout"];
+    const NAV_PRESETS = [
+      { label: "Plan · Kitchen · Layout", slots: ["plan", "kitchen", "layout"] },
+      { label: "Plan · Vault · Calendar", slots: ["plan", "vault", "calendar"] },
+      { label: "Layout · Vault · Journal", slots: ["layout", "vault", "journal"] },
+      { label: "Plan · Layout · Rotate", slots: ["plan", "layout", "rotate"] },
+    ];
     const getNavSlots = (profile) => {
       const raw = Array.isArray(profile?.navSlots) ? profile.navSlots.filter(Boolean) : [];
       const valid = raw.filter(id => TAB_CATALOG.some(t => t.id === id));
-      const slots = [...valid];
+      // de-dupe while preserving order
+      const slots = [];
+      valid.forEach(id => { if (!slots.includes(id)) slots.push(id); });
       for (const d of DEFAULT_NAV_SLOTS) {
         if (slots.length >= 3) break;
         if (!slots.includes(d)) slots.push(d);
       }
       return slots.slice(0, 3);
     };
-    const tabMeta = (id) => TAB_CATALOG.find(t => t.id === id) || { id, icon: "fa-circle", label: id, desc: "" };
+    const tabMeta = (id) => TAB_CATALOG.find(t => t.id === id) || { id, icon: "fa-circle", label: id, short: id, desc: "" };
 
     function BottomNav({ active, setActive, profile }) {
       const slots = getNavSlots(profile);
       const primary = [
         { id: "home", icon: "fa-home", label: "Home" },
-        ...slots.map(id => ({ id, icon: tabMeta(id).icon, label: tabMeta(id).label })),
+        ...slots.map(id => ({ id, icon: tabMeta(id).icon, label: tabMeta(id).short || tabMeta(id).label })),
         { id: "more", icon: "fa-ellipsis-h", label: "More" },
       ];
       const primaryIds = primary.map(p => p.id);
@@ -4910,7 +4918,7 @@
       const [showBedForm, setShowBedForm] = useState(false);
       const [editingBedId, setEditingBedId] = useState(null);
       const [bedForm, setBedForm] = useState({ name: "", widthFt: 4, lengthFt: 8, sun: "Full sun", mapX: 10, mapY: 10 });
-      const [harvestForm, setHarvestForm] = useState({ plantId: "tomato", bedId: "", qty: "", unit: "lb", notes: "" });
+      const [harvestForm, setHarvestForm] = useState({ placedId: "", plantId: "", bedId: "", qty: "", unit: "lb", notes: "" });
       const [showGardenMap, setShowGardenMap] = useState(true);
 
       const yearPlaced = useMemo(
@@ -5345,20 +5353,111 @@
         }
       };
 
+      const growingHarvestOptions = useMemo(() => {
+        return (yearPlaced || [])
+          .filter(p => p.status !== "harvested" && !p.isCoverCrop && !p.isBedPrep)
+          .map(p => {
+            const pl = resolvePlant(p.plant, customPlants) || PLANT_LIBRARY.find(x => x.id === p.plant);
+            return {
+              placedId: p.id,
+              plantId: p.plant,
+              bedId: p.bed,
+              label: `${plantDisplayName(pl)} · ${bedLabel(beds, p.bed)}`,
+              icon: pl?.icon || "🌱",
+            };
+          });
+      }, [yearPlaced, beds, customPlants]);
+
       const logHarvest = () => {
         const qty = parseFloat(harvestForm.qty);
-        if (!qty || qty <= 0) return;
+        if (!qty || qty <= 0) {
+          alert("Enter a harvest quantity.");
+          return;
+        }
+
+        let plantId = harvestForm.plantId;
+        let bedId = harvestForm.bedId || null;
+        let placedId = harvestForm.placedId || null;
+
+        // Linked to a specific growing placement
+        if (placedId) {
+          const item = (placed || []).find(p => String(p.id) === String(placedId));
+          if (item) {
+            plantId = item.plant;
+            bedId = item.bed;
+          }
+        }
+
+        // Not linked — optional plant from library
+        if (!placedId && plantId) {
+          const inGarden = (yearPlaced || []).some(p =>
+            (p.plant === plantId || (resolvePlant(p.plant, customPlants)?.cropId === plantId))
+            && p.status !== "harvested"
+          );
+          if (!inGarden) {
+            const pl = resolvePlant(plantId, customPlants) || PLANT_LIBRARY.find(p => p.id === plantId);
+            const name = plantDisplayName(pl);
+            const bedList = resolveBedList(beds);
+            if (confirm(`${name} is not in your garden for ${planYear}.\n\nAdd it to a bed now so future tasks and harvests stay linked?`)) {
+              if (!bedList.length) {
+                alert("Add a bed in Layout or Plan first.");
+                return;
+              }
+              let pickBed = bedList[0].id;
+              if (bedList.length > 1) {
+                const names = bedList.map((b, i) => `${i + 1}. ${b.name}`).join("\n");
+                const ans = prompt(`Which bed?\n${names}\n\nEnter number 1–${bedList.length}:`, "1");
+                const idx = Math.max(0, Math.min(bedList.length - 1, (parseInt(ans, 10) || 1) - 1));
+                pickBed = bedList[idx].id;
+              }
+              const plantedAt = toISODate(new Date());
+              const newItem = {
+                id: Date.now() + Math.random(),
+                bed: pickBed,
+                plant: plantId,
+                plantedAt,
+                status: "growing",
+                year: planYear,
+                method: pl?.method,
+                harvestStart: careScheduleFromPlantDate(pl, plantedAt).harvestDue || null,
+              };
+              setPlaced(prev => [...prev, newItem]);
+              placedId = newItem.id;
+              bedId = pickBed;
+              if (setTasks && pl) {
+                const batch = buildCareTasksForPlanting(pl, plantedAt, {
+                  bedName: bedLabel(beds, pickBed),
+                  year: planYear,
+                });
+                setTasks(prev => mergeCareTasksInto(prev, batch));
+              }
+            }
+          } else if (!bedId) {
+            const match = (yearPlaced || []).find(p => p.plant === plantId && p.status !== "harvested");
+            if (match) {
+              bedId = match.bed;
+              placedId = match.id;
+            }
+          }
+        }
+
+        if (!plantId) {
+          alert("Choose a plant from your garden or the library.");
+          return;
+        }
+
         setHarvests(prev => [{
           id: Date.now(),
           date: toISODate(new Date()),
           year: planYear,
-          plantId: harvestForm.plantId,
-          bedId: harvestForm.bedId || null,
+          plantId,
+          bedId: bedId || null,
+          placedId: placedId || null,
           qty,
           unit: harvestForm.unit,
           notes: harvestForm.notes || "",
         }, ...prev]);
-        setHarvestForm(f => ({ ...f, qty: "", notes: "" }));
+        setHarvestForm(f => ({ ...f, qty: "", notes: "", placedId: placedId || f.placedId }));
       };
 
       const yearHarvests = (harvests || []).filter(h => (h.year || y0) === planYear);
@@ -5515,12 +5614,55 @@
             <section>
               <h3 className="font-semibold text-sage-800 text-sm mb-2">Harvest log ({planYear})</h3>
               <div className="bg-white rounded-2xl p-3 card-shadow space-y-2 mb-2">
+                <label className="text-[10px] text-sage-500">From plants in your garden</label>
+                <select
+                  className="w-full border rounded-lg px-2 py-1.5 text-xs"
+                  value={harvestForm.placedId || ""}
+                  onChange={e => {
+                    const placedId = e.target.value;
+                    if (!placedId) {
+                      setHarvestForm(f => ({ ...f, placedId: "", plantId: f.plantId || "", bedId: "" }));
+                      return;
+                    }
+                    const opt = growingHarvestOptions.find(o => String(o.placedId) === String(placedId));
+                    setHarvestForm(f => ({
+                      ...f,
+                      placedId,
+                      plantId: opt?.plantId || f.plantId,
+                      bedId: opt?.bedId || "",
+                    }));
+                  }}
+                >
+                  <option value="">— Select growing plant —</option>
+                  {growingHarvestOptions.map(o => (
+                    <option key={o.placedId} value={o.placedId}>{o.icon} {o.label}</option>
+                  ))}
+                </select>
+                {growingHarvestOptions.length === 0 && (
+                  <p className="text-[10px] text-amber-800 bg-amber-50 rounded-lg px-2 py-1.5">
+                    No growing plants in {planYear}. Plant on Layout, or pick from the library below (you’ll be asked to add it).
+                  </p>
+                )}
+                <label className="text-[10px] text-sage-500">Or any crop (not in garden yet)</label>
+                <select
+                  className="w-full border rounded-lg px-2 py-1.5 text-xs"
+                  value={harvestForm.placedId ? "" : (harvestForm.plantId || "")}
+                  onChange={e => {
+                    const plantId = e.target.value;
+                    setHarvestForm(f => ({ ...f, placedId: "", plantId, bedId: "" }));
+                  }}
+                >
+                  <option value="">— Library crop —</option>
+                  {PLANT_LIBRARY.filter(p => !p.isVariety).slice(0, 80).map(p => (
+                    <option key={p.id} value={p.id}>{p.icon} {p.name}</option>
+                  ))}
+                  {PLANT_LIBRARY.filter(p => p.isVariety).slice(0, 40).map(p => (
+                    <option key={p.id} value={p.id}>{p.icon} {p.name}</option>
+                  ))}
+                </select>
                 <div className="flex gap-2">
-                  <select className="flex-1 border rounded-lg px-2 py-1.5 text-xs" value={harvestForm.plantId} onChange={e => setHarvestForm(f => ({ ...f, plantId: e.target.value }))}>
-                    {PLANT_LIBRARY.map(p => <option key={p.id} value={p.id}>{p.icon} {p.name}</option>)}
-                  </select>
-                  <input className="w-16 border rounded-lg px-2 py-1.5 text-xs" placeholder="Qty" value={harvestForm.qty} onChange={e => setHarvestForm(f => ({ ...f, qty: e.target.value }))} />
-                  <select className="w-16 border rounded-lg px-1 py-1.5 text-xs" value={harvestForm.unit} onChange={e => setHarvestForm(f => ({ ...f, unit: e.target.value }))}>
+                  <input className="flex-1 border rounded-lg px-2 py-1.5 text-xs" placeholder="Qty" value={harvestForm.qty} onChange={e => setHarvestForm(f => ({ ...f, qty: e.target.value }))} />
+                  <select className="w-20 border rounded-lg px-1 py-1.5 text-xs" value={harvestForm.unit} onChange={e => setHarvestForm(f => ({ ...f, unit: e.target.value }))}>
                     {["lb", "oz", "kg", "bunch", "each"].map(u => <option key={u}>{u}</option>)}
                   </select>
                 </div>
@@ -5530,12 +5672,17 @@
                 <p className="text-xs text-sage-400 text-center">No harvests logged yet</p>
               ) : (
                 <div className="space-y-1">
-                  {yearHarvests.slice(0, 10).map(h => {
-                    const pl = PLANT_LIBRARY.find(p => p.id === h.plantId);
+                  {yearHarvests.slice(0, 12).map(h => {
+                    const pl = resolvePlant(h.plantId, customPlants) || PLANT_LIBRARY.find(p => p.id === h.plantId);
+                    const bedName = h.bedId ? bedLabel(beds, h.bedId) : "";
                     return (
-                      <div key={h.id} className="flex justify-between text-xs bg-white rounded-lg px-2 py-1.5 card-shadow">
-                        <span>{pl?.icon} {pl?.name} · {h.qty} {h.unit}</span>
-                        <span className="text-sage-400">{fmtDate(h.date)}</span>
+                      <div key={h.id} className="flex justify-between text-xs bg-white rounded-lg px-2 py-1.5 card-shadow gap-2">
+                        <span className="min-w-0 truncate">
+                          {pl?.icon} {plantDisplayName(pl) || h.plantId} · {h.qty} {h.unit}
+                          {bedName ? <span className="text-sage-400"> · {bedName}</span> : null}
+                          {h.placedId ? null : <span className="text-amber-600"> · unlinked</span>}
+                        </span>
+                        <span className="text-sage-400 shrink-0">{fmtDate(h.date)}</span>
                       </div>
                     );
                   })}
@@ -5983,21 +6130,25 @@
       profile, setProfile, setShowOnboarding,
       exportData, importData, resetDemo, clearGarden,
     }) {
-      const [form, setForm] = useState({ ...profile });
+      const [form, setForm] = useState(() => ({
+        ...profile,
+        navSlots: getNavSlots(profile),
+      }));
       const [notifyState, setNotifyState] = useState(
         typeof Notification !== "undefined" ? Notification.permission : "denied"
       );
       const fileRef = React.useRef(null);
 
       const save = () => {
-        setProfile({ ...form, onboarded: true });
+        const navSlots = getNavSlots({ navSlots: form.navSlots });
+        setProfile({ ...form, navSlots, onboarded: true });
         if (form.city) {
           try {
             const loc = JSON.parse(localStorage.getItem("pp_location") || "{}");
             localStorage.setItem("pp_location", JSON.stringify({ ...loc, name: form.city }));
           } catch (e) {}
         }
-        alert("Settings saved");
+        alert("Settings saved — bottom tabs updated.");
       };
 
       const enableNotifications = async () => {
@@ -6039,55 +6190,106 @@
 
             <div className="bg-white rounded-2xl p-4 card-shadow space-y-3">
               <h3 className="font-semibold text-sage-800 text-sm">Bottom tab priorities</h3>
-              <p className="text-xs text-sage-500">Home and More stay fixed. Choose 3 tabs for the middle of the bar (order = left to right).</p>
+              <p className="text-xs text-sage-500">
+                Home and More stay fixed. Put any 3 screens on the bar — including ones that normally live under More (Seed Vault, Calendar, Journal, etc.).
+              </p>
+              {/* Live preview */}
+              <div className="flex justify-around items-center bg-sage-50 rounded-xl py-2 px-1 border border-sage-100">
+                <span className="text-[9px] text-sage-500 flex flex-col items-center gap-0.5"><i className="fas fa-home"></i>Home</span>
+                {(form.navSlots || DEFAULT_NAV_SLOTS).map((id, i) => (
+                  <span key={i} className="text-[9px] text-sage-700 font-semibold flex flex-col items-center gap-0.5">
+                    <i className={`fas ${tabMeta(id).icon}`}></i>
+                    {tabMeta(id).short || tabMeta(id).label}
+                  </span>
+                ))}
+                <span className="text-[9px] text-sage-500 flex flex-col items-center gap-0.5"><i className="fas fa-ellipsis-h"></i>More</span>
+              </div>
               {(form.navSlots || DEFAULT_NAV_SLOTS).map((id, idx) => (
-                <div key={`${id}-${idx}`} className="flex items-center gap-2 bg-sage-50 rounded-xl p-2">
-                  <span className="text-[10px] text-sage-400 w-4">{idx + 1}</span>
-                  <select
-                    className="flex-1 border rounded-lg px-2 py-1.5 text-sm bg-white"
-                    value={id}
-                    onChange={e => {
-                      const nextId = e.target.value;
-                      setForm(f => {
+                <div key={`slot-${idx}`} className="bg-sage-50 rounded-xl p-2.5 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-sage-500 w-12">Slot {idx + 1}</span>
+                    <select
+                      className="flex-1 border rounded-lg px-2 py-1.5 text-sm bg-white"
+                      value={id}
+                      onChange={e => {
+                        const nextId = e.target.value;
+                        setForm(f => {
+                          let slots = [...(f.navSlots || DEFAULT_NAV_SLOTS)];
+                          // If nextId already in another slot, swap
+                          const other = slots.indexOf(nextId);
+                          if (other >= 0 && other !== idx) {
+                            slots[other] = slots[idx];
+                          }
+                          slots[idx] = nextId;
+                          return { ...f, navSlots: slots };
+                        });
+                      }}
+                    >
+                      {TAB_CATALOG.map(t => (
+                        <option key={t.id} value={t.id}>
+                          {t.label}{t.desc ? ` — ${t.desc}` : ""}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      disabled={idx === 0}
+                      onClick={() => setForm(f => {
                         const slots = [...(f.navSlots || DEFAULT_NAV_SLOTS)];
-                        slots[idx] = nextId;
+                        [slots[idx - 1], slots[idx]] = [slots[idx], slots[idx - 1]];
                         return { ...f, navSlots: slots };
-                      });
-                    }}
-                  >
-                    {TAB_CATALOG.map(t => (
-                      <option key={t.id} value={t.id} disabled={(form.navSlots || DEFAULT_NAV_SLOTS).includes(t.id) && t.id !== id}>
-                        {t.label}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    disabled={idx === 0}
-                    onClick={() => setForm(f => {
-                      const slots = [...(f.navSlots || DEFAULT_NAV_SLOTS)];
-                      [slots[idx - 1], slots[idx]] = [slots[idx], slots[idx - 1]];
-                      return { ...f, navSlots: slots };
-                    })}
-                    className="w-8 h-8 rounded-lg border text-sage-600 disabled:opacity-30"
-                  >↑</button>
-                  <button
-                    type="button"
-                    disabled={idx >= 2}
-                    onClick={() => setForm(f => {
-                      const slots = [...(f.navSlots || DEFAULT_NAV_SLOTS)];
-                      [slots[idx + 1], slots[idx]] = [slots[idx], slots[idx + 1]];
-                      return { ...f, navSlots: slots };
-                    })}
-                    className="w-8 h-8 rounded-lg border text-sage-600 disabled:opacity-30"
-                  >↓</button>
+                      })}
+                      className="w-8 h-8 rounded-lg border text-sage-600 disabled:opacity-30"
+                      title="Move up"
+                    >↑</button>
+                    <button
+                      type="button"
+                      disabled={idx >= 2}
+                      onClick={() => setForm(f => {
+                        const slots = [...(f.navSlots || DEFAULT_NAV_SLOTS)];
+                        [slots[idx + 1], slots[idx]] = [slots[idx], slots[idx + 1]];
+                        return { ...f, navSlots: slots };
+                      })}
+                      className="w-8 h-8 rounded-lg border text-sage-600 disabled:opacity-30"
+                      title="Move down"
+                    >↓</button>
+                  </div>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={() => setForm(f => ({ ...f, navSlots: [...DEFAULT_NAV_SLOTS] }))}
-                className="text-xs text-sage-500 underline"
-              >Reset to Plan · Kitchen · Layout</button>
+              <div>
+                <p className="text-[10px] text-sage-500 mb-1.5">Still under More (tap to put on bar — replaces slot 3):</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {TAB_CATALOG.filter(t => !(form.navSlots || DEFAULT_NAV_SLOTS).includes(t.id)).map(t => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setForm(f => {
+                        const slots = [...(f.navSlots || DEFAULT_NAV_SLOTS)];
+                        slots[2] = t.id;
+                        return { ...f, navSlots: slots };
+                      })}
+                      className="text-[10px] px-2 py-1 rounded-lg border border-sage-200 bg-white text-sage-700 hover:bg-sage-50"
+                    >
+                      <i className={`fas ${t.icon} mr-1 text-sage-500`}></i>{t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-[10px] text-sage-500 mb-1.5">Quick presets</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {NAV_PRESETS.map(p => (
+                    <button
+                      key={p.label}
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, navSlots: [...p.slots] }))}
+                      className="text-[10px] px-2 py-1 rounded-lg bg-sage-100 text-sage-800 font-medium"
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <button onClick={save} className="w-full py-2.5 rounded-xl bg-sage-600 text-white text-sm font-medium">Save tab order</button>
             </div>
 
