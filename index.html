@@ -592,11 +592,23 @@
 
       return (
         <div className={`relative bg-emerald-50/80 border border-emerald-200 rounded-2xl overflow-hidden ${compact ? "h-40" : "h-64"}`}>
-          <div className="absolute top-1 left-2 text-[9px] text-emerald-700/70 font-medium z-10 pointer-events-none">
-            Garden map · {dropEnabled ? "drop plants here" : "tap bed to edit"}
+          {/* Percentage reference grid — minimal */}
+          <div className="absolute inset-0 pointer-events-none z-[1]" aria-hidden="true">
+            {[0, 25, 50, 75, 100].map((pct) => (
+              <div key={`v${pct}`} className="absolute top-0 bottom-0 border-l border-emerald-300/45" style={{ left: `${pct}%` }} />
+            ))}
+            {[0, 25, 50, 75, 100].map((pct) => (
+              <div key={`h${pct}`} className="absolute left-0 right-0 border-t border-emerald-300/45" style={{ top: `${pct}%` }} />
+            ))}
+            {[0, 25, 50, 75].map((pct) => (
+              <span key={`tx${pct}`} className="absolute top-0.5 text-[8px] leading-none text-emerald-800/45 font-medium tabular-nums" style={{ left: `${pct}%`, marginLeft: pct === 0 ? "3px" : "-7px" }}>{pct}</span>
+            ))}
+            {[25, 50, 75].map((pct) => (
+              <span key={`ty${pct}`} className="absolute left-0.5 text-[8px] leading-none text-emerald-800/45 font-medium tabular-nums" style={{ top: `${pct}%`, marginTop: "-5px" }}>{pct}</span>
+            ))}
           </div>
-          <div className="absolute bottom-1 right-2 text-[9px] text-emerald-600/60 z-10 pointer-events-none">
-            Edit bed → set map % to rearrange
+          <div className="absolute top-1 right-1.5 text-[8px] text-emerald-800/55 font-medium z-10 pointer-events-none">
+            % from top-left · {dropEnabled ? "drop plants" : "tap to edit"}
           </div>
           {list.map((bed, i) => {
             const w = Number(bed.widthFt) || 4;
