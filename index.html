@@ -581,42 +581,67 @@
     ];
 
     /** Visual to-scale garden map (positions in % of yard) */
-    function GardenMap({ beds, placed, planYear, onSelectBed, selectedBedId, compact }) {
+    function GardenMap({
+      beds, placed, planYear, onSelectBed, selectedBedId, compact,
+      onDrop, onDragOver, onDragLeave, dragOverBed, dropEnabled,
+    }) {
       const y = planYear || new Date().getFullYear();
       const list = beds && beds.length ? beds : DEFAULT_BEDS;
-      const maxW = Math.max(...list.map(b => Number(b.widthFt) || 4), 1);
-      const maxL = Math.max(...list.map(b => Number(b.lengthFt) || 8), 1);
       // Scale so largest bed is readable; positions use mapX/mapY % or auto-layout
       const scale = compact ? 8 : 12;
 
       return (
-        <div className={`relative bg-emerald-50/80 border border-emerald-200 rounded-2xl overflow-hidden ${compact ? "h-40" : "h-56"}`}>
-          <div className="absolute top-1 left-2 text-[9px] text-emerald-700/70 font-medium z-10">Garden map · ft scale</div>
-          <div className="absolute bottom-1 right-2 text-[9px] text-emerald-600/60 z-10">Drag beds in Edit to place</div>
+        <div className={`relative bg-emerald-50/80 border border-emerald-200 rounded-2xl overflow-hidden ${compact ? "h-40" : "h-64"}`}>
+          <div className="absolute top-1 left-2 text-[9px] text-emerald-700/70 font-medium z-10 pointer-events-none">
+            Garden map · {dropEnabled ? "drop plants here" : "tap bed to edit"}
+          </div>
+          <div className="absolute bottom-1 right-2 text-[9px] text-emerald-600/60 z-10 pointer-events-none">
+            Edit bed → set map % to rearrange
+          </div>
           {list.map((bed, i) => {
             const w = Number(bed.widthFt) || 4;
             const l = Number(bed.lengthFt) || 8;
-            const pxW = Math.max(48, w * scale);
-            const pxH = Math.max(36, l * scale * 0.7);
+            const pxW = Math.max(56, w * scale);
+            const pxH = Math.max(44, l * scale * 0.7);
             const left = bed.mapX != null ? `${bed.mapX}%` : `${(i % 2) * 48 + 4}%`;
-            const top = bed.mapY != null ? `${bed.mapY}%` : `${Math.floor(i / 2) * 42 + 12}%`;
+            const top = bed.mapY != null ? `${bed.mapY}%` : `${Math.floor(i / 2) * 42 + 14}%`;
             const count = (placed || []).filter(p => p.bed === bed.id && (p.year || y) === y && p.status !== "harvested").length;
             const selected = selectedBedId === bed.id;
+            const isOver = dragOverBed === bed.id;
             return (
-              <button
+              <div
                 key={bed.id}
-                type="button"
+                role="button"
+                tabIndex={0}
                 onClick={() => onSelectBed && onSelectBed(bed.id)}
-                title={`${bed.name} · ${w}×${l} ft · ${bed.sun}`}
-                className={`absolute border-2 rounded-lg shadow-sm flex flex-col items-center justify-center p-1 transition
-                  ${bed.color} ${selected ? "ring-2 ring-sage-600 border-sage-600 z-20" : "border-sage-400/60 z-10"}
-                  hover:scale-[1.03] active:scale-95`}
-                style={{ left, top, width: pxW, height: pxH, maxWidth: "46%" }}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelectBed && onSelectBed(bed.id); }}
+                onDragOver={(e) => {
+                  if (!dropEnabled || !onDragOver) return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onDragOver(e, bed.id);
+                }}
+                onDragLeave={(e) => {
+                  if (onDragLeave) onDragLeave(e);
+                }}
+                onDrop={(e) => {
+                  if (!dropEnabled || !onDrop) return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onDrop(e, bed.id);
+                }}
+                title={`${bed.name} · ${w}×${l} ft · ${bed.sun}${dropEnabled ? " · drop plants here" : ""}`}
+                className={`absolute border-2 rounded-lg shadow-sm flex flex-col items-center justify-center p-1 transition cursor-pointer
+                  ${bed.color}
+                  ${selected ? "ring-2 ring-sage-600 border-sage-600 z-20" : "border-sage-400/60 z-10"}
+                  ${isOver ? "ring-2 ring-sage-500 scale-105 border-solid border-sage-600 z-30" : ""}
+                  hover:scale-[1.03]`}
+                style={{ left, top, width: pxW, height: pxH, maxWidth: "48%" }}
               >
-                <span className="text-[10px] font-bold text-sage-800 leading-tight text-center truncate w-full px-0.5">{bed.name}</span>
-                <span className="text-[8px] text-sage-600">{w}×{l} ft</span>
-                <span className="text-[9px] text-sage-700">{count ? `${count} plants` : "empty"}</span>
-              </button>
+                <span className="text-[10px] font-bold text-sage-800 leading-tight text-center truncate w-full px-0.5 pointer-events-none">{bed.name}</span>
+                <span className="text-[8px] text-sage-600 pointer-events-none">{w}×{l} ft</span>
+                <span className="text-[9px] text-sage-700 pointer-events-none">{count ? `${count} plants` : (isOver ? "drop!" : "empty")}</span>
+              </div>
             );
           })}
         </div>
@@ -1984,6 +2009,11 @@
                   beds={bedList}
                   placed={yearPlaced}
                   planYear={planYear}
+                  dropEnabled
+                  dragOverBed={dragOverBed}
+                  onDragOver={onDragOver}
+                  onDragLeave={onDragLeave}
+                  onDrop={onDrop}
                   onSelectBed={(id) => {
                     const b = bedList.find(x => x.id === id);
                     if (b) openEditBed(b);
@@ -1991,7 +2021,9 @@
                   selectedBedId={editingBed?.id}
                 />
               )}
-              <p className="text-[10px] text-sage-400 mt-1">Tap a bed on the map to edit size, name, or map position.</p>
+              <p className="text-[10px] text-sage-400 mt-1">
+                Drag plants from the library onto a map bed · tap a bed to edit size or map position.
+              </p>
             </div>
 
             {/* Canvas / Beds */}
