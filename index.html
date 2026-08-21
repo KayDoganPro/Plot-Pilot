@@ -574,11 +574,93 @@
     ];
 
     const DEFAULT_BEDS = [
-      { id: "tomato", name: "Tomato Bed", color: "bg-red-100 border-red-300", widthFt: 4, lengthFt: 8, sun: "Full sun" },
-      { id: "herb", name: "Herb Border", color: "bg-green-100 border-green-300", widthFt: 2, lengthFt: 10, sun: "Full sun" },
-      { id: "pepper", name: "Pepper Bed", color: "bg-orange-100 border-orange-300", widthFt: 4, lengthFt: 6, sun: "Full sun" },
-      { id: "berry", name: "Blueberry Bed", color: "bg-blue-100 border-blue-300", widthFt: 4, lengthFt: 8, sun: "Full sun" },
+      { id: "tomato", name: "Tomato Bed", color: "bg-red-100 border-red-300", widthFt: 4, lengthFt: 8, sun: "Full sun", mapX: 5, mapY: 5 },
+      { id: "herb", name: "Herb Border", color: "bg-green-100 border-green-300", widthFt: 2, lengthFt: 10, sun: "Full sun", mapX: 55, mapY: 5 },
+      { id: "pepper", name: "Pepper Bed", color: "bg-orange-100 border-orange-300", widthFt: 4, lengthFt: 6, sun: "Full sun", mapX: 5, mapY: 45 },
+      { id: "berry", name: "Blueberry Bed", color: "bg-blue-100 border-blue-300", widthFt: 4, lengthFt: 8, sun: "Full sun", mapX: 50, mapY: 45 },
     ];
+
+    /** Visual to-scale garden map (positions in % of yard) */
+    function GardenMap({ beds, placed, planYear, onSelectBed, selectedBedId, compact, onMoveBed }) {
+      const y = planYear || new Date().getFullYear();
+      const list = beds && beds.length ? beds : DEFAULT_BEDS;
+      const maxW = Math.max(...list.map(b => Number(b.widthFt) || 4), 1);
+      const maxL = Math.max(...list.map(b => Number(b.lengthFt) || 8), 1);
+      // Scale so largest bed is readable; positions use mapX/mapY % or auto-layout
+      const scale = compact ? 8 : 12;
+
+      const moveBed = (e) => {
+        e.preventDefault();
+        if (!onMoveBed) return;
+        let data;
+        try { data = JSON.parse(e.dataTransfer.getData("text/plain")); } catch (err) { return; }
+        if (data?.type !== "bed" || !data.bedId) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const draggedBed = list.find(bed => bed.id === data.bedId);
+        const bedWidth = Math.min(
+          Math.max(48, (Number(draggedBed?.widthFt) || 4) * scale),
+          rect.width * 0.46
+        );
+        const bedHeight = Math.max(36, (Number(draggedBed?.lengthFt) || 8) * scale * 0.7);
+        const bedWidthPercent = (bedWidth / rect.width) * 100;
+        const bedHeightPercent = (bedHeight / rect.height) * 100;
+        const pointerX = ((e.clientX - rect.left) / rect.width) * 100;
+        const pointerY = ((e.clientY - rect.top) / rect.height) * 100;
+        const grabXPercent = Number.isFinite(data.grabXPercent) ? data.grabXPercent : 0.5;
+        const grabYPercent = Number.isFinite(data.grabYPercent) ? data.grabYPercent : 0.5;
+        const x = Math.min(100 - bedWidthPercent, Math.max(0, pointerX - bedWidthPercent * grabXPercent));
+        const y = Math.min(100 - bedHeightPercent, Math.max(0, pointerY - bedHeightPercent * grabYPercent));
+        onMoveBed(data.bedId, x, y);
+      };
+
+      return (
+        <div
+          className={`relative bg-emerald-50/80 border border-emerald-200 rounded-2xl overflow-hidden ${compact ? "h-40" : "h-56"}`}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={moveBed}
+        >
+          <div className="absolute top-1 left-2 text-[9px] text-emerald-700/70 font-medium z-10">Garden map · ft scale</div>
+          <div className="absolute bottom-1 right-2 text-[9px] text-emerald-600/60 z-10">Drop bed where you want it</div>
+          {list.map((bed, i) => {
+            const w = Number(bed.widthFt) || 4;
+            const l = Number(bed.lengthFt) || 8;
+            const pxW = Math.max(48, w * scale);
+            const pxH = Math.max(36, l * scale * 0.7);
+            const left = bed.mapX != null ? `${bed.mapX}%` : `${(i % 2) * 48 + 4}%`;
+            const top = bed.mapY != null ? `${bed.mapY}%` : `${Math.floor(i / 2) * 42 + 12}%`;
+            const count = (placed || []).filter(p => p.bed === bed.id && (p.year || y) === y && p.status !== "harvested").length;
+            const selected = selectedBedId === bed.id;
+            return (
+              <button
+                key={bed.id}
+                type="button"
+                onClick={() => onSelectBed && onSelectBed(bed.id)}
+                draggable={!!onMoveBed}
+                onDragStart={(e) => {
+                  const bedRect = e.currentTarget.getBoundingClientRect();
+                  e.dataTransfer.setData("text/plain", JSON.stringify({
+                    type: "bed",
+                    bedId: bed.id,
+                    grabXPercent: bedRect.width ? (e.clientX - bedRect.left) / bedRect.width : 0.5,
+                    grabYPercent: bedRect.height ? (e.clientY - bedRect.top) / bedRect.height : 0.5,
+                  }));
+                  e.dataTransfer.effectAllowed = "move";
+                }}
+                title={`${bed.name} · ${w}×${l} ft · ${bed.sun}`}
+                className={`absolute border-2 rounded-lg shadow-sm flex flex-col items-center justify-center p-1 transition
+                  ${bed.color} ${selected ? "ring-2 ring-sage-600 border-sage-600 z-20" : "border-sage-400/60 z-10"}
+                  hover:scale-[1.03] active:scale-95`}
+                style={{ left, top, width: pxW, height: pxH, maxWidth: "46%" }}
+              >
+                <span className="text-[10px] font-bold text-sage-800 leading-tight text-center truncate w-full px-0.5">{bed.name}</span>
+                <span className="text-[8px] text-sage-600">{w}×{l} ft</span>
+                <span className="text-[9px] text-sage-700">{count ? `${count} plants` : "empty"}</span>
+              </button>
+            );
+          })}
+        </div>
+      );
+    }
 
     // Legacy alias so older UI that references BEDS still works until fully migrated
     const BEDS = DEFAULT_BEDS;
@@ -1636,7 +1718,7 @@
       );
     }
 
-    function LayoutPlanner({ placed, setPlaced, setTasks, beds, planYear, seeds, setSeeds }) {
+    function LayoutPlanner({ placed, setPlaced, setTasks, beds, setBeds, planYear, seeds, setSeeds }) {
       const bedList = beds && beds.length ? beds : DEFAULT_BEDS;
       const yearPlaced = (placed || []).filter(p => (p.year || new Date().getFullYear()) === (planYear || new Date().getFullYear()));
       const [dragPlantId, setDragPlantId] = useState(null);       // plant type being dragged from library
@@ -1646,6 +1728,73 @@
       const [suggestions, setSuggestions] = useState([]);
       const [suggestBed, setSuggestBed] = useState(null); // null = whole garden
       const [undoStack, setUndoStack] = useState([]);
+      const [showMap, setShowMap] = useState(true);
+      const [editingBed, setEditingBed] = useState(null); // bed object being edited
+      const [bedDraft, setBedDraft] = useState({ name: "", widthFt: 4, lengthFt: 8, sun: "Full sun", mapX: 10, mapY: 10 });
+
+      const moveBedOnMap = (bedId, mapX, mapY) => {
+        if (!setBeds) return;
+        setBeds(prev => prev.map(b => b.id === bedId ? { ...b, mapX, mapY } : b));
+      };
+
+      const openEditBed = (bed) => {
+        setEditingBed(bed);
+        setBedDraft({
+          name: bed.name,
+          widthFt: bed.widthFt || 4,
+          lengthFt: bed.lengthFt || 8,
+          sun: bed.sun || "Full sun",
+          mapX: bed.mapX != null ? bed.mapX : 10,
+          mapY: bed.mapY != null ? bed.mapY : 10,
+          color: bed.color,
+        });
+      };
+
+      const saveBedEdit = () => {
+        if (!editingBed || !setBeds) return;
+        setBeds(prev => prev.map(b => b.id === editingBed.id ? {
+          ...b,
+          name: bedDraft.name.trim() || b.name,
+          widthFt: Math.max(1, Number(bedDraft.widthFt) || 4),
+          lengthFt: Math.max(1, Number(bedDraft.lengthFt) || 8),
+          sun: bedDraft.sun,
+          mapX: Math.min(90, Math.max(0, Number(bedDraft.mapX) || 0)),
+          mapY: Math.min(85, Math.max(0, Number(bedDraft.mapY) || 0)),
+        } : b));
+        setEditingBed(null);
+      };
+
+      const addBedFromLayout = () => {
+        if (!setBeds) return;
+        const id = "bed_" + Date.now();
+        const n = (beds || []).length;
+        setBeds(prev => [...prev, {
+          id,
+          name: `Bed ${n + 1}`,
+          widthFt: 4,
+          lengthFt: 8,
+          sun: "Full sun",
+          color: BED_COLORS[n % BED_COLORS.length],
+          mapX: 8 + (n % 3) * 30,
+          mapY: 12 + Math.floor(n / 3) * 35,
+        }]);
+      };
+
+      const deleteBed = (bedId) => {
+        if (!setBeds) return;
+        const count = yearPlaced.filter(p => p.bed === bedId).length;
+        if (count > 0 && !confirm(`This bed has ${count} plant(s). Delete bed and keep plants unassigned?`)) return;
+        if (count === 0 && !confirm("Delete this bed?")) return;
+        setBeds(prev => prev.filter(b => b.id !== bedId));
+        // Move plants to first remaining bed if any
+        setPlaced(prev => {
+          const remaining = (beds || []).filter(b => b.id !== bedId);
+          const fallback = remaining[0]?.id;
+          if (!fallback) return prev.filter(p => p.bed !== bedId);
+          return prev.map(p => p.bed === bedId ? { ...p, bed: fallback } : p);
+        });
+        setEditingBed(null);
+      };
 
       const pushUndo = (snapshot) => {
         setUndoStack(prev => [...prev.slice(-9), snapshot]);
@@ -1861,10 +2010,39 @@
           } />
 
           <div className="px-4 pt-4">
+            {/* Visual garden map */}
+            <div className="mb-3">
+              <div className="flex justify-between items-center mb-2">
+                <p className="text-xs font-medium text-sage-700">Visual garden map</p>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setShowMap(s => !s)} className="text-[10px] text-sage-500">
+                    {showMap ? "Hide map" : "Show map"}
+                  </button>
+                  <button type="button" onClick={addBedFromLayout} className="text-[10px] font-semibold text-sage-600 bg-sage-100 px-2 py-0.5 rounded-lg">
+                    + Bed
+                  </button>
+                </div>
+              </div>
+              {showMap && (
+                <GardenMap
+                  beds={bedList}
+                  placed={yearPlaced}
+                  planYear={planYear}
+                  onSelectBed={(id) => {
+                    const b = bedList.find(x => x.id === id);
+                    if (b) openEditBed(b);
+                  }}
+                  onMoveBed={moveBedOnMap}
+                  selectedBedId={editingBed?.id}
+                />
+              )}
+              <p className="text-[10px] text-sage-400 mt-1">Drag a bed to reposition it. Tap a bed to edit its size or name.</p>
+            </div>
+
             {/* Canvas / Beds */}
             <div className="bg-white rounded-2xl p-4 card-shadow mb-4 relative">
               <div className="flex justify-between items-center mb-3">
-                <p className="text-xs font-medium text-sage-600">Your Garden Beds</p>
+                <p className="text-xs font-medium text-sage-600">Drop plants onto beds ({bedList.length})</p>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => computeSuggestions(null)}
@@ -1872,7 +2050,6 @@
                   >
                     ✨ Suggest Companions
                   </button>
-                  <p className="text-xs text-sage-400">20 ft × 15 ft</p>
                 </div>
               </div>
 
@@ -1880,6 +2057,7 @@
                 {bedList.map(bed => {
                   const bedPlants = yearPlaced.filter(p => p.bed === bed.id);
                   const isOver = dragOverBed === bed.id;
+                  const cap = bedCapacity(bed, 12);
                   return (
                     <div
                       key={bed.id}
@@ -1891,8 +2069,19 @@
                         ${dragPlantId || dragPlacedId ? "cursor-copy" : ""}`}
                     >
                       <div className="flex justify-between items-start mb-2">
-                        <p className="text-xs font-semibold text-sage-700">{bed.name}</p>
-                        <div className="flex gap-1.5">
+                        <div>
+                          <p className="text-xs font-semibold text-sage-700">{bed.name}</p>
+                          <p className="text-[9px] text-sage-500">{bed.widthFt}×{bed.lengthFt} ft · {bed.sun}</p>
+                        </div>
+                        <div className="flex gap-1.5 items-center">
+                          <button
+                            type="button"
+                            onClick={() => openEditBed(bed)}
+                            className="text-[10px] text-sage-600 font-medium"
+                            title="Edit bed"
+                          >
+                            Edit
+                          </button>
                           {bedPlants.length > 0 && (
                             <>
                               <button
@@ -2042,6 +2231,51 @@
               })}
             </div>
           </div>
+
+          {editingBed && (
+            <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
+              <div className="bg-white rounded-2xl p-5 w-full max-w-sm max-h-[90vh] overflow-y-auto">
+                <h3 className="font-semibold text-sage-800 mb-1">Edit bed</h3>
+                <p className="text-[10px] text-sage-400 mb-3">Size is in feet. Map position is % from top-left of the garden map.</p>
+                <label className="text-xs text-sage-500">Name</label>
+                <input className="w-full border rounded-xl px-3 py-2 text-sm mb-2" value={bedDraft.name} onChange={e => setBedDraft(f => ({ ...f, name: e.target.value }))} />
+                <div className="flex gap-2 mb-2">
+                  <div className="flex-1">
+                    <label className="text-xs text-sage-500">Width (ft)</label>
+                    <input type="number" min={1} max={100} className="w-full border rounded-xl px-3 py-2 text-sm" value={bedDraft.widthFt} onChange={e => setBedDraft(f => ({ ...f, widthFt: e.target.value }))} />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-xs text-sage-500">Length (ft)</label>
+                    <input type="number" min={1} max={100} className="w-full border rounded-xl px-3 py-2 text-sm" value={bedDraft.lengthFt} onChange={e => setBedDraft(f => ({ ...f, lengthFt: e.target.value }))} />
+                  </div>
+                </div>
+                <label className="text-xs text-sage-500">Sun</label>
+                <select className="w-full border rounded-xl px-3 py-2 text-sm mb-2" value={bedDraft.sun} onChange={e => setBedDraft(f => ({ ...f, sun: e.target.value }))}>
+                  {["Full sun", "Partial", "Shade"].map(s => <option key={s}>{s}</option>)}
+                </select>
+                <div className="flex gap-2 mb-3">
+                  <div className="flex-1">
+                    <label className="text-xs text-sage-500">Map left %</label>
+                    <input type="number" min={0} max={90} className="w-full border rounded-xl px-3 py-2 text-sm" value={bedDraft.mapX} onChange={e => setBedDraft(f => ({ ...f, mapX: e.target.value }))} />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-xs text-sage-500">Map top %</label>
+                    <input type="number" min={0} max={85} className="w-full border rounded-xl px-3 py-2 text-sm" value={bedDraft.mapY} onChange={e => setBedDraft(f => ({ ...f, mapY: e.target.value }))} />
+                  </div>
+                </div>
+                <p className="text-[10px] text-sage-500 mb-3">
+                  Capacity (at 12&quot; spacing): ~{bedCapacity({ widthFt: bedDraft.widthFt, lengthFt: bedDraft.lengthFt }, 12)} plants
+                </p>
+                <div className="flex gap-2 mb-2">
+                  <button type="button" onClick={() => setEditingBed(null)} className="flex-1 py-2.5 rounded-xl border text-sm">Cancel</button>
+                  <button type="button" onClick={saveBedEdit} className="flex-1 py-2.5 rounded-xl bg-sage-600 text-white text-sm font-medium">Save</button>
+                </div>
+                <button type="button" onClick={() => deleteBed(editingBed.id)} className="w-full py-2 text-xs text-red-600 font-medium">
+                  Delete bed
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       );
     }
@@ -2317,7 +2551,7 @@
     }
 
     // ========== PHASE 2 UI: Kitchen ==========
-    function KitchenScreen({ profile, planYear, placed, setPlaced, beds, setTasks, setSeeds, setActive }) {
+    function KitchenScreen({ profile, planYear, setPlanYear, placed, setPlaced, beds, setTasks, setSeeds, setActive }) {
       const [tab, setTab] = useState("recipes"); // recipes | preserve | herbs
       const [selected, setSelected] = useState(() => new Set());
       const [detail, setDetail] = useState(null);
@@ -2333,19 +2567,67 @@
 
       const growList = useMemo(() => growListFromRecipes([...selected]), [selected]);
 
+      // Too late this season if sow date is more than a few days in the past
+      // (or plant-out is past for direct seed / transplants)
+      const isTooLateThisSeason = (sched) => {
+        if (!sched) return true;
+        const today = new Date();
+        today.setHours(12, 0, 0, 0);
+        const sow = new Date((sched.sowDate || sched.plantOutDate) + "T12:00:00");
+        const plantOut = new Date((sched.plantOutDate || sched.sowDate) + "T12:00:00");
+        // Grace: still OK if sow was within last 3 days
+        if (sow < addDays(today, -3) && plantOut < today) return true;
+        // Also too late if first frost is within 30 days and crop needs long season
+        if (profile?.firstFrost) {
+          const ff = new Date(profile.firstFrost + "T12:00:00");
+          const daysLeft = Math.round((ff - today) / 86400000);
+          const harvest = new Date((sched.harvestStart || sched.plantOutDate) + "T12:00:00");
+          if (daysLeft < 21 && harvest > ff) return true;
+        }
+        return false;
+      };
+
+      const profileForYear = (year) => {
+        if (!profile?.lastFrost) return profile;
+        // Shift frost dates to the target year (keep MM-DD)
+        const lf = profile.lastFrost;
+        const ff = profile.firstFrost;
+        return {
+          ...profile,
+          lastFrost: lf.length >= 10 ? `${year}-${lf.slice(5)}` : lf,
+          firstFrost: ff && ff.length >= 10 ? `${year}-${ff.slice(5)}` : ff,
+        };
+      };
+
       const planFromRecipes = () => {
         if (!growList.length) {
           alert("Select at least one recipe first.");
           return;
         }
         const bedId = beds[0]?.id || "tomato";
+        const y0 = planYear || new Date().getFullYear();
         const newItems = [];
         const tasksToAdd = [];
+        let rolledNext = 0;
+        let sameYear = 0;
+
         growList.forEach((g, idx) => {
           const pl = PLANT_LIBRARY.find(p => p.id === g.plantId);
           if (!pl) return;
-          const sched = computePlantingSchedule(pl, profile);
+
+          let targetYear = y0;
+          let sched = computePlantingSchedule(pl, profileForYear(y0));
           if (!sched) return;
+
+          if (isTooLateThisSeason(sched)) {
+            targetYear = y0 + 1;
+            sched = computePlantingSchedule(pl, profileForYear(targetYear));
+            if (!sched) return;
+            rolledNext += 1;
+          } else {
+            sameYear += 1;
+          }
+
           for (let i = 0; i < Math.min(g.plants, 12); i++) {
             newItems.push({
               id: Date.now() + idx * 100 + i + Math.random(),
@@ -2353,24 +2635,26 @@
               plant: g.plantId,
               plantedAt: sched.plantOutDate,
               status: "planned",
-              year: planYear || new Date().getFullYear(),
+              year: targetYear,
               method: sched.method,
               sowDate: sched.sowDate,
               transplantDate: sched.transplantDate,
               harvestStart: sched.harvestStart,
               fromRecipe: true,
+              rolledToNextYear: targetYear > y0,
             });
           }
           tasksToAdd.push({
             id: Date.now() + 500 + idx,
             title: `Grow ${pl.name} for recipes`,
-            detail: `~${g.plants} plant(s) · sow ${sched.sowDate}`,
+            detail: `~${g.plants} plant(s) · sow ${sched.sowDate}${targetYear > y0 ? ` · ${targetYear}` : ""}`,
             done: false,
             icon: pl.icon || "🌱",
             due: sched.sowDate,
-            year: planYear,
+            year: targetYear,
           });
         });
+
         setPlaced(prev => [...prev, ...newItems]);
         setTasks(prev => [...tasksToAdd, ...prev]);
         setSeeds(prev => prev.map(s => {
@@ -2382,7 +2666,21 @@
           const qty = Math.max(0, s.qty - hit.plants);
           return { ...s, qty, low: qty <= 3 };
         }));
-        alert(`Added ${newItems.length} planting(s) to ${planYear} plan. Open Plan to review beds.`);
+
+        // Jump plan year if everything rolled forward
+        if (rolledNext > 0 && sameYear === 0 && setPlanYear) {
+          setPlanYear(y0 + 1);
+        }
+
+        let msg = `Added ${newItems.length} planting(s).`;
+        if (rolledNext > 0 && sameYear > 0) {
+          msg += ` ${rolledNext} crop(s) were too late for this season and were scheduled for ${y0 + 1}.`;
+        } else if (rolledNext > 0) {
+          msg += ` Too late to start these this season — all set for ${y0 + 1}.`;
+        } else {
+          msg += ` On your ${y0} plan.`;
+        }
+        alert(msg);
         if (setActive) setActive("plan");
       };
 
@@ -2578,8 +2876,10 @@
       const [showAdd, setShowAdd] = useState(false);
       const [form, setForm] = useState({ plantId: "tomato", bedId: beds[0]?.id || "tomato", successions: 1 });
       const [showBedForm, setShowBedForm] = useState(false);
-      const [bedForm, setBedForm] = useState({ name: "", widthFt: 4, lengthFt: 8, sun: "Full sun" });
+      const [editingBedId, setEditingBedId] = useState(null);
+      const [bedForm, setBedForm] = useState({ name: "", widthFt: 4, lengthFt: 8, sun: "Full sun", mapX: 10, mapY: 10 });
       const [harvestForm, setHarvestForm] = useState({ plantId: "tomato", bedId: "", qty: "", unit: "lb", notes: "" });
+      const [showGardenMap, setShowGardenMap] = useState(true);
 
       const yearPlaced = useMemo(
         () => (placed || []).filter(p => (p.year || y0) === planYear),
@@ -2700,19 +3000,62 @@
         alert(`Copied ${copies.length} planting(s) to ${next}. Check Rotate for family conflicts.`);
       };
 
+      const openNewBed = () => {
+        setEditingBedId(null);
+        setBedForm({ name: "", widthFt: 4, lengthFt: 8, sun: "Full sun", mapX: 10, mapY: 10 });
+        setShowBedForm(true);
+      };
+
+      const openEditBedPlan = (b) => {
+        setEditingBedId(b.id);
+        setBedForm({
+          name: b.name,
+          widthFt: b.widthFt || 4,
+          lengthFt: b.lengthFt || 8,
+          sun: b.sun || "Full sun",
+          mapX: b.mapX != null ? b.mapX : 10,
+          mapY: b.mapY != null ? b.mapY : 10,
+        });
+        setShowBedForm(true);
+      };
+
       const addBed = () => {
         if (!bedForm.name.trim()) return;
-        const id = "bed_" + Date.now();
-        setBeds(prev => [...prev, {
-          id,
-          name: bedForm.name.trim(),
-          widthFt: Number(bedForm.widthFt) || 4,
-          lengthFt: Number(bedForm.lengthFt) || 8,
-          sun: bedForm.sun,
-          color: BED_COLORS[prev.length % BED_COLORS.length],
-        }]);
-        setBedForm({ name: "", widthFt: 4, lengthFt: 8, sun: "Full sun" });
+        if (editingBedId) {
+          setBeds(prev => prev.map(b => b.id === editingBedId ? {
+            ...b,
+            name: bedForm.name.trim(),
+            widthFt: Math.max(1, Number(bedForm.widthFt) || 4),
+            lengthFt: Math.max(1, Number(bedForm.lengthFt) || 8),
+            sun: bedForm.sun,
+            mapX: Math.min(90, Math.max(0, Number(bedForm.mapX) || 0)),
+            mapY: Math.min(85, Math.max(0, Number(bedForm.mapY) || 0)),
+          } : b));
+        } else {
+          const id = "bed_" + Date.now();
+          setBeds(prev => [...prev, {
+            id,
+            name: bedForm.name.trim(),
+            widthFt: Math.max(1, Number(bedForm.widthFt) || 4),
+            lengthFt: Math.max(1, Number(bedForm.lengthFt) || 8),
+            sun: bedForm.sun,
+            color: BED_COLORS[prev.length % BED_COLORS.length],
+            mapX: Math.min(90, Math.max(0, Number(bedForm.mapX) || 10)),
+            mapY: Math.min(85, Math.max(0, Number(bedForm.mapY) || 10)),
+          }]);
+        }
+        setBedForm({ name: "", widthFt: 4, lengthFt: 8, sun: "Full sun", mapX: 10, mapY: 10 });
+        setEditingBedId(null);
         setShowBedForm(false);
+      };
+
+      const removeBed = (bedId) => {
+        if (!confirm("Delete this bed?")) return;
+        setBeds(prev => prev.filter(b => b.id !== bedId));
+        const fallback = beds.find(b => b.id !== bedId)?.id;
+        if (fallback) {
+          setPlaced(prev => prev.map(p => p.bed === bedId ? { ...p, bed: fallback } : p));
+        }
       };
 
       const logHarvest = () => {
@@ -2817,14 +3160,34 @@
 
             <section>
               <div className="flex justify-between items-center mb-2">
-                <h3 className="font-semibold text-sage-800 text-sm">Beds</h3>
-                <button type="button" onClick={() => setShowBedForm(true)} className="text-xs text-sage-600 font-medium">+ Bed</button>
+                <h3 className="font-semibold text-sage-800 text-sm">Garden beds ({beds.length})</h3>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setShowGardenMap(s => !s)} className="text-xs text-sage-500">{showGardenMap ? "Hide map" : "Map"}</button>
+                  <button type="button" onClick={openNewBed} className="text-xs text-sage-600 font-medium">+ Bed</button>
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              {showGardenMap && (
+                <div className="mb-3">
+                  <GardenMap
+                    beds={beds}
+                    placed={yearPlaced}
+                    planYear={planYear}
+                    onSelectBed={(id) => {
+                      const b = beds.find(x => x.id === id);
+                      if (b) openEditBedPlan(b);
+                    }}
+                  />
+                </div>
+              )}
+              <div className="space-y-2">
                 {beds.map(b => (
-                  <div key={b.id} className={`${b.color} border rounded-xl p-2`}>
-                    <p className="text-xs font-semibold text-sage-800">{b.name}</p>
-                    <p className="text-[10px] text-sage-600">{b.widthFt}×{b.lengthFt} ft · {b.sun}</p>
+                  <div key={b.id} className={`${b.color} border rounded-xl p-3 flex items-center gap-2`}>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-sage-800">{b.name}</p>
+                      <p className="text-[10px] text-sage-600">{b.widthFt}×{b.lengthFt} ft · {b.sun} · ~{bedCapacity(b, 12)} plants @12&quot;</p>
+                    </div>
+                    <button type="button" onClick={() => openEditBedPlan(b)} className="text-[10px] font-semibold text-sage-700 bg-white/80 px-2 py-1 rounded-lg">Edit</button>
+                    <button type="button" onClick={() => removeBed(b.id)} className="text-[10px] text-red-600 px-1">×</button>
                   </div>
                 ))}
               </div>
@@ -2900,17 +3263,35 @@
           {showBedForm && (
             <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
               <div className="bg-white rounded-2xl p-5 w-full max-w-sm">
-                <h3 className="font-semibold text-sage-800 mb-3">New bed</h3>
+                <h3 className="font-semibold text-sage-800 mb-3">{editingBedId ? "Edit bed" : "New bed"}</h3>
+                <label className="text-xs text-sage-500">Name</label>
                 <input className="w-full border rounded-xl px-3 py-2 text-sm mb-2" placeholder="Name" value={bedForm.name} onChange={e => setBedForm(f => ({ ...f, name: e.target.value }))} />
                 <div className="flex gap-2 mb-2">
-                  <input type="number" className="flex-1 border rounded-xl px-3 py-2 text-sm" placeholder="Width ft" value={bedForm.widthFt} onChange={e => setBedForm(f => ({ ...f, widthFt: e.target.value }))} />
-                  <input type="number" className="flex-1 border rounded-xl px-3 py-2 text-sm" placeholder="Length ft" value={bedForm.lengthFt} onChange={e => setBedForm(f => ({ ...f, lengthFt: e.target.value }))} />
+                  <div className="flex-1">
+                    <label className="text-xs text-sage-500">Width (ft)</label>
+                    <input type="number" min={1} className="w-full border rounded-xl px-3 py-2 text-sm" placeholder="Width ft" value={bedForm.widthFt} onChange={e => setBedForm(f => ({ ...f, widthFt: e.target.value }))} />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-xs text-sage-500">Length (ft)</label>
+                    <input type="number" min={1} className="w-full border rounded-xl px-3 py-2 text-sm" placeholder="Length ft" value={bedForm.lengthFt} onChange={e => setBedForm(f => ({ ...f, lengthFt: e.target.value }))} />
+                  </div>
                 </div>
-                <select className="w-full border rounded-xl px-3 py-2 text-sm mb-3" value={bedForm.sun} onChange={e => setBedForm(f => ({ ...f, sun: e.target.value }))}>
+                <label className="text-xs text-sage-500">Sun</label>
+                <select className="w-full border rounded-xl px-3 py-2 text-sm mb-2" value={bedForm.sun} onChange={e => setBedForm(f => ({ ...f, sun: e.target.value }))}>
                   {["Full sun", "Partial", "Shade"].map(s => <option key={s}>{s}</option>)}
                 </select>
+                <div className="flex gap-2 mb-3">
+                  <div className="flex-1">
+                    <label className="text-xs text-sage-500">Map left %</label>
+                    <input type="number" min={0} max={90} className="w-full border rounded-xl px-3 py-2 text-sm" value={bedForm.mapX} onChange={e => setBedForm(f => ({ ...f, mapX: e.target.value }))} />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-xs text-sage-500">Map top %</label>
+                    <input type="number" min={0} max={85} className="w-full border rounded-xl px-3 py-2 text-sm" value={bedForm.mapY} onChange={e => setBedForm(f => ({ ...f, mapY: e.target.value }))} />
+                  </div>
+                </div>
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => setShowBedForm(false)} className="flex-1 py-2.5 rounded-xl border text-sm">Cancel</button>
+                  <button type="button" onClick={() => { setShowBedForm(false); setEditingBedId(null); }} className="flex-1 py-2.5 rounded-xl border text-sm">Cancel</button>
                   <button type="button" onClick={addBed} className="flex-1 py-2.5 rounded-xl bg-sage-600 text-white text-sm font-medium">Save bed</button>
                 </div>
               </div>
@@ -3312,10 +3693,12 @@
       );
     }
 
-    function CropRotationScreen({ placed, rotationHistory, setRotationHistory }) {
+    function CropRotationScreen({ placed, setPlaced, rotationHistory, setRotationHistory, beds }) {
+      const bedList = beds && beds.length ? beds : DEFAULT_BEDS;
       const currentYear = new Date().getFullYear();
-      const [selectedBed, setSelectedBed] = useState(BEDS[0].id);
+      const [selectedBed, setSelectedBed] = useState(bedList[0]?.id || "tomato");
       const [showLogConfirm, setShowLogConfirm] = useState(false);
+      const [solveMsg, setSolveMsg] = useState("");
 
       const getPlant = (id) => PLANT_LIBRARY.find(p => p.id === id);
 
@@ -3354,7 +3737,7 @@
 
       const logCurrentSeason = () => {
         const next = { ...rotationHistory };
-        BEDS.forEach(bed => {
+        bedList.forEach(bed => {
           const bedPlants = placed.filter(p => p.bed === bed.id);
           if (bedPlants.length === 0) return;
           const plantIds = [...new Set(bedPlants.map(p => p.plant))];
@@ -3372,6 +3755,51 @@
         });
         setRotationHistory(next);
         setShowLogConfirm(false);
+      };
+
+      /** Move conflict plants to a bed where their family was not grown recently */
+      const solveConflicts = () => {
+        if (!setPlaced) return;
+        const recent = recentFamilies(selectedBed);
+        const movers = placed.filter(p => {
+          if (p.bed !== selectedBed) return false;
+          const fam = getPlant(p.plant)?.family;
+          return fam && fam !== "Ericaceae" && recent.includes(fam);
+        });
+        if (!movers.length) {
+          setSolveMsg("No conflicting plantings to move on this bed.");
+          return;
+        }
+        const moves = [];
+        const stillStuck = [];
+        setPlaced(prev => {
+          let next = [...prev];
+          movers.forEach(m => {
+            const fam = getPlant(m.plant)?.family;
+            const target = bedList.find(b => {
+              if (b.id === selectedBed) return false;
+              const r = recentFamilies(b.id);
+              return fam && !r.includes(fam);
+            });
+            if (target) {
+              next = next.map(p => p.id === m.id ? { ...p, bed: target.id, rotationSolved: true } : p);
+              moves.push({ plant: m.plant, to: target.name });
+            } else {
+              stillStuck.push(m.plant);
+            }
+          });
+          return next;
+        });
+        let msg = moves.length
+          ? `Moved ${moves.length} planting(s): ` + moves.map(x => {
+              const n = getPlant(x.plant)?.name || x.plant;
+              return `${n} → ${x.to}`;
+            }).join("; ")
+          : "Could not auto-place conflicts.";
+        if (stillStuck.length) {
+          msg += ` Still need a free bed for: ${stillStuck.map(id => getPlant(id)?.name || id).join(", ")}. Add a bed or pick a different crop.`;
+        }
+        setSolveMsg(msg);
       };
 
       const bedHistory = rotationHistory[selectedBed] || [];
@@ -3405,10 +3833,10 @@
 
             {/* Bed selector */}
             <div className="flex gap-2 overflow-x-auto pb-1">
-              {BEDS.map(bed => (
+              {bedList.map(bed => (
                 <button
                   key={bed.id}
-                  onClick={() => setSelectedBed(bed.id)}
+                  onClick={() => { setSelectedBed(bed.id); setSolveMsg(""); }}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition ${
                     selectedBed === bed.id
                       ? "bg-sage-600 text-white"
@@ -3424,7 +3852,7 @@
             <div className={`rounded-2xl p-4 card-shadow ${hasConflict ? "bg-amber-50 border border-amber-200" : "bg-white"}`}>
               <div className="flex justify-between items-start mb-2">
                 <h3 className="font-semibold text-sage-800">
-                  {BEDS.find(b => b.id === selectedBed)?.name}
+                  {bedList.find(b => b.id === selectedBed)?.name}
                 </h3>
                 {hasConflict ? (
                   <span className="text-[10px] bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full font-medium">
@@ -3436,6 +3864,26 @@
                   </span>
                 )}
               </div>
+              {hasConflict && (
+                <div className="mb-3">
+                  <p className="text-xs text-amber-900 mb-2">
+                    Same plant family was here within the last {ROTATION_YEARS} years. Solve moves those plantings to a safer bed.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={solveConflicts}
+                    className="w-full py-2 rounded-xl bg-amber-600 text-white text-sm font-semibold"
+                  >
+                    Solve conflicts
+                  </button>
+                  {solveMsg && (
+                    <p className="text-[10px] text-sage-700 mt-2 bg-white/80 rounded-lg px-2 py-1.5">{solveMsg}</p>
+                  )}
+                </div>
+              )}
+              {!hasConflict && solveMsg && (
+                <p className="text-[10px] text-sage-600 mb-2 bg-sage-50 rounded-lg px-2 py-1.5">{solveMsg}</p>
+              )}
 
               <p className="text-xs text-sage-500 mb-2">This season (from Layout)</p>
               <div className="flex flex-wrap gap-1.5 mb-3">
@@ -4135,6 +4583,7 @@
             <KitchenScreen
               profile={profile}
               planYear={planYear}
+              setPlanYear={setPlanYear}
               placed={placed}
               setPlaced={setPlaced}
               beds={beds}
@@ -4149,6 +4598,7 @@
               setPlaced={setPlaced}
               setTasks={setTasks}
               beds={beds}
+              setBeds={setBeds}
               planYear={planYear}
               seeds={seeds}
               setSeeds={setSeeds}
@@ -4157,8 +4607,10 @@
           {active === "rotate" && (
             <CropRotationScreen
               placed={placed}
+              setPlaced={setPlaced}
               rotationHistory={rotationHistory}
               setRotationHistory={setRotationHistory}
+              beds={beds}
             />
           )}
           {active === "diagnose" && <DiagnosticScreen tasks={tasks} setTasks={setTasks} />}
