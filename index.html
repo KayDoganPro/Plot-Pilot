@@ -1729,6 +1729,79 @@
       const [showMap, setShowMap] = useState(true);
       const [editingBed, setEditingBed] = useState(null); // bed object being edited
       const [bedDraft, setBedDraft] = useState({ name: "", widthFt: 4, lengthFt: 8, sun: "Full sun", mapX: 10, mapY: 10 });
+      // Mobile-friendly: multi-select plants, then tap a bed to plant
+      const [selectedPlantIds, setSelectedPlantIds] = useState([]);
+
+      const togglePlantSelect = (plantId) => {
+        setSelectedPlantIds(prev =>
+          prev.includes(plantId) ? prev.filter(id => id !== plantId) : [...prev, plantId]
+        );
+      };
+
+      const clearPlantSelection = () => setSelectedPlantIds([]);
+
+      const placePlantOnBed = (plantId, bedId) => {
+        const plantInfo = PLANT_LIBRARY.find(p => p.id === plantId);
+        if (!plantInfo) return false;
+        const bedPlants = placed.filter(p => p.bed === bedId).map(p => p.plant);
+        const conflicts = bedPlants.filter(pid => getRelation(plantId, pid) < 0);
+        if (conflicts.length > 0) {
+          const names = conflicts.map(c => PLANT_LIBRARY.find(p => p.id === c)?.name || c).join(", ");
+          if (!confirm(`⚠️ ${plantInfo.name} may conflict with: ${names}.\n\nPlant anyway?`)) return false;
+        }
+        const plantedAt = toISODate(new Date());
+        const planY = planYear || new Date().getFullYear();
+        const profileSaved = JSON.parse(localStorage.getItem("pp_profile") || "{}");
+        const sched = computePlantingSchedule(plantInfo, profileSaved);
+        const newItem = {
+          id: Date.now() + Math.random(),
+          bed: bedId,
+          plant: plantId,
+          plantedAt,
+          status: "growing",
+          year: planY,
+          method: plantInfo?.method,
+          sowDate: sched?.sowDate,
+          transplantDate: sched?.transplantDate,
+          harvestStart: sched?.harvestStart,
+        };
+        setPlaced(prev => [...prev, newItem]);
+        setJustDropped(newItem.id);
+        setTimeout(() => setJustDropped(null), 600);
+        if (setSeeds && plantInfo) {
+          setSeeds(prev => prev.map(s => {
+            if ((s.name || "").toLowerCase().includes(plantInfo.name.toLowerCase()) && s.qty > 0) {
+              const qty = Math.max(0, s.qty - 1);
+              return { ...s, qty, low: qty <= 3 };
+            }
+            return s;
+          }));
+        }
+        if (setTasks && plantInfo) {
+          const tasks = [];
+          if (sched?.sowDate) {
+            tasks.push({ id: Date.now() + Math.random(), title: `Sow ${plantInfo.name}`, detail: sched.sowDate, done: false, icon: "🌱", due: sched.sowDate, year: planY });
+          }
+          setTasks(prev => [...tasks, ...prev]);
+        }
+        return true;
+      };
+
+      const placeSelectedOnBed = (bedId) => {
+        if (!selectedPlantIds.length) return;
+        pushUndo(placed);
+        selectedPlantIds.forEach(pid => placePlantOnBed(pid, bedId));
+        clearPlantSelection();
+      };
+
+      const handleBedTap = (bedId) => {
+        if (selectedPlantIds.length > 0) {
+          placeSelectedOnBed(bedId);
+          return;
+        }
+        const b = bedList.find(x => x.id === bedId);
+        if (b) openEditBed(b);
+      };
 
       const openEditBed = (bed) => {
         setEditingBed(bed);
@@ -2016,6 +2089,12 @@
                   </button>
                 </div>
               </div>
+              {selectedPlantIds.length > 0 && (
+                <div className="mb-2 flex items-center gap-2 bg-sage-600 text-white rounded-xl px-3 py-2 text-xs font-medium">
+                  <span className="flex-1">{selectedPlantIds.length} selected — tap a bed to plant</span>
+                  <button type="button" onClick={clearPlantSelection} className="underline opacity-90">Clear</button>
+                </div>
+              )}
               {showMap && (
                 <GardenMap
                   beds={bedList}
@@ -2025,23 +2104,27 @@
                   dragOverBed={dragOverBed}
                   onDragOver={onDragOver}
                   onDragLeave={onDragLeave}
-                  onDrop={onDrop}
-                  onSelectBed={(id) => {
-                    const b = bedList.find(x => x.id === id);
-                    if (b) openEditBed(b);
+                  onDrop={(e, bedId) => {
+                    if (selectedPlantIds.length) {
+                      e.preventDefault();
+                      placeSelectedOnBed(bedId);
+                      return;
+                    }
+                    onDrop(e, bedId);
                   }}
+                  onSelectBed={handleBedTap}
                   selectedBedId={editingBed?.id}
                 />
               )}
               <p className="text-[10px] text-sage-400 mt-1">
-                Drag plants from the library onto a map bed · tap a bed to edit size or map position.
+                Tap plants below to select · tap a bed to plant · long-press Edit only when nothing is selected.
               </p>
             </div>
 
             {/* Canvas / Beds */}
             <div className="bg-white rounded-2xl p-4 card-shadow mb-4 relative">
               <div className="flex justify-between items-center mb-3">
-                <p className="text-xs font-medium text-sage-600">Drop plants onto beds ({bedList.length})</p>
+                <p className="text-xs font-medium text-sage-600">Beds ({bedList.length}) — tap to plant selection</p>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => computeSuggestions(null)}
@@ -2055,27 +2138,39 @@
               <div className="grid grid-cols-2 gap-3">
                 {bedList.map(bed => {
                   const bedPlants = yearPlaced.filter(p => p.bed === bed.id);
-                  const isOver = dragOverBed === bed.id;
-                  const cap = bedCapacity(bed, 12);
+                  const isOver = dragOverBed === bed.id || (selectedPlantIds.length > 0 && false);
+                  const awaiting = selectedPlantIds.length > 0;
                   return (
                     <div
                       key={bed.id}
+                      onClick={() => {
+                        if (selectedPlantIds.length) placeSelectedOnBed(bed.id);
+                      }}
                       onDragOver={(e) => onDragOver(e, bed.id)}
                       onDragLeave={onDragLeave}
-                      onDrop={(e) => onDrop(e, bed.id)}
+                      onDrop={(e) => {
+                        if (selectedPlantIds.length) {
+                          e.preventDefault();
+                          placeSelectedOnBed(bed.id);
+                          return;
+                        }
+                        onDrop(e, bed.id);
+                      }}
                       className={`${bed.color} border-2 rounded-xl p-3 min-h-[130px] relative transition-all duration-150
-                        ${isOver ? "border-sage-600 border-solid scale-[1.02] shadow-md ring-2 ring-sage-300" : "border-dashed"}
+                        ${isOver || awaiting ? "border-sage-600 border-solid" : "border-dashed"}
+                        ${awaiting ? "ring-2 ring-sage-400 cursor-pointer" : ""}
                         ${dragPlantId || dragPlacedId ? "cursor-copy" : ""}`}
                     >
                       <div className="flex justify-between items-start mb-2">
                         <div>
                           <p className="text-xs font-semibold text-sage-700">{bed.name}</p>
                           <p className="text-[9px] text-sage-500">{bed.widthFt}×{bed.lengthFt} ft · {bed.sun}</p>
+                          {awaiting && <p className="text-[9px] text-sage-700 font-semibold mt-0.5">Tap to plant here</p>}
                         </div>
                         <div className="flex gap-1.5 items-center">
                           <button
                             type="button"
-                            onClick={() => openEditBed(bed)}
+                            onClick={(e) => { e.stopPropagation(); openEditBed(bed); }}
                             className="text-[10px] text-sage-600 font-medium"
                             title="Edit bed"
                           >
@@ -2172,12 +2267,12 @@
                 </div>
                 <div className="space-y-2">
                   {suggestions.slice(0, 5).map(s => (
-                    <div
+                    <button
+                      type="button"
                       key={s.id}
-                      className="bg-white rounded-xl p-2.5 flex items-center gap-3 cursor-grab active:cursor-grabbing"
-                      draggable
-                      onDragStart={(e) => onLibraryDragStart(e, s.id)}
-                      onDragEnd={onDragEnd}
+                      onClick={() => togglePlantSelect(s.id)}
+                      className={`w-full bg-white rounded-xl p-2.5 flex items-center gap-3 text-left transition
+                        ${selectedPlantIds.includes(s.id) ? "ring-2 ring-sage-600" : ""}`}
                     >
                       <span className="text-2xl">{s.icon}</span>
                       <div className="flex-1 min-w-0">
@@ -2198,34 +2293,44 @@
                       }`}>
                         {s.score > 0 ? `+${s.score}` : s.score}
                       </span>
-                    </div>
+                    </button>
                   ))}
                 </div>
-                <p className="text-[10px] text-sage-500 mt-2">Drag any suggestion onto a bed to plant it</p>
+                <p className="text-[10px] text-sage-500 mt-2">Tap a suggestion to select, then tap a bed</p>
               </div>
             )}
 
-            {/* Plant Library – Draggable source */}
-            <h3 className="font-semibold text-sage-800 mb-1">Plant Library</h3>
+            {/* Plant Library – multi-select then tap bed */}
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-semibold text-sage-800">Plant Library</h3>
+              {selectedPlantIds.length > 0 && (
+                <button type="button" onClick={clearPlantSelection} className="text-xs text-sage-600 font-medium">Clear ({selectedPlantIds.length})</button>
+              )}
+            </div>
             <p className="text-xs text-sage-500 mb-3">
-              {dragPlantId ? "Drop onto a bed…" : "Drag a plant onto any bed"}
+              {selectedPlantIds.length
+                ? `Selected ${selectedPlantIds.length} — tap a bed on the map or list to plant`
+                : "Tap to select plants (multi-select), then tap a bed"}
             </p>
             <div className="grid grid-cols-4 gap-2">
               {PLANT_LIBRARY.map(plant => {
                 const isSuggested = suggestions.some(s => s.id === plant.id && s.score > 0);
+                const isSelected = selectedPlantIds.includes(plant.id);
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={plant.id}
-                    draggable
-                    onDragStart={(e) => onLibraryDragStart(e, plant.id)}
-                    onDragEnd={onDragEnd}
-                    className={`bg-white rounded-xl p-2 card-shadow text-center cursor-grab active:cursor-grabbing plant-card transition
-                      ${dragPlantId === plant.id ? "opacity-50 ring-2 ring-sage-400 scale-95" : "hover:scale-105 hover:shadow-md"}
-                      ${isSuggested ? "ring-2 ring-green-400 bg-green-50" : ""}`}
+                    onClick={() => togglePlantSelect(plant.id)}
+                    className={`bg-white rounded-xl p-2 card-shadow text-center plant-card transition relative
+                      ${isSelected ? "ring-2 ring-sage-600 bg-sage-50 scale-[0.98]" : "hover:shadow-md active:scale-95"}
+                      ${isSuggested && !isSelected ? "ring-2 ring-green-400 bg-green-50" : ""}`}
                   >
+                    {isSelected && (
+                      <span className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-sage-600 text-white text-[9px] flex items-center justify-center">✓</span>
+                    )}
                     <div className="text-2xl mb-1 select-none">{plant.icon}</div>
                     <p className="text-[10px] font-medium leading-tight select-none">{plant.name}</p>
-                  </div>
+                  </button>
                 );
               })}
             </div>
