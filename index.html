@@ -1930,7 +1930,7 @@
 
             {/* Location edit modal */}
             {showLocEdit && (
-              <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
+              <div className="fixed inset-0 bg-black/40 z-[100] flex items-end sm:items-center justify-center px-4 pt-4 pb-24">
                 <div className="bg-white rounded-2xl p-5 w-full max-w-sm card-shadow">
                   <h3 className="font-semibold text-sage-800 mb-1">Garden location</h3>
                   <p className="text-xs text-sage-500 mb-3">Used for weather and frost advice</p>
@@ -2204,7 +2204,7 @@
       );
     }
 
-    function LayoutPlanner({ placed, setPlaced, setTasks, beds, setBeds, planYear, seeds, setSeeds }) {
+    function LayoutPlanner({ placed, setPlaced, setTasks, beds, setBeds, planYear, seeds, setSeeds, customPlants, setCustomPlants }) {
       const bedList = beds && beds.length ? beds : DEFAULT_BEDS;
       const yearPlaced = (placed || []).filter(p => (p.year || new Date().getFullYear()) === (planYear || new Date().getFullYear()));
       const [dragPlantId, setDragPlantId] = useState(null);       // plant type being dragged from library
@@ -2222,6 +2222,11 @@
       const [layoutTypeFilter, setLayoutTypeFilter] = useState("All");
       const [varietyPickerCrop, setVarietyPickerCrop] = useState(null); // crop id for variety multi-select sheet
       const [pickerSelected, setPickerSelected] = useState([]); // variety ids in sheet
+      const [showAddVariety, setShowAddVariety] = useState(false);
+      const [newVarietyName, setNewVarietyName] = useState("");
+      const [newVarietyNotes, setNewVarietyNotes] = useState("");
+      const [detailItem, setDetailItem] = useState(null); // placed item for info sheet
+      const longPressRef = useState({ timer: null, fired: false })[0];
 
       const togglePlantSelect = (plantId) => {
         setSelectedPlantIds(prev =>
@@ -2232,11 +2237,11 @@
       const clearPlantSelection = () => setSelectedPlantIds([]);
 
       const placePlantOnBed = (plantId, bedId) => {
-        const plantInfo = resolvePlant(plantId) || PLANT_LIBRARY.find(p => p.id === plantId);
+        const plantInfo = resolvePlant(plantId, customPlants) || PLANT_LIBRARY.find(p => p.id === plantId);
         if (!plantInfo) return false;
         const cropKey = plantInfo.cropId || plantInfo.id;
         const bedCropKeys = placed.filter(p => p.bed === bedId).map(p => {
-          const pl = resolvePlant(p.plant);
+          const pl = resolvePlant(p.plant, customPlants);
           return pl?.cropId || p.plant;
         });
         const conflicts = bedCropKeys.filter(pid => getRelation(cropKey, pid) < 0);
@@ -2705,35 +2710,58 @@
                           </p>
                         )}
                         {bedPlants.map(item => {
-                          const plant = resolvePlant(item.plant) || PLANT_LIBRARY.find(pl => pl.id === item.plant);
+                          const plant = resolvePlant(item.plant, customPlants) || PLANT_LIBRARY.find(pl => pl.id === item.plant);
                           const harvested = item.status === "harvested";
                           const label = plant?.variety || plant?.name || item.plant;
+                          const clearLongPress = () => {
+                            if (longPressRef.timer) {
+                              clearTimeout(longPressRef.timer);
+                              longPressRef.timer = null;
+                            }
+                          };
+                          const startLongPress = (e) => {
+                            e.stopPropagation();
+                            longPressRef.fired = false;
+                            clearLongPress();
+                            longPressRef.timer = setTimeout(() => {
+                              longPressRef.fired = true;
+                              if (navigator.vibrate) try { navigator.vibrate(30); } catch (_) {}
+                              if (confirm(`Remove ${label} from this bed?`)) {
+                                removePlant(item.id);
+                              }
+                            }, 550);
+                          };
                           return (
                             <div
                               key={item.id}
-                              draggable={!harvested}
-                              onDragStart={(e) => onPlacedDragStart(e, item)}
-                              onDragEnd={onDragEnd}
-                              className={`relative group bg-white/90 rounded-lg px-1.5 py-1 shadow-sm cursor-grab active:cursor-grabbing max-w-[72px]
+                              role="button"
+                              tabIndex={0}
+                              className={`relative group bg-white/90 rounded-lg px-1.5 py-1 shadow-sm cursor-pointer max-w-[72px] select-none
                                 ${justDropped === item.id ? "animate-bounce" : ""}
                                 ${dragPlacedId === item.id ? "opacity-40" : ""}
                                 ${harvested ? "opacity-40 grayscale" : ""}`}
-                              title={`${label}${harvested ? " (harvested)" : ""} – drag to move · double-tap remove`}
-                              onDoubleClick={() => removePlant(item.id)}
+                              title={`${label} — tap for info · long-press to remove`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (longPressRef.fired) {
+                                  longPressRef.fired = false;
+                                  return;
+                                }
+                                setDetailItem(item);
+                              }}
+                              onPointerDown={startLongPress}
+                              onPointerUp={clearLongPress}
+                              onPointerLeave={clearLongPress}
+                              onPointerCancel={clearLongPress}
                               onContextMenu={(e) => {
                                 e.preventDefault();
-                                setPlantStatus(item.id, harvested ? "growing" : "harvested");
+                                e.stopPropagation();
+                                if (confirm(`Remove ${label} from this bed?`)) removePlant(item.id);
                               }}
                             >
-                              <div className="text-xl text-center leading-none">{plant?.icon}</div>
-                              <p className="text-[8px] leading-tight text-sage-700 text-center mt-0.5 line-clamp-2 font-medium">{label}</p>
+                              <div className="text-xl text-center leading-none pointer-events-none">{plant?.icon}</div>
+                              <p className="text-[8px] leading-tight text-sage-700 text-center mt-0.5 line-clamp-2 font-medium pointer-events-none">{label}</p>
                               {harvested && <span className="absolute -bottom-1 left-0 right-0 text-[8px] text-center text-sage-600">✓</span>}
-                              <button
-                                onClick={(e) => { e.stopPropagation(); removePlant(item.id); }}
-                                className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full text-[9px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
-                              >
-                                ×
-                              </button>
                             </div>
                           );
                         })}
@@ -2744,9 +2772,101 @@
               </div>
 
               <p className="text-center text-xs text-sage-400 mt-3">
-                Multi-select varieties · tap bed to plant · × removes
+                Tap plant for details · long-press to remove
               </p>
             </div>
+
+            {detailItem && (() => {
+              const plant = resolvePlant(detailItem.plant, customPlants) || PLANT_LIBRARY.find(p => p.id === detailItem.plant);
+              const bed = bedList.find(b => b.id === detailItem.bed);
+              const sched = plant ? computePlantingSchedule(plant, JSON.parse(localStorage.getItem("pp_profile") || "{}")) : null;
+              const label = plant?.variety || plant?.name || detailItem.plant;
+              return (
+                <div className="fixed inset-0 bg-black/40 z-[100] flex items-end sm:items-center justify-center px-4 pt-4 pb-24" onClick={() => setDetailItem(null)}>
+                  <div className="bg-white rounded-2xl w-full max-w-sm p-5 shadow-xl" onClick={e => e.stopPropagation()}>
+                    <div className="flex gap-3 items-start mb-3">
+                      <span className="text-4xl">{plant?.icon || "🌱"}</span>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-sage-800 text-lg leading-tight">{label}</h3>
+                        {plant?.variety && (
+                          <p className="text-xs text-sage-500">{plant.cropName || plant.name?.split("—")[0]?.trim()}</p>
+                        )}
+                        {plant?.scientific && <p className="text-[10px] text-sage-400 italic">{plant.scientific}</p>}
+                        {plant?.isCustom && <p className="text-[10px] text-amber-700 font-medium">Your custom variety</p>}
+                      </div>
+                      <button type="button" onClick={() => setDetailItem(null)} className="text-sage-400 text-sm">✕</button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+                      <div className="bg-sage-50 rounded-xl p-2.5">
+                        <p className="text-[10px] text-sage-500">Variety</p>
+                        <p className="font-medium text-sage-800">{plant?.variety || "Generic / unspecified"}</p>
+                      </div>
+                      <div className="bg-sage-50 rounded-xl p-2.5">
+                        <p className="text-[10px] text-sage-500">Sun / shade</p>
+                        <p className="font-medium text-sage-800">{plant?.sun || "—"}</p>
+                      </div>
+                      <div className="bg-sage-50 rounded-xl p-2.5">
+                        <p className="text-[10px] text-sage-500">Germination</p>
+                        <p className="font-medium text-sage-800">{plant?.germDays != null ? `${plant.germDays} days` : "—"}</p>
+                      </div>
+                      <div className="bg-sage-50 rounded-xl p-2.5">
+                        <p className="text-[10px] text-sage-500">Days to harvest</p>
+                        <p className="font-medium text-sage-800">{plant?.daysToHarvest != null ? `~${plant.daysToHarvest} days` : "—"}</p>
+                      </div>
+                      <div className="bg-sage-50 rounded-xl p-2.5">
+                        <p className="text-[10px] text-sage-500">Spacing</p>
+                        <p className="font-medium text-sage-800">{plant?.spacing || "—"}</p>
+                      </div>
+                      <div className="bg-sage-50 rounded-xl p-2.5">
+                        <p className="text-[10px] text-sage-500">Method</p>
+                        <p className="font-medium text-sage-800">{plant?.method === "indoor" ? "Start indoors" : "Direct sow"}</p>
+                      </div>
+                    </div>
+                    <div className="text-[10px] text-sage-600 space-y-1 mb-3 bg-sage-50 rounded-xl p-2.5">
+                      <p><span className="text-sage-500">Bed:</span> {bed?.name || detailItem.bed}{bed?.sun ? ` · ${bed.sun}` : ""}</p>
+                      {detailItem.sowDate && <p><span className="text-sage-500">Sow:</span> {fmtDate(detailItem.sowDate)}</p>}
+                      {detailItem.harvestStart && <p><span className="text-sage-500">Harvest ~</span> {fmtDate(detailItem.harvestStart)}</p>}
+                      {sched && !detailItem.sowDate && (
+                        <p><span className="text-sage-500">Typical sow:</span> {fmtDate(sched.sowDate)} · harvest ~{fmtDate(sched.harvestStart)}</p>
+                      )}
+                      <p><span className="text-sage-500">Status:</span> {detailItem.status || "growing"}</p>
+                      {plant?.notes && <p><span className="text-sage-500">Notes:</span> {plant.notes}</p>}
+                    </div>
+                    {plant?.homestead && plant.homestead.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {plant.homestead.slice(0, 6).map(h => (
+                          <span key={h} className="text-[9px] bg-amber-50 text-amber-900 px-1.5 py-0.5 rounded">{HOMESTEAD_LABELS[h] || h}</span>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPlantStatus(detailItem.id, detailItem.status === "harvested" ? "growing" : "harvested");
+                          setDetailItem(null);
+                        }}
+                        className="flex-1 py-2.5 rounded-xl border text-sm font-medium"
+                      >
+                        {detailItem.status === "harvested" ? "Mark growing" : "Mark harvested"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm(`Remove ${label} from ${bed?.name || "bed"}?`)) {
+                            removePlant(detailItem.id);
+                            setDetailItem(null);
+                          }
+                        }}
+                        className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-medium"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Suggestions Panel */}
             {suggestions.length > 0 && (
@@ -2825,7 +2945,7 @@
             {selectedPlantIds.length > 0 && (
               <div className="flex flex-wrap gap-1 mb-2">
                 {selectedPlantIds.map(id => {
-                  const pl = resolvePlant(id) || PLANT_LIBRARY.find(p => p.id === id);
+                  const pl = resolvePlant(id, customPlants) || PLANT_LIBRARY.find(p => p.id === id);
                   return (
                     <button
                       key={id}
@@ -2880,28 +3000,77 @@
 
           {varietyPickerCrop && (() => {
             const parent = PLANT_LIBRARY.find(p => p.id === varietyPickerCrop);
-            const vars = VARIETY_LIBRARY.filter(v => v.cropId === varietyPickerCrop);
+            const catalogVars = VARIETY_LIBRARY.filter(v => v.cropId === varietyPickerCrop);
+            const customVars = (customPlants || []).filter(v => v.isVariety && v.cropId === varietyPickerCrop);
+            const vars = [...customVars, ...catalogVars];
             const togglePick = (id) => {
               setPickerSelected(prev =>
                 prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
               );
             };
+            const saveNewVariety = () => {
+              const name = (newVarietyName || "").trim();
+              if (!name || !parent || !setCustomPlants) return;
+              const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "custom";
+              const id = `${varietyPickerCrop}__mine_${Date.now()}`;
+              const entry = {
+                ...parent,
+                id,
+                name: `${parent.name} — ${name}`,
+                variety: name,
+                cropId: varietyPickerCrop,
+                cropName: parent.name,
+                sources: "Mine",
+                isVariety: true,
+                isCustom: true,
+                notes: (newVarietyNotes || "").trim() || undefined,
+              };
+              setCustomPlants(prev => [...prev, entry]);
+              setPickerSelected(prev => [...prev, id]);
+              setNewVarietyName("");
+              setNewVarietyNotes("");
+              setShowAddVariety(false);
+            };
             return (
-              <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
-                <div className="bg-white rounded-2xl p-4 w-full max-w-sm max-h-[85vh] overflow-y-auto">
-                  <h3 className="font-semibold text-sage-800 mb-1">{parent?.icon} {parent?.name} varieties</h3>
-                  <p className="text-[10px] text-sage-500 mb-3">Select one or many. Same bed can hold multiple varieties.</p>
-                  <button
-                    type="button"
-                    onClick={() => togglePick(varietyPickerCrop)}
-                    className={`w-full text-left px-3 py-2.5 rounded-xl mb-2 border text-sm ${
-                      pickerSelected.includes(varietyPickerCrop) ? "border-sage-600 bg-sage-50 ring-1 ring-sage-400" : "border-sage-100"
-                    }`}
-                  >
-                    Generic {parent?.name} (no named variety)
-                  </button>
-                  <div className="space-y-1.5 mb-4">
-                    {vars.map(v => (
+              <div className="fixed inset-0 bg-black/40 z-[100] flex items-end sm:items-center justify-center px-4 pt-4 pb-24">
+                <div className="bg-white rounded-2xl w-full max-w-sm max-h-[min(80vh,calc(100dvh-7.5rem))] flex flex-col shadow-xl">
+                  <div className="p-4 pb-2 shrink-0">
+                    <h3 className="font-semibold text-sage-800 mb-1">{parent?.icon} {parent?.name} varieties</h3>
+                    <p className="text-[10px] text-sage-500">Select one or many. Same bed can hold multiple varieties.</p>
+                  </div>
+                  <div className="px-4 overflow-y-auto flex-1 min-h-0 space-y-1.5">
+                    <button
+                      type="button"
+                      onClick={() => togglePick(varietyPickerCrop)}
+                      className={`w-full text-left px-3 py-2.5 rounded-xl border text-sm ${
+                        pickerSelected.includes(varietyPickerCrop) ? "border-sage-600 bg-sage-50 ring-1 ring-sage-400" : "border-sage-100"
+                      }`}
+                    >
+                      Generic {parent?.name} (no named variety)
+                    </button>
+                    {customVars.length > 0 && (
+                      <p className="text-[10px] font-semibold text-sage-500 pt-1">Your varieties</p>
+                    )}
+                    {customVars.map(v => (
+                      <button
+                        type="button"
+                        key={v.id}
+                        onClick={() => togglePick(v.id)}
+                        className={`w-full text-left px-3 py-2 rounded-xl border text-sm flex justify-between items-center ${
+                          pickerSelected.includes(v.id) ? "border-sage-600 bg-sage-50 ring-1 ring-sage-400" : "border-amber-200 bg-amber-50/50"
+                        }`}
+                      >
+                        <span>
+                          <span className="font-medium text-sage-800">{v.variety}</span>
+                          <span className="block text-[10px] text-amber-700">My variety{v.notes ? ` · ${v.notes}` : ""}</span>
+                        </span>
+                        {pickerSelected.includes(v.id) && <span className="text-sage-600 font-bold">✓</span>}
+                      </button>
+                    ))}
+                    {catalogVars.length > 0 && (
+                      <p className="text-[10px] font-semibold text-sage-500 pt-1">Catalog</p>
+                    )}
+                    {catalogVars.map(v => (
                       <button
                         type="button"
                         key={v.id}
@@ -2919,25 +3088,60 @@
                         {pickerSelected.includes(v.id) && <span className="text-sage-600 font-bold">✓</span>}
                       </button>
                     ))}
+
+                    {!showAddVariety ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowAddVariety(true)}
+                        className="w-full mt-2 py-2.5 rounded-xl border-2 border-dashed border-sage-300 text-sage-700 text-sm font-medium"
+                      >
+                        + Add my variety
+                      </button>
+                    ) : (
+                      <div className="mt-2 p-3 rounded-xl bg-sage-50 border border-sage-200 space-y-2">
+                        <p className="text-xs font-semibold text-sage-800">New {parent?.name} variety</p>
+                        <input
+                          className="w-full border rounded-xl px-3 py-2 text-sm"
+                          placeholder="Variety name (e.g. Grandma's Hot)"
+                          value={newVarietyName}
+                          onChange={e => setNewVarietyName(e.target.value)}
+                          autoFocus
+                        />
+                        <input
+                          className="w-full border rounded-xl px-3 py-2 text-sm"
+                          placeholder="Notes optional (source, color…)"
+                          value={newVarietyNotes}
+                          onChange={e => setNewVarietyNotes(e.target.value)}
+                        />
+                        <div className="flex gap-2">
+                          <button type="button" onClick={() => { setShowAddVariety(false); setNewVarietyName(""); setNewVarietyNotes(""); }} className="flex-1 py-2 rounded-xl border text-xs">Cancel</button>
+                          <button type="button" onClick={saveNewVariety} className="flex-1 py-2 rounded-xl bg-sage-600 text-white text-xs font-medium">Save variety</button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex gap-2 sticky bottom-0 bg-white pt-1">
+                  <div className="p-4 pt-3 border-t border-sage-100 shrink-0 flex gap-2 bg-white rounded-b-2xl">
                     <button
                       type="button"
-                      onClick={() => { setVarietyPickerCrop(null); setPickerSelected([]); }}
-                      className="flex-1 py-2.5 rounded-xl border text-sm"
+                      onClick={() => { setVarietyPickerCrop(null); setPickerSelected([]); setShowAddVariety(false); }}
+                      className="flex-1 py-3 rounded-xl border text-sm font-medium"
                     >Cancel</button>
                     <button
                       type="button"
                       onClick={() => {
-                        // Replace this crop's previous selection with picker choices
                         setSelectedPlantIds(prev => {
-                          const without = prev.filter(id => id !== varietyPickerCrop && !id.startsWith(varietyPickerCrop + "__"));
+                          const without = prev.filter(id => {
+                            if (id === varietyPickerCrop) return false;
+                            if (id.startsWith(varietyPickerCrop + "__")) return false;
+                            return true;
+                          });
                           return [...without, ...pickerSelected];
                         });
                         setVarietyPickerCrop(null);
                         setPickerSelected([]);
+                        setShowAddVariety(false);
                       }}
-                      className="flex-1 py-2.5 rounded-xl bg-sage-600 text-white text-sm font-medium"
+                      className="flex-1 py-3 rounded-xl bg-sage-600 text-white text-sm font-medium"
                     >
                       Add {pickerSelected.length || 0} to selection
                     </button>
@@ -2948,7 +3152,7 @@
           })()}
 
           {editingBed && (
-            <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/40 z-[100] flex items-end sm:items-center justify-center px-4 pt-4 pb-24">
               <div className="bg-white rounded-2xl p-5 w-full max-w-sm max-h-[90vh] overflow-y-auto">
                 <h3 className="font-semibold text-sage-800 mb-1">Edit bed</h3>
                 <p className="text-[10px] text-sage-400 mb-3">Size is in feet. Map position is % from top-left of the garden map.</p>
@@ -3720,7 +3924,7 @@
           </div>
 
           {detail && (
-            <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4" onClick={() => setDetail(null)}>
+            <div className="fixed inset-0 bg-black/40 z-[100] flex items-end sm:items-center justify-center px-4 pt-4 pb-24" onClick={() => setDetail(null)}>
               <div className="bg-white rounded-2xl p-5 w-full max-w-sm max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                 <p className="text-2xl text-center">{detail.icon}</p>
                 <h3 className="font-semibold text-sage-800 text-center text-lg">{detail.name}</h3>
@@ -3759,7 +3963,7 @@
     // ========== PHASE 1: 3-year plan, schedules, succession, harvest ==========
     function PlanScreen({
       profile, planYear, setPlanYear, placed, setPlaced, beds, setBeds,
-      harvests, setHarvests, setTasks, seeds, setSeeds, rotationHistory,
+      harvests, setHarvests, setTasks, seeds, setSeeds, rotationHistory, customPlants,
     }) {
       const y0 = new Date().getFullYear();
       const years = [y0, y0 + 1, y0 + 2];
@@ -4403,7 +4607,7 @@
           </div>
 
           {showAdd && (
-            <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/40 z-[100] flex items-end sm:items-center justify-center px-4 pt-4 pb-24">
               <div className="bg-white rounded-2xl p-5 w-full max-w-sm max-h-[90vh] overflow-y-auto">
                 <h3 className="font-semibold text-sage-800 mb-3">Add planting ({planYear})</h3>
                 <label className="text-xs text-sage-500">Crop type</label>
@@ -4435,7 +4639,10 @@
                         />
                         Generic (no named variety)
                       </label>
-                      {VARIETY_LIBRARY.filter(v => v.cropId === form.cropId).map(v => (
+                      {[
+                        ...(typeof customPlants !== "undefined" && customPlants ? customPlants.filter(v => v.isVariety && v.cropId === form.cropId) : []),
+                        ...VARIETY_LIBRARY.filter(v => v.cropId === form.cropId),
+                      ].map(v => (
                         <label key={v.id} className="flex items-center gap-2 text-xs py-1">
                           <input
                             type="checkbox"
@@ -4449,7 +4656,7 @@
                             }}
                           />
                           <span className="flex-1">{v.variety}</span>
-                          <span className="text-[9px] text-sage-400">{v.sources}</span>
+                          <span className="text-[9px] text-sage-400">{v.isCustom || v.sources === "Mine" ? "Mine" : v.sources}</span>
                         </label>
                       ))}
                     </div>
@@ -4487,7 +4694,7 @@
           )}
 
           {showBedForm && (
-            <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/40 z-[100] flex items-end sm:items-center justify-center px-4 pt-4 pb-24">
               <div className="bg-white rounded-2xl p-5 w-full max-w-sm">
                 <h3 className="font-semibold text-sage-800 mb-3">{editingBedId ? "Edit bed" : "New bed"}</h3>
                 <label className="text-xs text-sage-500">Name</label>
@@ -4555,11 +4762,34 @@
       }, [filter, search]);
 
       const varietiesFor = (cropId) => {
-        return VARIETY_LIBRARY.filter(v => v.cropId === cropId).filter(v => {
+        const custom = (customPlants || []).filter(v => v.isVariety && v.cropId === cropId);
+        const catalog = VARIETY_LIBRARY.filter(v => v.cropId === cropId).filter(v => {
           if (sourceFilter === "All") return true;
           if (sourceFilter === "Both") return v.sources === "Both" || (v.sources && v.sources.includes("EB") && v.sources.includes("SSE"));
           return v.sources === sourceFilter || v.sources === "Both";
-        }).filter(v => !search || v.variety.toLowerCase().includes(search.toLowerCase()) || v.name.toLowerCase().includes(search.toLowerCase()));
+        });
+        return [...custom, ...catalog].filter(v => !search || (v.variety || v.name || "").toLowerCase().includes(search.toLowerCase()));
+      };
+
+      const addCustomVariety = (cropId) => {
+        const parent = PLANT_LIBRARY.find(p => p.id === cropId);
+        if (!parent) return;
+        const name = prompt(`Name of your ${parent.name} variety:`);
+        if (!name || !name.trim()) return;
+        const notes = prompt("Optional notes (seed source, color, heat…):") || "";
+        const id = `${cropId}__mine_${Date.now()}`;
+        setCustomPlants(prev => [...prev, {
+          ...parent,
+          id,
+          name: `${parent.name} — ${name.trim()}`,
+          variety: name.trim(),
+          cropId,
+          cropName: parent.name,
+          sources: "Mine",
+          isVariety: true,
+          isCustom: true,
+          notes: notes.trim() || undefined,
+        }]);
       };
 
       const addCustom = () => {
@@ -4662,19 +4892,26 @@
                       )}
                       <p className="text-[10px] font-semibold text-sage-500 uppercase tracking-wide">Varieties</p>
                       {vars.length === 0 ? (
-                        <p className="text-xs text-sage-400">No varieties for this source filter</p>
+                        <p className="text-xs text-sage-400">No catalog varieties for this filter</p>
                       ) : vars.map(v => (
-                        <div key={v.id} className="flex items-center justify-between bg-sage-50 rounded-xl px-3 py-2">
+                        <div key={v.id} className={`flex items-center justify-between rounded-xl px-3 py-2 ${v.isCustom ? "bg-amber-50" : "bg-sage-50"}`}>
                           <div>
                             <p className="text-sm font-medium text-sage-800">{v.variety}</p>
                             <p className="text-[10px] text-sage-500">
-                              {v.sources === "EB" ? "Eden Brothers" : v.sources === "SSE" ? "Seed Savers" : "Eden Brothers · Seed Savers"}
+                              {v.isCustom || v.sources === "Mine" ? `My variety${v.notes ? ` · ${v.notes}` : ""}`
+                                : v.sources === "EB" ? "Eden Brothers" : v.sources === "SSE" ? "Seed Savers" : "Eden Brothers · Seed Savers"}
                             </p>
                           </div>
-                          <span className="text-[9px] bg-white px-1.5 py-0.5 rounded text-sage-500">{v.sources}</span>
+                          <span className="text-[9px] bg-white px-1.5 py-0.5 rounded text-sage-500">{v.sources === "Mine" || v.isCustom ? "Mine" : v.sources}</span>
                         </div>
                       ))}
-                      {(customPlants || []).filter(c => c.type === plant.type).length > 0 && openCrop === plant.id && null}
+                      <button
+                        type="button"
+                        onClick={() => addCustomVariety(plant.id)}
+                        className="w-full mt-1 py-2 rounded-xl border-2 border-dashed border-sage-300 text-sage-700 text-xs font-medium"
+                      >
+                        + Add my variety
+                      </button>
                     </div>
                   )}
                 </div>
@@ -4695,7 +4932,7 @@
           </div>
 
           {showAdd && (
-            <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/40 z-[100] flex items-end sm:items-center justify-center px-4 pt-4 pb-24">
               <div className="bg-white rounded-2xl p-5 w-full max-w-sm">
                 <h3 className="font-semibold text-sage-800 mb-3">Add custom plant</h3>
                 <input className="w-full border rounded-xl px-3 py-2 text-sm mb-2" placeholder="Name" value={newPlant.name} onChange={e => setNewPlant(n => ({ ...n, name: e.target.value }))} />
@@ -4771,7 +5008,7 @@
           </div>
 
           {showAdd && (
-            <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/40 z-[100] flex items-end sm:items-center justify-center px-4 pt-4 pb-24">
               <div className="bg-white rounded-2xl p-5 w-full max-w-sm">
                 <h3 className="font-semibold text-sage-800 mb-3">New journal entry</h3>
                 <textarea
@@ -5322,7 +5559,7 @@
 
           {/* Log confirm modal */}
           {showLogConfirm && (
-            <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/40 z-[100] flex items-end sm:items-center justify-center px-4 pt-4 pb-24">
               <div className="bg-white rounded-2xl p-5 w-full max-w-sm card-shadow">
                 <h3 className="font-semibold text-sage-800 mb-2">Log {currentYear} season?</h3>
                 <p className="text-xs text-sage-600 mb-4">
@@ -5891,6 +6128,7 @@
               seeds={seeds}
               setSeeds={setSeeds}
               rotationHistory={rotationHistory}
+              customPlants={customPlants}
             />
           )}
           {active === "kitchen" && (
@@ -5916,6 +6154,8 @@
               planYear={planYear}
               seeds={seeds}
               setSeeds={setSeeds}
+              customPlants={customPlants}
+              setCustomPlants={setCustomPlants}
             />
           )}
           {active === "rotate" && (
