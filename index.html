@@ -66,12 +66,99 @@
 
     // ========== MOCK DATA ==========
     const INITIAL_SEEDS = [
-      { id: 1, name: "Cherokee Purple Tomato", type: "Vegetable", qty: 12, expires: "2025-08-12", germRate: 92, low: false },
-      { id: 2, name: "Paris Market Carrot", type: "Vegetable", qty: 4, expires: "2025-05-18", germRate: 85, low: true },
-      { id: 3, name: "Genovese Basil", type: "Herb", qty: 7, expires: "2025-06-03", germRate: 78, low: false },
-      { id: 4, name: "English Lavender", type: "Flower", qty: 9, expires: "2025-09-22", germRate: 88, low: false },
-      { id: 5, name: "California Giants Zinnia", type: "Flower", qty: 15, expires: "2025-11-30", germRate: 90, low: false },
-      { id: 6, name: "Slow Bolt Cilantro", type: "Herb", qty: 3, expires: "2025-05-05", germRate: 65, low: true },
+      { id: 1, name: "Cherokee Purple Tomato", plantId: "tomato", variety: "Cherokee Purple", type: "Vegetable", measure: "count", qty: 12, unit: "seeds", expires: "2027-08-12", germRate: 92, low: false, source: "purchased" },
+      { id: 2, name: "Paris Market Carrot", plantId: "carrot", variety: "Paris Market", type: "Vegetable", measure: "count", qty: 40, unit: "seeds", expires: "2027-05-18", germRate: 85, low: true, source: "purchased" },
+      { id: 3, name: "Genovese Basil", plantId: "basil", variety: "Genovese", type: "Herb", measure: "count", qty: 50, unit: "seeds", expires: "2027-06-03", germRate: 78, low: false, source: "purchased" },
+      { id: 4, name: "English Lavender", plantId: "lavender", variety: "English", type: "Herb", measure: "count", qty: 25, unit: "seeds", expires: "2028-09-22", germRate: 88, low: false, source: "purchased" },
+      { id: 5, name: "California Giants Zinnia", plantId: "zinnia", variety: "California Giants", type: "Flower", measure: "count", qty: 60, unit: "seeds", expires: "2028-11-30", germRate: 90, low: false, source: "purchased" },
+      { id: 6, name: "Slow Bolt Cilantro", plantId: "cilantro", variety: "Slow Bolt", type: "Herb", measure: "count", qty: 30, unit: "seeds", expires: "2027-05-05", germRate: 65, low: true, source: "purchased" },
+    ];
+
+    /** Per-crop / family seed care: store, germinate, grow, save */
+    function getSeedCareGuide(plantId) {
+      const pl = PLANT_LIBRARY.find(p => p.id === plantId) || resolvePlant(plantId);
+      const family = pl?.family || "";
+      const method = pl?.method || "direct";
+      const germ = pl?.germDays != null ? `${pl.germDays} days typical` : "varies";
+      const storeBase = "Cool, dark, dry place in airtight container. Silica gel or rice helps control moisture. Label variety + year.";
+      const guides = {
+        Solanaceae: {
+          save: "Open-pollinated only for true seed. Ferment tomato/tomatillo pulp 2–3 days, rinse, dry fully on paper. Peppers: fully ripe fruit, dry seeds. Isolate varieties 50–500+ ft if saving pure seed.",
+          store: storeBase + " Tomato seed often lasts 4–6 years; pepper 2–4.",
+          germinate: method === "indoor"
+            ? `Start indoors ${pl?.startWeeksBeforeFrost || 6} weeks before last frost. Warm soil (70-80F). Germination ~${germ}.`
+            : `Direct sow after frost. Germination ~${germ}.`,
+          grow: `Full sun. Space ${pl?.spacing || "18–36 in"}. ${pl?.sun || "Full sun"}. Fertilize every ${pl?.fertilizeEveryDays || 21} days while fruiting.`,
+        },
+        Brassicaceae: {
+          save: "Many brassicas cross. Isolate by distance or bag blooms. Biennials (cabbage, kale) need overwintering to flower for seed.",
+          store: storeBase + " Best within 3–5 years.",
+          germinate: `Cool temps OK. Germination ~${germ}. ${method === "indoor" ? "Start indoors or direct sow." : "Direct sow succession plantings."}`,
+          grow: `Space ${pl?.spacing || "6–18 in"}. Prefer consistent moisture. ${pl?.sun || "Full sun to partial"}.`,
+        },
+        Fabaceae: {
+          save: "Self-pollinating beans/peas are beginner-friendly. Dry pods on plant; shell when brittle. Avoid disease.",
+          store: storeBase + " Bean/pea seed often lasts 3–5+ years.",
+          germinate: `Direct sow in warm soil. Germination ~${germ}. Do not soak too long.`,
+          grow: `Space ${pl?.spacing || "2–6 in"}. Nitrogen-fixing; light fertilizer. Provide trellis for poles.`,
+        },
+        Cucurbitaceae: {
+          save: "Insects cross squash easily—hand-pollinate or isolate. Save from fully mature fruit. Dry seeds thoroughly.",
+          store: storeBase + " 3–6 years typical.",
+          germinate: `Warm soil essential. Germination ~${germ}. Start indoors in short seasons.`,
+          grow: `Space ${pl?.spacing || "24–48 in"}. Full sun, rich soil, steady water.`,
+        },
+        Apiaceae: {
+          save: "Carrot/parsley/dill often biennial or bolt to seed. Isolate related umbels. Dry seed heads in paper bags.",
+          store: storeBase + " Carrot seed viability drops after 2–3 years.",
+          germinate: `Often slow. Keep moist. Germination ~${germ}. Light may help some.`,
+          grow: `Space ${pl?.spacing || "2–8 in"}. Deep loose soil for roots.`,
+        },
+        Asteraceae: {
+          save: "Lettuce: let bolt, dry seed heads. Flowers: dry heads, thresh. Easy for many annuals.",
+          store: storeBase,
+          germinate: `Germination ~${germ}. Surface-sow if tiny seed.`,
+          grow: `Space ${pl?.spacing || "6–12 in"}. ${pl?.sun || "Full sun to partial"}.`,
+        },
+        Lamiaceae: {
+          save: "Many herbs self-seed. Collect dry flower spikes. Perennials can also be divided.",
+          store: storeBase,
+          germinate: `Often slow/light-dependent. Germination ~${germ}.`,
+          grow: `Space ${pl?.spacing || "12 in"}. Prefer well-drained soil and sun.`,
+        },
+        Amaryllidaceae: {
+          save: "Onion/leek biennial seed. Garlic is usually planted as cloves, not seed.",
+          store: storeBase + " Onion seed best used within 1–2 years.",
+          germinate: `Germination ~${germ}. Start early indoors for bulbs.`,
+          grow: `Space ${pl?.spacing || "4–6 in"}. Full sun.`,
+        },
+      };
+      const g = guides[family] || {
+        save: "Use open-pollinated / heirloom varieties. Allow seed to fully mature and dry before storage. Research isolation for pure variety seed.",
+        store: storeBase,
+        germinate: `Germination typically ~${germ}. Follow packet or library method (${method}).`,
+        grow: pl
+          ? `Space ${pl.spacing}. ${pl.sun}. Days to harvest ~${pl.daysToHarvest}. Method: ${method === "indoor" ? "start indoors" : "direct sow"}.`
+          : "See plant library entry for spacing and sun.",
+      };
+      return {
+        ...g,
+        plant: pl,
+        germDays: pl?.germDays,
+        daysToHarvest: pl?.daysToHarvest,
+        spacing: pl?.spacing,
+        sun: pl?.sun,
+        method: pl?.method,
+      };
+    }
+
+    const SEED_SAVING_OVERVIEW = [
+      { title: "1. Start with open-pollinated / heirloom", body: "Hybrids (F1) often don’t grow true from saved seed. Prefer OP varieties for seed saving." },
+      { title: "2. Let seed fully mature", body: "Fruit/pods past eating stage. Seed should be hard and dry (or properly fermented for wet-seeded crops like tomato)." },
+      { title: "3. Clean and dry thoroughly", body: "No moisture before storage—mold is the enemy. Dry on screens or paper out of direct hot sun." },
+      { title: "4. Label everything", body: "Crop, variety, year, and source. Unlabeled jars become mysteries." },
+      { title: "5. Store cool, dark, dry", body: "Airtight jars in a closet or fridge (with desiccant). Avoid heat and humidity swings." },
+      { title: "6. Isolation & population", body: "Related plants cross via wind/insects. Distance, timing, or bagging keeps varieties pure. Save from multiple healthy plants when possible." },
     ];
 
     // germDays, daysToHarvest, fertilizeEveryDays, startWeeksBeforeFrost, transplantWeeksBeforeFrost
@@ -3395,101 +3482,437 @@
       );
     }
 
-    function SeedVault({ seeds, setSeeds }) {
+    function SeedVault({ seeds, setSeeds, placed, harvests, customPlants, profile, setProfile }) {
+      const [tab, setTab] = useState("inventory"); // inventory | guide | save
       const [filter, setFilter] = useState("All");
       const [search, setSearch] = useState("");
-      const filters = ["All", "Vegetable", "Herb", "Flower", "Expiring"];
+      const [showAdd, setShowAdd] = useState(false);
+      const [detailSeed, setDetailSeed] = useState(null);
+      const unitSystem = profile?.seedUnits || "imperial"; // imperial | metric
+      const defaultMeasure = profile?.seedMeasure || "count"; // count | weight
+
+      const setUnitSystem = (u) => setProfile && setProfile(p => ({ ...p, seedUnits: u }));
+      const setDefaultMeasure = (m) => setProfile && setProfile(p => ({ ...p, seedMeasure: m }));
+
+      const weightUnit = unitSystem === "metric" ? "g" : "oz";
+      const countUnit = "seeds";
+
+      const filters = ["All", "Vegetable", "Herb", "Flower", "Fruit", "Cover", "Expiring", "Low", "Saved"];
 
       const filtered = useMemo(() => {
-        return seeds.filter(s => {
-          if (filter === "Expiring") return new Date(s.expires) < new Date("2025-07-01");
+        const now = new Date();
+        return (seeds || []).filter(s => {
+          if (filter === "Expiring") {
+            if (!s.expires) return false;
+            const exp = new Date(s.expires + "T12:00:00");
+            return exp < new Date(now.getTime() + 180 * 86400000); // within 6 months or past
+          }
+          if (filter === "Low") return s.low || (s.measure !== "weight" && s.qty <= 10) || (s.measure === "weight" && s.qty <= 1);
+          if (filter === "Saved") return s.source === "saved";
           if (filter !== "All" && s.type !== filter) return false;
-          if (search && !s.name.toLowerCase().includes(search.toLowerCase())) return false;
+          if (search) {
+            const q = search.toLowerCase();
+            if (!(s.name || "").toLowerCase().includes(q)
+              && !(s.variety || "").toLowerCase().includes(q)
+              && !(s.plantId || "").toLowerCase().includes(q)) return false;
+          }
           return true;
         });
       }, [seeds, filter, search]);
 
-      const addSeed = () => {
-        const name = prompt("Seed variety name:");
-        if (!name) return;
+      const [form, setForm] = useState({
+        plantId: "tomato",
+        varietyId: "",
+        varietyName: "",
+        measure: defaultMeasure,
+        qty: "25",
+        germRate: "85",
+        expires: `${new Date().getFullYear() + 2}-12-31`,
+        source: "purchased",
+        notes: "",
+      });
+
+      const openAdd = () => {
+        setForm({
+          plantId: "tomato",
+          varietyId: "",
+          varietyName: "",
+          measure: defaultMeasure,
+          qty: "25",
+          germRate: "85",
+          expires: `${new Date().getFullYear() + 2}-12-31`,
+          source: "purchased",
+          notes: "",
+        });
+        setShowAdd(true);
+      };
+
+      const saveSeedEntry = () => {
+        const pl = resolvePlant(form.varietyId || form.plantId, customPlants) || PLANT_LIBRARY.find(p => p.id === form.plantId);
+        if (!pl && !form.varietyName.trim()) return;
+        const varietyLabel = form.varietyName.trim()
+          || (form.varietyId ? (resolvePlant(form.varietyId, customPlants)?.variety || "") : "")
+          || "";
+        const cropName = PLANT_LIBRARY.find(p => p.id === form.plantId)?.name || pl?.cropName || pl?.name || "Seed";
+        const name = varietyLabel ? `${varietyLabel} ${cropName}`.replace(`${cropName} ${cropName}`, cropName) : (pl?.name || cropName);
+        const qty = Math.max(0, parseFloat(form.qty) || 0);
+        const measure = form.measure || "count";
         setSeeds(prev => [...prev, {
-          id: Date.now(),
-          name,
-          type: "Vegetable",
-          qty: 5,
-          expires: "2026-12-31",
-          germRate: 80,
-          low: false
+          id: Date.now() + Math.random(),
+          name: varietyLabel ? `${cropName} — ${varietyLabel}` : (pl?.name || cropName),
+          plantId: form.plantId,
+          variety: varietyLabel || pl?.variety || null,
+          varietyId: form.varietyId || null,
+          type: pl?.type || PLANT_LIBRARY.find(p => p.id === form.plantId)?.type || "Vegetable",
+          measure,
+          qty,
+          unit: measure === "weight" ? weightUnit : countUnit,
+          expires: form.expires,
+          germRate: Math.min(100, Math.max(0, parseInt(form.germRate, 10) || 80)),
+          low: measure === "count" ? qty <= 10 : qty <= 1,
+          source: form.source,
+          notes: form.notes.trim() || undefined,
+          yearSaved: form.source === "saved" ? new Date().getFullYear() : undefined,
         }]);
+        setShowAdd(false);
+      };
+
+      const adjustQty = (id, delta) => {
+        setSeeds(prev => prev.map(s => {
+          if (s.id !== id) return s;
+          const qty = Math.max(0, Math.round((Number(s.qty) + delta) * 100) / 100);
+          return { ...s, qty, low: s.measure === "weight" ? qty <= 1 : qty <= 10 };
+        }));
+      };
+
+      const removeSeed = (id) => {
+        if (!confirm("Remove this seed from your vault?")) return;
+        setSeeds(prev => prev.filter(s => s.id !== id));
+        setDetailSeed(null);
+      };
+
+      // Harvested plantings that can become saved seed
+      const harvestCandidates = useMemo(() => {
+        return (placed || []).filter(p => p.status === "harvested" || (p.harvestStart && new Date(p.harvestStart) <= new Date()));
+      }, [placed]);
+
+      const saveSeedFromPlanting = (item) => {
+        const pl = resolvePlant(item.plant, customPlants) || PLANT_LIBRARY.find(p => p.id === item.plant);
+        if (!pl) return;
+        const qtyStr = prompt(`How many seeds (or ${weightUnit}) of ${pl.variety || pl.name}?`, "20");
+        if (qtyStr == null) return;
+        const qty = Math.max(0, parseFloat(qtyStr) || 0);
+        const measure = defaultMeasure;
+        setSeeds(prev => [...prev, {
+          id: Date.now() + Math.random(),
+          name: pl.name,
+          plantId: pl.cropId || pl.id,
+          variety: pl.variety || null,
+          varietyId: pl.isVariety ? pl.id : null,
+          type: pl.type || "Vegetable",
+          measure,
+          qty,
+          unit: measure === "weight" ? weightUnit : countUnit,
+          expires: `${new Date().getFullYear() + 3}-12-31`,
+          germRate: 80,
+          low: measure === "count" ? qty <= 10 : qty <= 1,
+          source: "saved",
+          yearSaved: new Date().getFullYear(),
+          fromPlantingId: item.id,
+          notes: `Saved from garden ${item.bed || ""}`.trim(),
+        }]);
+        alert("Added to Seed Vault as saved seed.");
+        setTab("inventory");
+      };
+
+      const formatQty = (s) => {
+        const u = s.unit || (s.measure === "weight" ? weightUnit : countUnit);
+        return `${s.qty} ${u}`;
+      };
+
+      const varietiesForCrop = (cropId) => {
+        const custom = (customPlants || []).filter(v => v.isVariety && v.cropId === cropId);
+        const catalog = VARIETY_LIBRARY.filter(v => v.cropId === cropId);
+        return [...custom, ...catalog];
       };
 
       return (
         <div className="pb-24">
           <Header title="Seed Vault" right={
-            <button onClick={addSeed} className="bg-sage-600 text-white w-8 h-8 rounded-full flex items-center justify-center">
+            <button type="button" onClick={openAdd} className="bg-sage-600 text-white w-8 h-8 rounded-full flex items-center justify-center">
               <i className="fas fa-plus text-sm"></i>
             </button>
           } />
 
-          <div className="px-4 pt-4">
-            {/* Search */}
-            <div className="relative mb-3">
-              <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-sage-400 text-sm"></i>
-              <input
-                type="text"
-                placeholder="Search seed varieties..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="w-full bg-white rounded-xl pl-9 pr-4 py-2.5 text-sm card-shadow outline-none focus:ring-2 focus:ring-sage-300"
-              />
-            </div>
-
-            {/* Filters */}
-            <div className="flex gap-2 overflow-x-auto pb-2 mb-4 -mx-1 px-1">
-              {filters.map(f => (
+          <div className="px-4 pt-3 space-y-3">
+            <div className="flex gap-1 bg-sage-100 rounded-xl p-1">
+              {[
+                { id: "inventory", label: "Inventory" },
+                { id: "save", label: "Save seed" },
+                { id: "guide", label: "Guide" },
+              ].map(t => (
                 <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition ${
-                    filter === f ? "bg-sage-600 text-white" : "bg-white text-sage-600 card-shadow"
-                  }`}
-                >
-                  {f}
-                </button>
+                  key={t.id}
+                  type="button"
+                  onClick={() => setTab(t.id)}
+                  className={`flex-1 py-2 rounded-lg text-xs font-semibold ${tab === t.id ? "bg-white text-sage-800 shadow" : "text-sage-600"}`}
+                >{t.label}</button>
               ))}
             </div>
 
-            {/* Seed cards */}
-            <div className="grid grid-cols-2 gap-3">
-              {filtered.map(seed => {
-                const isExpiring = new Date(seed.expires) < new Date("2025-07-01");
-                return (
-                  <div key={seed.id} className="bg-white rounded-2xl p-3 card-shadow relative">
-                    {(seed.low || seed.qty <= 3) && (
-                      <span className="absolute top-2 right-2 bg-amber-100 text-amber-700 text-[9px] font-bold px-1.5 py-0.5 rounded">
-                        LOW
-                      </span>
-                    )}
-                    {isExpiring && (
-                      <span className="absolute top-2 left-2 bg-red-100 text-red-600 text-[9px] font-bold px-1.5 py-0.5 rounded">
-                        EXPIRING
-                      </span>
-                    )}
-                    <div className="text-3xl mb-2 mt-1">🌱</div>
-                    <p className="font-medium text-sm text-sage-800 leading-tight mb-1">{seed.name}</p>
-                    <p className="text-[10px] text-sage-500 mb-2">{seed.type}</p>
-                    <div className="flex justify-between text-xs">
-                      <span className={seed.qty <= 3 ? "text-red-500 font-semibold" : "text-sage-600"}>
-                        Qty: {seed.qty}
-                      </span>
-                      <span className="text-sage-500">{seed.germRate}%</span>
-                    </div>
-                    <p className="text-[10px] text-sage-400 mt-1">Exp: {seed.expires}</p>
+            {tab === "inventory" && (
+              <>
+                <div className="bg-white rounded-xl p-3 card-shadow space-y-2">
+                  <p className="text-[10px] font-semibold text-sage-500 uppercase">Measurement preferences</p>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setUnitSystem("imperial")} className={`flex-1 py-1.5 rounded-lg text-xs font-medium ${unitSystem === "imperial" ? "bg-sage-600 text-white" : "bg-sage-50 text-sage-700"}`}>Imperial (oz)</button>
+                    <button type="button" onClick={() => setUnitSystem("metric")} className={`flex-1 py-1.5 rounded-lg text-xs font-medium ${unitSystem === "metric" ? "bg-sage-600 text-white" : "bg-sage-50 text-sage-700"}`}>Metric (g)</button>
                   </div>
-                );
-              })}
-            </div>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setDefaultMeasure("count")} className={`flex-1 py-1.5 rounded-lg text-xs font-medium ${defaultMeasure === "count" ? "bg-sage-600 text-white" : "bg-sage-50 text-sage-700"}`}>Count seeds</button>
+                    <button type="button" onClick={() => setDefaultMeasure("weight")} className={`flex-1 py-1.5 rounded-lg text-xs font-medium ${defaultMeasure === "weight" ? "bg-sage-600 text-white" : "bg-sage-50 text-sage-700"}`}>Weigh seeds</button>
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-sage-400 text-sm"></i>
+                  <input
+                    type="text"
+                    placeholder="Search inventory…"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    className="w-full bg-white rounded-xl pl-9 pr-4 py-2.5 text-sm card-shadow outline-none focus:ring-2 focus:ring-sage-300"
+                  />
+                </div>
+
+                <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                  {filters.map(f => (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => setFilter(f)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
+                        filter === f ? "bg-sage-600 text-white" : "bg-white text-sage-600 card-shadow"
+                      }`}
+                    >{f}</button>
+                  ))}
+                </div>
+
+                <p className="text-[10px] text-sage-500">{filtered.length} of {(seeds || []).length} packets · tap for care guide</p>
+
+                <div className="space-y-2">
+                  {filtered.length === 0 && (
+                    <p className="text-center text-sage-400 text-sm py-8">No seeds match. Tap + to add from the plant library.</p>
+                  )}
+                  {filtered.map(seed => {
+                    const pl = resolvePlant(seed.varietyId || seed.plantId, customPlants) || PLANT_LIBRARY.find(p => p.id === seed.plantId);
+                    const exp = seed.expires ? new Date(seed.expires + "T12:00:00") : null;
+                    const expiring = exp && exp < new Date(Date.now() + 180 * 86400000);
+                    return (
+                      <button
+                        key={seed.id}
+                        type="button"
+                        onClick={() => setDetailSeed(seed)}
+                        className="w-full text-left bg-white rounded-2xl p-3 card-shadow flex gap-3 items-start"
+                      >
+                        <span className="text-3xl">{pl?.icon || "🌱"}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between gap-2">
+                            <p className="font-medium text-sm text-sage-800 leading-tight">{seed.name}</p>
+                            <div className="flex gap-1 shrink-0">
+                              {(seed.low || (seed.measure !== "weight" && seed.qty <= 10)) && (
+                                <span className="bg-amber-100 text-amber-800 text-[9px] font-bold px-1.5 py-0.5 rounded">LOW</span>
+                              )}
+                              {expiring && (
+                                <span className="bg-red-100 text-red-700 text-[9px] font-bold px-1.5 py-0.5 rounded">EXP</span>
+                              )}
+                              {seed.source === "saved" && (
+                                <span className="bg-lime-100 text-lime-800 text-[9px] font-bold px-1.5 py-0.5 rounded">SAVED</span>
+                              )}
+                            </div>
+                          </div>
+                          <p className="text-[10px] text-sage-500">{seed.type}{seed.variety ? ` · ${seed.variety}` : ""}</p>
+                          <div className="flex justify-between items-center mt-1 text-xs">
+                            <span className={seed.low ? "text-red-600 font-semibold" : "text-sage-700 font-medium"}>{formatQty(seed)}</span>
+                            <span className="text-sage-500">{seed.germRate != null ? `${seed.germRate}% germ` : ""}</span>
+                          </div>
+                          {seed.expires && <p className="text-[10px] text-sage-400">Best by {seed.expires}</p>}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+
+            {tab === "save" && (
+              <div className="space-y-3">
+                <div className="bg-lime-50 border border-lime-200 rounded-2xl p-3 text-xs text-lime-950">
+                  Save seed from harvested (or mature) plantings in your garden. Only open-pollinated / heirloom varieties grow true.
+                </div>
+                {harvestCandidates.length === 0 ? (
+                  <p className="text-sm text-sage-400 text-center py-6">Mark plants as harvested on Layout, or wait until harvest dates, then save seed here.</p>
+                ) : (
+                  harvestCandidates.map(item => {
+                    const pl = resolvePlant(item.plant, customPlants) || PLANT_LIBRARY.find(p => p.id === item.plant);
+                    return (
+                      <div key={item.id} className="bg-white rounded-xl p-3 card-shadow flex items-center gap-3">
+                        <span className="text-2xl">{pl?.icon || "🌱"}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-sage-800">{pl?.variety || pl?.name || item.plant}</p>
+                          <p className="text-[10px] text-sage-500">{item.bed} · {item.status}</p>
+                        </div>
+                        <button type="button" onClick={() => saveSeedFromPlanting(item)} className="text-xs bg-sage-600 text-white px-3 py-2 rounded-xl font-medium shrink-0">
+                          Save seed
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
+                <button type="button" onClick={openAdd} className="w-full py-2.5 rounded-xl border border-dashed border-sage-300 text-sm text-sage-700 font-medium">
+                  + Add packet manually from library
+                </button>
+              </div>
+            )}
+
+            {tab === "guide" && (
+              <div className="space-y-3">
+                <p className="text-xs text-sage-600">Homestead seed-saving basics. Always follow local regulations and disease-free practices.</p>
+                {SEED_SAVING_OVERVIEW.map((g, i) => (
+                  <div key={i} className="bg-white rounded-xl p-3 card-shadow">
+                    <p className="text-sm font-semibold text-sage-800">{g.title}</p>
+                    <p className="text-xs text-sage-600 mt-1">{g.body}</p>
+                  </div>
+                ))}
+                <p className="text-[10px] text-sage-400">Tap any seed in Inventory for crop-specific store · germinate · grow · save instructions.</p>
+              </div>
+            )}
           </div>
+
+          {detailSeed && (() => {
+            const care = getSeedCareGuide(detailSeed.plantId || detailSeed.varietyId);
+            const pl = care.plant || resolvePlant(detailSeed.varietyId || detailSeed.plantId, customPlants);
+            return (
+              <div className="fixed inset-0 bg-black/40 z-[100] flex items-end sm:items-center justify-center px-4 pt-4 pb-24" onClick={() => setDetailSeed(null)}>
+                <div className="bg-white rounded-2xl w-full max-w-sm max-h-[min(85vh,calc(100dvh-7rem))] flex flex-col shadow-xl" onClick={e => e.stopPropagation()}>
+                  <div className="p-4 pb-2 shrink-0 flex gap-3">
+                    <span className="text-4xl">{pl?.icon || "🌱"}</span>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-sage-800 leading-tight">{detailSeed.name}</h3>
+                      <p className="text-[10px] text-sage-500">{detailSeed.type} · {detailSeed.source || "inventory"}</p>
+                    </div>
+                    <button type="button" onClick={() => setDetailSeed(null)} className="text-sage-400">✕</button>
+                  </div>
+                  <div className="px-4 overflow-y-auto flex-1 min-h-0 space-y-3 pb-2">
+                    <div className="flex items-center justify-between bg-sage-50 rounded-xl p-3">
+                      <div>
+                        <p className="text-[10px] text-sage-500">On hand</p>
+                        <p className="text-lg font-bold text-sage-800">{formatQty(detailSeed)}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button type="button" onClick={() => adjustQty(detailSeed.id, detailSeed.measure === "weight" ? -0.1 : -1)} className="w-9 h-9 rounded-full bg-white border text-sage-700 font-bold">−</button>
+                        <button type="button" onClick={() => adjustQty(detailSeed.id, detailSeed.measure === "weight" ? 0.1 : 1)} className="w-9 h-9 rounded-full bg-white border text-sage-700 font-bold">+</button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-sage-50 rounded-xl p-2"><p className="text-[10px] text-sage-500">Germ rate</p><p className="font-medium">{detailSeed.germRate != null ? `${detailSeed.germRate}%` : "—"}</p></div>
+                      <div className="bg-sage-50 rounded-xl p-2"><p className="text-[10px] text-sage-500">Best by</p><p className="font-medium">{detailSeed.expires || "—"}</p></div>
+                      <div className="bg-sage-50 rounded-xl p-2"><p className="text-[10px] text-sage-500">Sun</p><p className="font-medium">{care.sun || "—"}</p></div>
+                      <div className="bg-sage-50 rounded-xl p-2"><p className="text-[10px] text-sage-500">Spacing</p><p className="font-medium">{care.spacing || "—"}</p></div>
+                    </div>
+                    {[
+                      { t: "Store", b: care.store },
+                      { t: "Germinate", b: care.germinate },
+                      { t: "Grow", b: care.grow },
+                      { t: "Save seed next time", b: care.save },
+                    ].map(block => (
+                      <div key={block.t} className="border border-sage-100 rounded-xl p-3">
+                        <p className="text-xs font-semibold text-sage-800 mb-1">{block.t}</p>
+                        <p className="text-[11px] text-sage-600 leading-relaxed">{block.b}</p>
+                      </div>
+                    ))}
+                    {detailSeed.notes && <p className="text-[10px] text-sage-500">Notes: {detailSeed.notes}</p>}
+                  </div>
+                  <div className="p-4 pt-2 border-t flex gap-2 shrink-0">
+                    <button type="button" onClick={() => removeSeed(detailSeed.id)} className="flex-1 py-2.5 rounded-xl border border-red-200 text-red-700 text-sm font-medium">Delete</button>
+                    <button type="button" onClick={() => setDetailSeed(null)} className="flex-1 py-2.5 rounded-xl bg-sage-600 text-white text-sm font-medium">Done</button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {showAdd && (
+            <div className="fixed inset-0 bg-black/40 z-[100] flex items-end sm:items-center justify-center px-4 pt-4 pb-24">
+              <div className="bg-white rounded-2xl w-full max-w-sm max-h-[min(85vh,calc(100dvh-7rem))] flex flex-col shadow-xl">
+                <div className="p-4 pb-2 shrink-0">
+                  <h3 className="font-semibold text-sage-800">Add to Seed Vault</h3>
+                  <p className="text-[10px] text-sage-500">Pick from plant library, then set quantity.</p>
+                </div>
+                <div className="px-4 overflow-y-auto flex-1 min-h-0 space-y-2 pb-2">
+                  <label className="text-xs text-sage-500">Crop</label>
+                  <select
+                    className="w-full border rounded-xl px-3 py-2 text-sm"
+                    value={form.plantId}
+                    onChange={e => setForm(f => ({ ...f, plantId: e.target.value, varietyId: "", varietyName: "" }))}
+                  >
+                    {PLANT_LIBRARY.map(p => (
+                      <option key={p.id} value={p.id}>{p.icon} {p.name}</option>
+                    ))}
+                  </select>
+                  <label className="text-xs text-sage-500">Variety (library or type your own)</label>
+                  <select
+                    className="w-full border rounded-xl px-3 py-2 text-sm mb-1"
+                    value={form.varietyId}
+                    onChange={e => {
+                      const id = e.target.value;
+                      const v = resolvePlant(id, customPlants);
+                      setForm(f => ({ ...f, varietyId: id, varietyName: v?.variety || "" }));
+                    }}
+                  >
+                    <option value="">Generic / unspecified</option>
+                    {varietiesForCrop(form.plantId).map(v => (
+                      <option key={v.id} value={v.id}>{v.variety}{v.isCustom ? " (mine)" : ""}</option>
+                    ))}
+                  </select>
+                  <input
+                    className="w-full border rounded-xl px-3 py-2 text-sm"
+                    placeholder="Or type unique variety name"
+                    value={form.varietyName}
+                    onChange={e => setForm(f => ({ ...f, varietyName: e.target.value }))}
+                  />
+                  <label className="text-xs text-sage-500">Measure</label>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setForm(f => ({ ...f, measure: "count" }))} className={`flex-1 py-2 rounded-xl text-xs font-medium ${form.measure === "count" ? "bg-sage-600 text-white" : "bg-sage-50"}`}>Count</button>
+                    <button type="button" onClick={() => setForm(f => ({ ...f, measure: "weight" }))} className={`flex-1 py-2 rounded-xl text-xs font-medium ${form.measure === "weight" ? "bg-sage-600 text-white" : "bg-sage-50"}`}>Weight ({weightUnit})</button>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <label className="text-xs text-sage-500">Quantity</label>
+                      <input type="number" min={0} step={form.measure === "weight" ? 0.1 : 1} className="w-full border rounded-xl px-3 py-2 text-sm" value={form.qty} onChange={e => setForm(f => ({ ...f, qty: e.target.value }))} />
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-xs text-sage-500">Germ %</label>
+                      <input type="number" min={0} max={100} className="w-full border rounded-xl px-3 py-2 text-sm" value={form.germRate} onChange={e => setForm(f => ({ ...f, germRate: e.target.value }))} />
+                    </div>
+                  </div>
+                  <label className="text-xs text-sage-500">Best by</label>
+                  <input type="date" className="w-full border rounded-xl px-3 py-2 text-sm" value={form.expires} onChange={e => setForm(f => ({ ...f, expires: e.target.value }))} />
+                  <label className="text-xs text-sage-500">Source</label>
+                  <select className="w-full border rounded-xl px-3 py-2 text-sm" value={form.source} onChange={e => setForm(f => ({ ...f, source: e.target.value }))}>
+                    <option value="purchased">Purchased</option>
+                    <option value="saved">Saved from garden</option>
+                    <option value="gift">Gift / trade</option>
+                  </select>
+                  <input className="w-full border rounded-xl px-3 py-2 text-sm" placeholder="Notes (optional)" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
+                </div>
+                <div className="p-4 pt-2 border-t flex gap-2 shrink-0">
+                  <button type="button" onClick={() => setShowAdd(false)} className="flex-1 py-2.5 rounded-xl border text-sm">Cancel</button>
+                  <button type="button" onClick={saveSeedEntry} className="flex-1 py-2.5 rounded-xl bg-sage-600 text-white text-sm font-medium">Add to vault</button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       );
     }
@@ -6352,7 +6775,17 @@
             />
           )}
           {active === "diagnose" && <DiagnosticScreen tasks={tasks} setTasks={setTasks} />}
-          {active === "vault" && <SeedVault seeds={seeds} setSeeds={setSeeds} />}
+          {active === "vault" && (
+            <SeedVault
+              seeds={seeds}
+              setSeeds={setSeeds}
+              placed={placed}
+              harvests={harvests}
+              customPlants={customPlants}
+              profile={profile}
+              setProfile={setProfile}
+            />
+          )}
           {active === "calendar" && <CalendarScreen profile={profile} placed={placed} tasks={tasks} />}
           {active === "plants" && <PlantsScreen customPlants={customPlants} setCustomPlants={setCustomPlants} />}
           {active === "journal" && <JournalScreen journal={journal} setJournal={setJournal} placed={placed} />}
