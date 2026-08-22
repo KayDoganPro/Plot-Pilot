@@ -698,11 +698,51 @@
     // Full selectable library: base crops + varieties
     const FULL_PLANT_LIBRARY = [...PLANT_LIBRARY, ...VARIETY_LIBRARY];
 
+    /** Live list of user-added varieties — kept in sync so resolvePlant works even when callers omit the 2nd arg */
+    let _customPlantsLive = [];
+    function syncCustomPlantsLive(list) {
+      _customPlantsLive = Array.isArray(list) ? list : [];
+    }
+
     function resolvePlant(id, customPlants) {
-      return FULL_PLANT_LIBRARY.find(p => p.id === id)
+      if (!id) return null;
+      const customs = (customPlants && customPlants.length) ? customPlants : _customPlantsLive;
+      const found = FULL_PLANT_LIBRARY.find(p => p.id === id)
         || PLANT_LIBRARY.find(p => p.id === id)
-        || (customPlants || []).find(p => p.id === id)
+        || (customs || []).find(p => p.id === id)
         || null;
+      if (found) {
+        // Ensure variety objects always have display fields
+        if (found.isVariety && !found.variety && found.name) {
+          const parts = String(found.name).split("—");
+          if (parts.length > 1) {
+            return { ...found, variety: parts.slice(1).join("—").trim(), cropName: found.cropName || parts[0].trim() };
+          }
+        }
+        return found;
+      }
+      // Recover custom / mine ids when entry was lost or id pattern is crop_mine_ / crop__mine_
+      const sid = String(id);
+      const m = sid.match(/^([a-z0-9-]+)(?:__mine_|_mine_|__)(.+)$/i);
+      if (m) {
+        const parent = PLANT_LIBRARY.find(p => p.id === m[1]) || FULL_PLANT_LIBRARY.find(p => p.id === m[1]);
+        if (parent) {
+          let varietyLabel = m[2].replace(/^\d+$/, "").replace(/[-_]+/g, " ").trim();
+          if (!varietyLabel || /^\d+$/.test(m[2])) varietyLabel = "My variety";
+          return {
+            ...parent,
+            id,
+            name: `${parent.name} — ${varietyLabel}`,
+            variety: varietyLabel,
+            cropId: parent.id,
+            cropName: parent.name,
+            isVariety: true,
+            isCustom: true,
+            sources: "Mine",
+          };
+        }
+      }
+      return null;
     }
 
     // Family colors for visual badges
@@ -738,7 +778,9 @@
       const lastFrost = profile?.lastFrost
         ? new Date(profile.lastFrost + "T12:00:00")
         : addDays(new Date(), 30);
-      const pl = typeof plant === "string" ? PLANT_LIBRARY.find(p => p.id === plant) : plant;
+      const pl = typeof plant === "string"
+        ? (resolvePlant(plant) || PLANT_LIBRARY.find(p => p.id === plant))
+        : plant;
       if (!pl) return null;
       const sow = pl.method === "indoor" && pl.startWeeksBeforeFrost > 0
         ? addDays(lastFrost, -pl.startWeeksBeforeFrost * 7)
@@ -921,7 +963,7 @@
     }
 
     function plantDisplayName(plantInfo, opts = {}) {
-      if (!plantInfo) return "Plant";
+      if (!plantInfo) return opts.fallbackId ? String(opts.fallbackId).replace(/_/g, " ") : "Plant";
       const withCrop = opts.withCrop !== false;
       if (plantInfo.variety) {
         const crop = plantInfo.cropName
@@ -930,7 +972,16 @@
         if (withCrop && crop) return `${plantInfo.variety} (${crop})`;
         return plantInfo.variety;
       }
-      return plantInfo.name || "Plant";
+      if (plantInfo.name && plantInfo.name.includes("—")) {
+        return withCrop ? plantInfo.name : plantInfo.name.split("—").slice(1).join("—").trim();
+      }
+      return plantInfo.name || opts.fallbackId || "Plant";
+    }
+
+    /** Resolve + display name for any plant id (library, variety, or custom) */
+    function plantNameForId(id, customPlants, opts = {}) {
+      const pl = resolvePlant(id, customPlants);
+      return plantDisplayName(pl, { ...opts, fallbackId: id });
     }
 
     /**
@@ -5272,7 +5323,7 @@
         const ids = (form.plantIds && form.plantIds.length) ? form.plantIds : [form.cropId || form.plantId || "tomato"];
         const newItems = [];
         ids.forEach((plantId, vi) => {
-          const pl = resolvePlant(plantId) || PLANT_LIBRARY.find(p => p.id === plantId);
+          const pl = resolvePlant(plantId, customPlants) || PLANT_LIBRARY.find(p => p.id === plantId);
           if (!pl) return;
           const sched = computePlantingSchedule(pl, profile);
           if (!sched) return;
@@ -5386,7 +5437,7 @@
           return;
         }
         const copies = source.map((p, i) => {
-          const pl = resolvePlant(p.plant) || PLANT_LIBRARY.find(x => x.id === p.plant);
+          const pl = resolvePlant(p.plant, customPlants) || PLANT_LIBRARY.find(x => x.id === p.plant);
           const sched = computePlantingSchedule(pl, {
             ...profile,
             lastFrost: profile.lastFrost
@@ -5420,7 +5471,7 @@
         });
         (placed || []).filter(p => p.bed === bedId && (p.year || y0) <= throughYear && (p.year || y0) > throughYear - ROTATION_YEARS)
           .forEach(p => {
-            const pl = resolvePlant(p.plant) || PLANT_LIBRARY.find(x => x.id === p.plant);
+            const pl = resolvePlant(p.plant, customPlants) || PLANT_LIBRARY.find(x => x.id === p.plant);
             if (pl?.family && pl.family !== "Ericaceae") fams.add(pl.family);
           });
         return fams;
@@ -5901,23 +5952,29 @@
               ) : (
                 <div className="space-y-2">
                   {yearPlaced.map(item => {
-                    const pl = resolvePlant(item.plant) || PLANT_LIBRARY.find(p => p.id === item.plant);
+                    const pl = resolvePlant(item.plant, customPlants) || PLANT_LIBRARY.find(p => p.id === item.plant);
                     const bed = beds.find(b => b.id === item.bed);
                     const cap = bed && pl ? bedCapacity(bed, pl.spacingIn) : null;
+                    const displayName = plantDisplayName(pl, { fallbackId: item.plant });
                     return (
                       <div key={item.id} className={`rounded-xl p-3 card-shadow ${item.isCoverCrop ? "bg-lime-50 border border-lime-200" : "bg-white"}`}>
                         <div className="flex items-start gap-2">
                           <span className="text-2xl">{pl?.icon || "🌱"}</span>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-sm text-sage-800">
-                              {pl?.name || item.plant}
+                              {displayName}
+                              {pl?.isCustom && <span className="text-[10px] text-amber-700 font-normal"> · mine</span>}
                               {item.isCoverCrop && <span className="text-[10px] text-lime-700 font-normal"> · cover crop</span>}
                               {item.fromRotationSuggest && <span className="text-[10px] text-emerald-700 font-normal"> · rotation pick</span>}
                               {item.successionOf > 1 && (
                                 <span className="text-xs text-sage-500 font-normal"> · succ. {item.successionIndex}/{item.successionOf}</span>
                               )}
                             </p>
-                            <p className="text-[10px] text-sage-500">{bed?.name || item.bed} · {item.method || pl?.method}</p>
+                            <p className="text-[10px] text-sage-500">
+                              {bed?.name || item.bed}
+                              {pl?.cropName || pl?.type ? ` · ${pl.cropName || pl.type}` : ""}
+                              {" · "}{item.method || pl?.method || "—"}
+                            </p>
                             <div className="mt-1 grid grid-cols-2 gap-1 text-[10px] text-sage-600">
                               <span>🌱 Sow {item.sowDate ? fmtDate(item.sowDate) : "—"}</span>
                               <span>🌿 Out {item.plantedAt ? fmtDate(item.plantedAt) : "—"}</span>
@@ -6072,7 +6129,12 @@
                 >
                   {PLANT_LIBRARY.map(p => <option key={p.id} value={p.id}>{p.icon} {p.name}</option>)}
                 </select>
-                {(VARIETY_RAW[form.cropId] || []).length > 0 && (
+                {(() => {
+                  const cropVars = [
+                    ...(customPlants || []).filter(v => v.isVariety && v.cropId === form.cropId),
+                    ...VARIETY_LIBRARY.filter(v => v.cropId === form.cropId),
+                  ];
+                  return (
                   <>
                     <label className="text-xs text-sage-500">Varieties (multi-select)</label>
                     <div className="max-h-40 overflow-y-auto border rounded-xl p-2 mb-2 space-y-1">
@@ -6090,10 +6152,7 @@
                         />
                         Generic (no named variety)
                       </label>
-                      {[
-                        ...(typeof customPlants !== "undefined" && customPlants ? customPlants.filter(v => v.isVariety && v.cropId === form.cropId) : []),
-                        ...VARIETY_LIBRARY.filter(v => v.cropId === form.cropId),
-                      ].map(v => (
+                      {cropVars.map(v => (
                         <label key={v.id} className="flex items-center gap-2 text-xs py-1">
                           <input
                             type="checkbox"
@@ -6106,16 +6165,20 @@
                               });
                             }}
                           />
-                          <span className="flex-1">{v.variety}</span>
-                          <span className="text-[9px] text-sage-400">{v.isCustom || v.sources === "Mine" ? "Mine" : v.sources}</span>
+                          <span className="flex-1">{v.variety || plantDisplayName(v)}</span>
+                          <span className="text-[9px] text-sage-400">{v.isCustom || v.sources === "Mine" ? "Mine" : (v.sources || "")}</span>
                         </label>
                       ))}
+                      {cropVars.length === 0 && (
+                        <p className="text-[10px] text-sage-400 py-1">No catalog varieties — add one in Layout → crop → + Add my variety</p>
+                      )}
                     </div>
                     <p className="text-[10px] text-sage-400 mb-2">
                       {(form.plantIds || []).length} selected — all go in the same bed
                     </p>
                   </>
-                )}
+                  );
+                })()}
                 <label className="text-xs text-sage-500">Bed</label>
                 <select className="w-full border rounded-xl px-3 py-2 text-sm mb-2" value={form.bedId} onChange={e => setForm(f => ({ ...f, bedId: e.target.value }))}>
                   {beds.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -6123,7 +6186,7 @@
                 <label className="text-xs text-sage-500">Succession plantings (1–8) per variety</label>
                 <input type="number" min={1} max={8} className="w-full border rounded-xl px-3 py-2 text-sm mb-2" value={form.successions} onChange={e => setForm(f => ({ ...f, successions: e.target.value }))} />
                 {(() => {
-                  const pl = resolvePlant((form.plantIds || [])[0]) || PLANT_LIBRARY.find(p => p.id === form.cropId);
+                  const pl = resolvePlant((form.plantIds || [])[0], customPlants) || PLANT_LIBRARY.find(p => p.id === form.cropId);
                   const sched = pl ? computePlantingSchedule(pl, profile) : null;
                   if (!sched) return null;
                   return (
@@ -6207,10 +6270,16 @@
       const types = ["All", "Vegetable", "Herb", "Fruit", "Flower", "Cover"];
 
       const crops = useMemo(() => {
-        return PLANT_LIBRARY.filter(p => filter === "All" || p.type === filter)
-          .filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase())
-            || (VARIETY_RAW[p.id] || []).some(([, vn]) => vn.toLowerCase().includes(search.toLowerCase())));
-      }, [filter, search]);
+        const customCrops = (customPlants || []).filter(p => !p.isVariety);
+        const base = [...PLANT_LIBRARY, ...customCrops];
+        return base
+          .filter(p => filter === "All" || p.type === filter)
+          .filter(p => !search
+            || p.name.toLowerCase().includes(search.toLowerCase())
+            || (p.variety || "").toLowerCase().includes(search.toLowerCase())
+            || (VARIETY_RAW[p.id] || []).some(([, vn]) => vn.toLowerCase().includes(search.toLowerCase()))
+            || (customPlants || []).some(v => v.cropId === p.id && (v.variety || v.name || "").toLowerCase().includes(search.toLowerCase())));
+      }, [filter, search, customPlants]);
 
       const varietiesFor = (cropId) => {
         const custom = (customPlants || []).filter(v => v.isVariety && v.cropId === cropId);
@@ -7603,7 +7672,9 @@
       });
       const [customPlants, setCustomPlants] = useState(() => {
         const saved = localStorage.getItem("pp_custom_plants");
-        return saved ? JSON.parse(saved) : [];
+        const list = saved ? JSON.parse(saved) : [];
+        syncCustomPlantsLive(list);
+        return list;
       });
       const [beds, setBeds] = useState(() => {
         const saved = localStorage.getItem("pp_beds");
@@ -7628,7 +7699,10 @@
       useEffect(() => { localStorage.setItem("pp_rotation", JSON.stringify(rotationHistory)); }, [rotationHistory]);
       useEffect(() => { localStorage.setItem("pp_profile", JSON.stringify(profile)); }, [profile]);
       useEffect(() => { localStorage.setItem("pp_journal", JSON.stringify(journal)); }, [journal]);
-      useEffect(() => { localStorage.setItem("pp_custom_plants", JSON.stringify(customPlants)); }, [customPlants]);
+      useEffect(() => {
+        syncCustomPlantsLive(customPlants);
+        localStorage.setItem("pp_custom_plants", JSON.stringify(customPlants));
+      }, [customPlants]);
       useEffect(() => { localStorage.setItem("pp_beds", JSON.stringify(beds)); }, [beds]);
       useEffect(() => { localStorage.setItem("pp_harvests", JSON.stringify(harvests)); }, [harvests]);
 
