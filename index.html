@@ -1480,61 +1480,182 @@
     ];
 
     // Companion matrix: +1 = beneficial, -1 = antagonistic, 0 or missing = neutral
-    // Based on common traditional + research-backed pairings
+    // Synthesized from extension guides (Almanac, WSU, GKH) + widely repeated field practice.
+    // Prefer pairs with a clear mechanism: disease, allelopathy, N-fixation, trap crop, shade.
     const COMPANION_MATRIX = {
-      tomato:   { basil: 1, marigold: 1, carrot: 1, lettuce: 1, pepper: 0, lavender: 0, blueberry: 0 },
-      basil:    { tomato: 1, pepper: 1, marigold: 1, lettuce: 0, carrot: 0, lavender: -1, blueberry: 0 },
-      marigold: { tomato: 1, basil: 1, pepper: 1, carrot: 1, lettuce: 0, lavender: 0, blueberry: 0 },
-      lavender: { tomato: 0, basil: -1, marigold: 0, lettuce: 0, pepper: 0, carrot: 0, blueberry: 0 },
-      lettuce:  { tomato: 1, carrot: 1, basil: 0, marigold: 0, pepper: 0, lavender: 0, blueberry: 0 },
-      pepper:   { basil: 1, marigold: 1, tomato: 0, carrot: 1, lettuce: 0, lavender: 0, blueberry: 0 },
-      carrot:   { tomato: 1, lettuce: 1, marigold: 1, pepper: 1, basil: 0, lavender: 0, blueberry: 0 },
-      blueberry:{ tomato: 0, basil: 0, marigold: 0, lavender: 0, lettuce: 0, pepper: 0, carrot: 0 },
-      onion:    { carrot: 1, lettuce: 1, tomato: 1, beet: 1, bean: -1, pea: -1 },
-      garlic:   { tomato: 1, carrot: 1, bean: -1, pea: -1 },
-      bean:     { corn: 1, squash: 1, marigold: 1, cucumber: 1, onion: -1, garlic: -1, fennel: -1 },
-      pea:      { carrot: 1, corn: 1, onion: -1, garlic: -1 },
-      corn:     { bean: 1, squash: 1, cucumber: 1 },
-      squash:   { corn: 1, bean: 1, potato: -1 },
-      cucumber: { bean: 1, corn: 1, potato: -1, sage: -1 },
-      potato:   { bean: 1, corn: 1, tomato: -1, squash: -1, cucumber: -1 },
-      cabbage:  { onion: 1, dill: 1, strawberry: -1, tomato: -1 },
-      broccoli: { onion: 1, dill: 1, tomato: -1, strawberry: -1 },
-      fennel:   { tomato: -1, bean: -1, pepper: -1, carrot: -1 },
-      dill:     { cabbage: 1, broccoli: 1, carrot: -1 },
-      rosemary: { cabbage: 1, carrot: 1, basil: -1 },
+      tomato: {
+        basil: 1, marigold: 1, borage: 1, carrot: 1, lettuce: 1, onion: 1, garlic: 1, chives: 1,
+        parsley: 1, nasturtium: 1, asparagus: 1, calendula: 1, alyssum: 1,
+        pepper: 0, eggplant: -1, potato: -1, tomatillo: -1, groundcherry: -1,
+        cucumber: -1, squash: -1, zucchini: -1, pumpkin: -1, melon: -1, watermelon: -1,
+        corn: -1, fennel: -1, dill: -1, cabbage: -1, broccoli: -1, cauliflower: -1,
+        kale: -1, brussels: -1, collard: -1, bokchoy: -1, kohlrabi: -1,
+        strawberry: -1, sunflower: -1,
+      },
+      basil: { tomato: 1, pepper: 1, eggplant: 1, marigold: 1, oregano: 1, lavender: -1, rosemary: -1 },
+      marigold: { tomato: 1, pepper: 1, eggplant: 1, potato: 1, bean: 1, carrot: 1, cabbage: 1, broccoli: 1, squash: 1 },
+      borage: { tomato: 1, squash: 1, strawberry: 1 },
+      nasturtium: { tomato: 1, cucumber: 1, squash: 1, bean: 1, cabbage: 1, broccoli: 1, radish: 1 },
+      lavender: { rosemary: 1, thyme: 1, sage: 1, oregano: 1, basil: -1 },
+      lettuce: { tomato: 1, carrot: 1, onion: 1, radish: 1, strawberry: 1, cucumber: 1, bean: 1, corn: 1 },
+      pepper: {
+        basil: 1, marigold: 1, onion: 1, carrot: 1, spinach: 1, parsley: 1,
+        tomato: 0, eggplant: -1, potato: -1, fennel: -1, cabbage: -1, broccoli: -1, cauliflower: -1,
+        kale: -1, cucumber: -1, fennel: -1,
+      },
+      eggplant: {
+        basil: 1, bean: 1, marigold: 1, spinach: 1, thyme: 1,
+        tomato: -1, potato: -1, pepper: -1, fennel: -1, pea: -1, cucumber: -1,
+      },
+      tomatillo: { basil: 1, marigold: 1, tomato: -1, potato: -1, pepper: -1 },
+      carrot: {
+        tomato: 1, lettuce: 1, onion: 1, leek: 1, chives: 1, garlic: 1, rosemary: 1, radish: 1, pea: 1, pepper: 1,
+        dill: -1, fennel: -1, celery: -1, potato: -1, parsley: -1,
+      },
+      celery: { bean: 1, cabbage: 1, onion: 1, tomato: 1, carrot: -1, potato: -1, corn: -1, parsley: -1 },
+      onion: {
+        carrot: 1, lettuce: 1, tomato: 1, beet: 1, strawberry: 1, cabbage: 1, broccoli: 1, pepper: 1, spinach: 1,
+        bean: -1, pea: -1, asparagus: -1, sage: -1, leek: 0, garlic: 0,
+      },
+      garlic: {
+        tomato: 1, carrot: 1, beet: 1, strawberry: 1, rose: 1, cabbage: 1, spinach: 1,
+        bean: -1, pea: -1, asparagus: -1, onion: 0,
+      },
+      leek: { carrot: 1, celery: 1, onion: 0, bean: -1, pea: -1 },
+      chives: { tomato: 1, carrot: 1, strawberry: 1, apple: 1, bean: -1 },
+      bean: {
+        corn: 1, squash: 1, pumpkin: 1, cucumber: 1, marigold: 1, potato: 1, carrot: 1, radish: 1, strawberry: 1, celery: 1, eggplant: 1,
+        onion: -1, garlic: -1, leek: -1, shallot: -1, chives: -1, fennel: -1, pepper: -1, sunflower: -1,
+      },
+      pea: {
+        carrot: 1, radish: 1, corn: 1, cucumber: 1, turnip: 1, spinach: 1, lettuce: 1,
+        onion: -1, garlic: -1, leek: -1, potato: -1, tomato: -1,
+      },
+      corn: {
+        bean: 1, squash: 1, pumpkin: 1, cucumber: 1, melon: 1, pea: 1, potato: 1, marigold: 1,
+        tomato: -1, celery: -1, cabbage: -1, broccoli: -1,
+      },
+      squash: {
+        corn: 1, bean: 1, nasturtium: 1, marigold: 1, radish: 1, borage: 1,
+        potato: -1, tomato: -1, zucchini: 0, cucumber: -1, melon: -1,
+      },
+      zucchini: { corn: 1, bean: 1, nasturtium: 1, potato: -1, tomato: -1, cucumber: -1 },
+      pumpkin: { corn: 1, bean: 1, nasturtium: 1, potato: -1, tomato: -1 },
+      cucumber: {
+        bean: 1, corn: 1, pea: 1, radish: 1, dill: 1, lettuce: 1, nasturtium: 1, marigold: 1, sunflower: 1,
+        potato: -1, sage: -1, tomato: -1, pepper: -1, zucchini: -1, squash: -1, melon: -1, eggplant: -1,
+      },
+      melon: { corn: 1, radish: 1, nasturtium: 1, potato: -1, cucumber: -1 },
+      watermelon: { corn: 1, radish: 1, potato: -1 },
+      potato: {
+        bean: 1, corn: 1, cabbage: 1, marigold: 1, horseradish: 1,
+        tomato: -1, eggplant: -1, pepper: -1, tomatillo: -1,
+        cucumber: -1, squash: -1, zucchini: -1, pumpkin: -1, melon: -1,
+        sunflower: -1, asparagus: -1, carrot: -1, celery: -1, raspberry: -1,
+      },
+      cabbage: {
+        onion: 1, garlic: 1, dill: 1, celery: 1, marigold: 1, nasturtium: 1, potato: 1, beet: 1, spinach: 1, rosemary: 1, thyme: 1, sage: 1,
+        tomato: -1, pepper: -1, strawberry: -1, bean: -1, mustard: -1,
+      },
+      broccoli: {
+        onion: 1, garlic: 1, dill: 1, celery: 1, marigold: 1, nasturtium: 1, beet: 1, rosemary: 1, thyme: 1,
+        tomato: -1, pepper: -1, strawberry: -1, mustard: -1,
+      },
+      cauliflower: { celery: 1, onion: 1, dill: 1, bean: 1, tomato: -1, strawberry: -1 },
+      kale: { onion: 1, dill: 1, beet: 1, celery: 1, tomato: -1, strawberry: -1 },
+      brussels: { onion: 1, dill: 1, potato: 1, tomato: -1, strawberry: -1 },
+      collard: { onion: 1, tomato: -1, strawberry: -1 },
+      bokchoy: { onion: 1, celery: 1, tomato: -1 },
+      kohlrabi: { beet: 1, onion: 1, cucumber: 1, tomato: -1, bean: -1 },
+      radish: { carrot: 1, cucumber: 1, bean: 1, pea: 1, lettuce: 1, nasturtium: 1, spinach: 1 },
+      beet: { onion: 1, garlic: 1, lettuce: 1, cabbage: 1, bushbean: 1, bean: 1, mustard: -1 },
+      spinach: { strawberry: 1, pea: 1, cabbage: 1, cauliflower: 1, eggplant: 1, pepper: 1 },
+      strawberry: {
+        bean: 1, lettuce: 1, spinach: 1, onion: 1, garlic: 1, chives: 1, borage: 1, thyme: 1,
+        cabbage: -1, broccoli: -1, cauliflower: -1, kale: -1, brussels: -1, tomato: -1, potato: -1, eggplant: -1, pepper: -1,
+      },
+      asparagus: { tomato: 1, parsley: 1, basil: 1, onion: -1, garlic: -1, potato: -1 },
+      fennel: {
+        // Allelopathic — keep isolated; weak + only with dill/coriander family is still risky
+        tomato: -1, pepper: -1, bean: -1, pea: -1, carrot: -1, cucumber: -1, squash: -1, potato: -1, eggplant: -1, lettuce: -1, cabbage: -1, broccoli: -1, cilantro: -1,
+      },
+      dill: { cabbage: 1, broccoli: 1, cucumber: 1, lettuce: 1, onion: 1, carrot: -1, tomato: -1, fennel: -1 },
+      parsley: { tomato: 1, asparagus: 1, corn: 1, carrot: -1, lettuce: 1 },
+      rosemary: { cabbage: 1, bean: 1, carrot: 1, sage: 1, basil: -1 },
+      sage: { cabbage: 1, rosemary: 1, carrot: 1, cucumber: -1, onion: -1 },
+      thyme: { cabbage: 1, broccoli: 1, strawberry: 1, eggplant: 1 },
+      oregano: { basil: 1, pepper: 1, cabbage: 1 },
+      sunflower: { cucumber: 1, corn: 1, potato: -1, bean: -1 },
+      blueberry: { /* likes acid soil; avoid competing with most mixed beds */ },
     };
 
     /** Human reasons. Keys are "idA|idB" with crop ids alphabetically sorted. */
     const COMPANION_WHY = {
       "basil|lavender": "Lavender wants dry, lean soil and airflow. Basil wants richer, evenly moist soil. Side by side, one is usually over- or under-watered.",
       "basil|rosemary": "Rosemary is drought-tolerant and woody; basil is a thirsty annual. They fight over water.",
-      "bean|onion": "Alliums can suppress the nitrogen-fixing bacteria on bean roots, so beans grow poorly nearby.",
+      "bean|onion": "Alliums can suppress nitrogen-fixing bacteria on bean roots, so beans grow poorly nearby.",
       "bean|garlic": "Garlic’s sulfur compounds and watering needs work against beans’ nitrogen-fixing roots.",
+      "bean|leek": "Leeks are alliums — they can inhibit legume nodulation. Keep beans and leeks in different beds.",
       "garlic|pea": "Peas are legumes. Alliums nearby can reduce nodulation and yield.",
       "onion|pea": "Onions and peas compete; alliums often inhibit pea root bacteria.",
-      "potato|tomato": "Both are nightshades. They share blight, wilt, and hornworms. Pairing them stacks disease risk and makes rotation harder.",
+      "asparagus|onion": "Onions compete with asparagus for nutrients during the long establishment years. Keep alliums out of the asparagus bed.",
+      "asparagus|garlic": "Garlic steals nutrients asparagus needs to build multi-year crowns.",
+      "asparagus|potato": "Potatoes disturb the soil and share no benefit with permanent asparagus roots.",
+      "potato|tomato": "Both are nightshades. They share early/late blight, wilt, and hornworms. Pairing stacks disease risk and ruins rotation.",
+      "eggplant|tomato": "Nightshades share blight, flea beetles, and hornworms. Separate beds and rotate the whole family.",
+      "eggplant|potato": "Shared soil diseases (Verticillium, blight) and pests. Never follow one with the other in the same bed.",
+      "pepper|potato": "Nightshade family — same blight and wilt complex. Keep peppers off potato ground.",
+      "potato|tomatillo": "Tomatillos are nightshades; they share disease pressure with potatoes.",
       "cucumber|potato": "They compete for nutrients and can pass blight-type problems; cukes also sprawl over potato rows.",
       "potato|squash": "Both are heavy feeders and share some wilt pressure. Give squash its own rich mound.",
-      "cabbage|strawberry": "Brassicas can stunt strawberries and share some soil pests. Keep berries in their own bed.",
-      "broccoli|strawberry": "Brassicas and strawberries are a poor mix — growth and flavor both suffer.",
-      "cabbage|tomato": "Tomatoes and cabbage-family crops compete for nutrients and can attract overlapping pests.",
-      "broccoli|tomato": "Tomatoes can inhibit brassicas and want different watering at fruit set.",
-      "carrot|dill": "Dill can stunt nearby carrots, and both are umbellifers that draw similar pests.",
-      "carrot|fennel": "Fennel is allelopathic — its roots release compounds that slow carrots and many neighbors.",
-      "fennel|tomato": "Fennel inhibits tomatoes and most garden crops. Give fennel its own pot.",
+      "potato|sunflower": "Sunflowers are allelopathic to potatoes and attract pests that move onto the crop.",
+      "cabbage|strawberry": "Brassicas and strawberries share Verticillium risk and compete hard for nutrients.",
+      "broccoli|strawberry": "Brassicas and strawberries are a poor mix — growth and disease pressure both rise.",
+      "cauliflower|strawberry": "Shared soil disease risk and heavy feeding. Keep berries in their own permanent bed.",
+      "strawberry|tomato": "Nightshades carry Verticillium that can kill strawberries for years afterward. Never interplant.",
+      "potato|strawberry": "Verticillium from potatoes can devastate strawberry beds for a decade.",
+      "cabbage|tomato": "Both are heavy feeders; brassicas can stunt tomatoes. Glucosinolates from brassicas may inhibit nightshades.",
+      "broccoli|tomato": "Heavy-feeder clash and brassica chemistry that can slow nightshade growth.",
+      "cauliflower|tomato": "Competing nutrient demand and brassica–nightshade antagonism.",
+      "broccoli|pepper": "Brassicas can inhibit peppers (glucosinolate residues) and both mine the same nutrients.",
+      "cabbage|pepper": "Brassicas and peppers are a classic avoid pair — stunting and nutrient competition.",
+      "carrot|dill": "Mature dill can stunt carrots; both are umbellifers that draw similar pests.",
+      "carrot|celery": "Same family (Apiaceae) — share carrot fly, weevils, and soil diseases. Rotate the family together.",
+      "carrot|fennel": "Fennel is allelopathic — roots release compounds that slow carrots and many neighbors.",
+      "carrot|parsley": "Same umbellifer family; they compete and share pests. Space them apart.",
+      "fennel|tomato": "Fennel inhibits tomatoes and most garden crops. Grow fennel in its own pot.",
       "bean|fennel": "Fennel is a poor neighbor for legumes and most vegetables.",
       "fennel|pepper": "Fennel’s allelopathy can reduce pepper vigor.",
-      "cucumber|sage": "Sage prefers dry soil; cucumbers need consistent moisture.",
-      "basil|tomato": "Classic partners: similar water and feed needs, and basil’s scent may confuse pests.",
-      "marigold|tomato": "French marigolds can help with some nematodes and draw beneficial insects without hogging the bed.",
+      "cucumber|sage": "Sage prefers dry soil and can stunt cucumbers; watering needs conflict.",
+      "cucumber|tomato": "Both are heavy feeders and share wilt pressure. Tomatoes shade cukes; vines fight for water. Separate beds.",
+      "squash|tomato": "Both hog nutrients and space. Squash sprawls into tomato stems and they can share wilt.",
+      "tomato|zucchini": "Same heavy-feeder / wilt / space problems as tomato with other squash.",
+      "corn|tomato": "Both heavy feeders; corn shades tomatoes and they can share worm and blight pressure.",
+      "cucumber|pepper": "Cukes sprawl and can smother peppers; they also share some wilt pressure.",
+      "cucumber|zucchini": "Cucurbits compete for the same nutrients and pests (cucumber beetles, wilt).",
+      "cucumber|squash": "Same family and pest complex — beetles and wilt move easily between them.",
+      "dill|tomato": "Young dill is fine; mature flowering dill can inhibit tomatoes. Keep bolted dill away.",
+      "sunflower|tomato": "Sunflowers can shade tomatoes and release mild allelopathic compounds into the soil.",
+      "bean|sunflower": "Sunflowers can inhibit bean growth via allelopathy and heavy nutrient use.",
+      "basil|tomato": "Classic partners: similar water and feed needs; basil’s aroma may confuse pests; supports pollinators.",
+      "marigold|tomato": "French marigolds can suppress root-knot nematodes and draw beneficial insects.",
+      "borage|tomato": "Borage draws pollinators and is traditionally planted to support tomato vigor and deter hornworms.",
       "carrot|tomato": "Carrots loosen soil under tomatoes; tomatoes give light shade as they grow up.",
       "lettuce|tomato": "Lettuce likes the cool shade under tomato foliage in summer heat.",
       "basil|pepper": "Same cultural needs as tomatoes — warm, even moisture — and basil is a good aromatic neighbor.",
-      "carrot|onion": "Onions may deter carrot fly; carrots break soil for onion bulbs. A classic pairing.",
-      "bean|corn": "Beans climb corn and add nitrogen; corn is a living trellis (Three Sisters).",
-      "corn|squash": "Squash shades soil; corn is the pole. Classic Three Sisters.",
+      "carrot|onion": "Onions help mask carrot fly scent; carrots break soil for onion bulbs. Strong traditional pair.",
+      "carrot|leek": "Leeks deter carrot fly; carrots occupy a different root zone.",
+      "bean|corn": "Beans climb corn and fix nitrogen; corn is a living trellis (Three Sisters).",
+      "corn|squash": "Squash shades soil and deters raccoons; corn is the pole. Classic Three Sisters.",
       "bean|squash": "Beans feed the squash mound; squash mulches the beans’ roots.",
+      "bean|pumpkin": "Same Three Sisters logic as squash — nitrogen, living mulch, and structure.",
+      "cabbage|dill": "Dill flowers attract parasitic wasps that attack cabbage worms.",
+      "broccoli|dill": "Dill supports beneficial wasps that prey on brassica caterpillars.",
+      "cabbage|nasturtium": "Nasturtiums act as a trap crop for aphids and can reduce cabbage pests.",
+      "nasturtium|squash": "Nasturtiums trap aphids and squash bugs away from the main crop.",
+      "cucumber|radish": "Radishes may deter cucumber beetles and finish before vines fully take over.",
+      "garlic|strawberry": "Garlic may reduce some fungal pressure; strawberries and alliums share space well.",
+      "onion|strawberry": "Alliums are traditional strawberry neighbors and help with some pests.",
     };
 
     function cropKeyOf(idOrPlant) {
@@ -1557,10 +1678,24 @@
       const pa = resolvePlant(x) || PLANT_LIBRARY.find(p => p.id === x);
       const pb = resolvePlant(y) || PLANT_LIBRARY.find(p => p.id === y);
       if (!pa || !pb) return 0;
+      // Family-level rules when no explicit pair is listed
       if ((pa.id === "fennel" || pb.id === "fennel") && pa.id !== pb.id) return -1;
       if (pa.family === "Amaryllidaceae" && pb.family === "Fabaceae") return -1;
       if (pb.family === "Amaryllidaceae" && pa.family === "Fabaceae") return -1;
-      if (pa.family === "Solanaceae" && pb.family === "Solanaceae" && (pa.id === "potato" || pb.id === "potato")) return -1;
+      if (pa.family === "Solanaceae" && pb.family === "Brassicaceae") return -1;
+      if (pb.family === "Solanaceae" && pa.family === "Brassicaceae") return -1;
+      if ((pa.id === "strawberry" && (pb.family === "Brassicaceae" || pb.family === "Solanaceae"))
+        || (pb.id === "strawberry" && (pa.family === "Brassicaceae" || pa.family === "Solanaceae"))) return -1;
+      if (pa.family === "Solanaceae" && pb.family === "Solanaceae") {
+        // Potato with any nightshade is high risk; other nightshades are caution (-1)
+        return -1;
+      }
+      if (pa.family === "Cucurbitaceae" && pb.family === "Cucurbitaceae" && pa.id !== pb.id) {
+        // Same-family cucurbits share beetles and wilt — mild avoid
+        return -1;
+      }
+      if ((pa.id === "asparagus" && pb.family === "Amaryllidaceae")
+        || (pb.id === "asparagus" && pa.family === "Amaryllidaceae")) return -1;
       return 0;
     }
 
@@ -1578,6 +1713,15 @@
         if (pa.family === "Solanaceae" && pb.family === "Solanaceae") {
           return "Both are nightshades. They share blight, wilt, and hornworms — crowding them stacks disease and makes crop rotation harder.";
         }
+        if ((pa.family === "Solanaceae" && pb.family === "Brassicaceae") || (pb.family === "Solanaceae" && pa.family === "Brassicaceae")) {
+          return "Nightshades and brassicas are both heavy feeders; brassicas can stunt tomatoes and peppers. Plant them in different beds.";
+        }
+        if (pa.family === "Cucurbitaceae" && pb.family === "Cucurbitaceae") {
+          return "Cucurbits (squash, cucumber, melon) share cucumber beetles and wilt. Spreading them across the garden slows pest buildup.";
+        }
+        if (pa.id === "strawberry" || pb.id === "strawberry") {
+          return "Strawberries are long-lived and sensitive to Verticillium from nightshades and brassicas. Keep a dedicated berry bed.";
+        }
         if (pa.id === "fennel" || pb.id === "fennel") {
           return "Fennel is allelopathic: roots release compounds that stunt many vegetables. Grow fennel in its own pot.";
         }
@@ -1587,7 +1731,7 @@
         return `${pa.name} and ${pb.name} are a traditional “avoid” pairing — they compete for water or nutrients, or one inhibits the other.`;
       }
       if (rel > 0) {
-        return `${pa.name} and ${pb.name} are a traditional companion pair — similar needs, or one helps the other with pests, shade, or soil.`;
+        return `${pa.name} and ${pb.name} are a strong companion pair — similar needs, pest help, nitrogen, shade, or soil structure.`;
       }
       return `${pa.name} and ${pb.name} are neutral together. Not harmful, not a standout team.`;
     }
