@@ -7185,7 +7185,23 @@
       const [showLogConfirm, setShowLogConfirm] = useState(false);
       const [solveMsg, setSolveMsg] = useState("");
 
-      const getPlant = (id) => PLANT_LIBRARY.find(p => p.id === id);
+      const getPlant = (id) => resolvePlant(id) || PLANT_LIBRARY.find(p => p.id === id);
+
+      const clearBedHistory = () => {
+        if (!confirm("Clear logged rotation history for this bed? This does not remove plants from Layout.")) return;
+        setRotationHistory(prev => {
+          const next = { ...prev };
+          delete next[selectedBed];
+          return next;
+        });
+        setSolveMsg("History cleared for this bed.");
+      };
+
+      const clearAllHistory = () => {
+        if (!confirm("Clear ALL rotation history on every bed? Use this if sample/demo years were showing as conflicts.")) return;
+        setRotationHistory({});
+        setSolveMsg("All rotation history cleared. Conflicts only appear after you tap Log Season.");
+      };
 
       // Families currently in a bed (from live layout)
       const currentFamiliesForBed = (bedId) => {
@@ -7198,7 +7214,7 @@
         const hist = rotationHistory[bedId] || [];
         const cutoff = currentYear - years;
         const fams = new Set();
-        hist.filter(h => h.year >= cutoff).forEach(h => {
+        hist.filter(h => h.year >= cutoff && h.loggedAt).forEach(h => {
           (h.families || []).forEach(f => fams.add(f));
         });
         return [...fams];
@@ -7314,6 +7330,9 @@
             <div className="bg-white rounded-2xl p-3 card-shadow text-xs text-sage-600">
               Avoid planting the same plant family in a bed for {ROTATION_YEARS}+ years.
               This reduces disease and nutrient imbalance.
+              <span className="block mt-1 text-sage-500">
+                Conflicts only use seasons you logged with <strong>Log Season</strong> — not plants sitting in Layout this year, and not sample data.
+              </span>
             </div>
 
             {/* Bed selector */}
@@ -7405,7 +7424,13 @@
 
             {/* History timeline */}
             <div className="bg-white rounded-2xl p-4 card-shadow">
-              <h3 className="font-semibold text-sage-800 text-sm mb-3">History</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-sage-800 text-sm">History</h3>
+                <div className="flex gap-2">
+                  <button type="button" onClick={clearBedHistory} className="text-[10px] text-sage-500 font-medium">Clear bed</button>
+                  <button type="button" onClick={clearAllHistory} className="text-[10px] text-sage-500 font-medium">Clear all</button>
+                </div>
+              </div>
               {bedHistory.length === 0 ? (
                 <p className="text-xs text-sage-400 text-center py-4">
                   No seasons logged yet.<br />Use “Log Season” after planting.
@@ -7906,23 +7931,19 @@
         ];
       });
       const [rotationHistory, setRotationHistory] = useState(() => {
-        const saved = localStorage.getItem("pp_rotation");
-        return saved ? JSON.parse(saved) : {
-          tomato: [
-            { year: 2025, plants: ["tomato", "basil", "marigold"], families: ["Solanaceae", "Lamiaceae", "Asteraceae"] },
-            { year: 2024, plants: ["pepper"], families: ["Solanaceae"] },
-          ],
-          herb: [
-            { year: 2025, plants: ["lavender", "basil"], families: ["Lamiaceae"] },
-          ],
-          pepper: [
-            { year: 2025, plants: ["pepper"], families: ["Solanaceae"] },
-            { year: 2024, plants: ["carrot", "lettuce"], families: ["Apiaceae", "Asteraceae"] },
-          ],
-          berry: [
-            { year: 2025, plants: ["blueberry"], families: ["Ericaceae"] },
-          ],
-        };
+        // Only seasons the user logged (have loggedAt). Old demo 2024/2025 sample history is dropped.
+        try {
+          const saved = localStorage.getItem("pp_rotation");
+          const parsed = saved ? JSON.parse(saved) : {};
+          const next = {};
+          Object.entries(parsed || {}).forEach(([bedId, arr]) => {
+            const real = (arr || []).filter(h => h && h.loggedAt);
+            if (real.length) next[bedId] = real;
+          });
+          return next;
+        } catch {
+          return {};
+        }
       });
       const [profile, setProfile] = useState(() => {
         const saved = localStorage.getItem("pp_profile");
