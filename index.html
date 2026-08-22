@@ -1490,7 +1490,118 @@
       pepper:   { basil: 1, marigold: 1, tomato: 0, carrot: 1, lettuce: 0, lavender: 0, blueberry: 0 },
       carrot:   { tomato: 1, lettuce: 1, marigold: 1, pepper: 1, basil: 0, lavender: 0, blueberry: 0 },
       blueberry:{ tomato: 0, basil: 0, marigold: 0, lavender: 0, lettuce: 0, pepper: 0, carrot: 0 },
+      onion:    { carrot: 1, lettuce: 1, tomato: 1, beet: 1, bean: -1, pea: -1 },
+      garlic:   { tomato: 1, carrot: 1, bean: -1, pea: -1 },
+      bean:     { corn: 1, squash: 1, marigold: 1, cucumber: 1, onion: -1, garlic: -1, fennel: -1 },
+      pea:      { carrot: 1, corn: 1, onion: -1, garlic: -1 },
+      corn:     { bean: 1, squash: 1, cucumber: 1 },
+      squash:   { corn: 1, bean: 1, potato: -1 },
+      cucumber: { bean: 1, corn: 1, potato: -1, sage: -1 },
+      potato:   { bean: 1, corn: 1, tomato: -1, squash: -1, cucumber: -1 },
+      cabbage:  { onion: 1, dill: 1, strawberry: -1, tomato: -1 },
+      broccoli: { onion: 1, dill: 1, tomato: -1, strawberry: -1 },
+      fennel:   { tomato: -1, bean: -1, pepper: -1, carrot: -1 },
+      dill:     { cabbage: 1, broccoli: 1, carrot: -1 },
+      rosemary: { cabbage: 1, carrot: 1, basil: -1 },
     };
+
+    /** Human reasons. Keys are "idA|idB" with crop ids alphabetically sorted. */
+    const COMPANION_WHY = {
+      "basil|lavender": "Lavender wants dry, lean soil and airflow. Basil wants richer, evenly moist soil. Side by side, one is usually over- or under-watered.",
+      "basil|rosemary": "Rosemary is drought-tolerant and woody; basil is a thirsty annual. They fight over water.",
+      "bean|onion": "Alliums can suppress the nitrogen-fixing bacteria on bean roots, so beans grow poorly nearby.",
+      "bean|garlic": "Garlic’s sulfur compounds and watering needs work against beans’ nitrogen-fixing roots.",
+      "garlic|pea": "Peas are legumes. Alliums nearby can reduce nodulation and yield.",
+      "onion|pea": "Onions and peas compete; alliums often inhibit pea root bacteria.",
+      "potato|tomato": "Both are nightshades. They share blight, wilt, and hornworms. Pairing them stacks disease risk and makes rotation harder.",
+      "cucumber|potato": "They compete for nutrients and can pass blight-type problems; cukes also sprawl over potato rows.",
+      "potato|squash": "Both are heavy feeders and share some wilt pressure. Give squash its own rich mound.",
+      "cabbage|strawberry": "Brassicas can stunt strawberries and share some soil pests. Keep berries in their own bed.",
+      "broccoli|strawberry": "Brassicas and strawberries are a poor mix — growth and flavor both suffer.",
+      "cabbage|tomato": "Tomatoes and cabbage-family crops compete for nutrients and can attract overlapping pests.",
+      "broccoli|tomato": "Tomatoes can inhibit brassicas and want different watering at fruit set.",
+      "carrot|dill": "Dill can stunt nearby carrots, and both are umbellifers that draw similar pests.",
+      "carrot|fennel": "Fennel is allelopathic — its roots release compounds that slow carrots and many neighbors.",
+      "fennel|tomato": "Fennel inhibits tomatoes and most garden crops. Give fennel its own pot.",
+      "bean|fennel": "Fennel is a poor neighbor for legumes and most vegetables.",
+      "fennel|pepper": "Fennel’s allelopathy can reduce pepper vigor.",
+      "cucumber|sage": "Sage prefers dry soil; cucumbers need consistent moisture.",
+      "basil|tomato": "Classic partners: similar water and feed needs, and basil’s scent may confuse pests.",
+      "marigold|tomato": "French marigolds can help with some nematodes and draw beneficial insects without hogging the bed.",
+      "carrot|tomato": "Carrots loosen soil under tomatoes; tomatoes give light shade as they grow up.",
+      "lettuce|tomato": "Lettuce likes the cool shade under tomato foliage in summer heat.",
+      "basil|pepper": "Same cultural needs as tomatoes — warm, even moisture — and basil is a good aromatic neighbor.",
+      "carrot|onion": "Onions may deter carrot fly; carrots break soil for onion bulbs. A classic pairing.",
+      "bean|corn": "Beans climb corn and add nitrogen; corn is a living trellis (Three Sisters).",
+      "corn|squash": "Squash shades soil; corn is the pole. Classic Three Sisters.",
+      "bean|squash": "Beans feed the squash mound; squash mulches the beans’ roots.",
+    };
+
+    function cropKeyOf(idOrPlant) {
+      if (!idOrPlant) return "";
+      if (typeof idOrPlant === "object") return idOrPlant.cropId || idOrPlant.id || "";
+      const pl = resolvePlant(idOrPlant);
+      return pl?.cropId || idOrPlant;
+    }
+
+    function companionPairKey(a, b) {
+      return [cropKeyOf(a), cropKeyOf(b)].sort().join("|");
+    }
+
+    function getRelation(a, b) {
+      const x = cropKeyOf(a);
+      const y = cropKeyOf(b);
+      if (!x || !y || x === y) return 0;
+      const listed = COMPANION_MATRIX[x]?.[y] ?? COMPANION_MATRIX[y]?.[x];
+      if (listed != null) return listed;
+      const pa = resolvePlant(x) || PLANT_LIBRARY.find(p => p.id === x);
+      const pb = resolvePlant(y) || PLANT_LIBRARY.find(p => p.id === y);
+      if (!pa || !pb) return 0;
+      if ((pa.id === "fennel" || pb.id === "fennel") && pa.id !== pb.id) return -1;
+      if (pa.family === "Amaryllidaceae" && pb.family === "Fabaceae") return -1;
+      if (pb.family === "Amaryllidaceae" && pa.family === "Fabaceae") return -1;
+      if (pa.family === "Solanaceae" && pb.family === "Solanaceae" && (pa.id === "potato" || pb.id === "potato")) return -1;
+      return 0;
+    }
+
+    function companionWhy(a, b) {
+      const key = companionPairKey(a, b);
+      if (COMPANION_WHY[key]) return COMPANION_WHY[key];
+      const pa = resolvePlant(cropKeyOf(a)) || PLANT_LIBRARY.find(p => p.id === cropKeyOf(a));
+      const pb = resolvePlant(cropKeyOf(b)) || PLANT_LIBRARY.find(p => p.id === cropKeyOf(b));
+      const rel = getRelation(a, b);
+      if (!pa || !pb) return rel < 0 ? "These two are a traditionally poor pairing in the same bed." : "No strong pairing notes on file.";
+      if (rel < 0) {
+        if ((pa.family === "Amaryllidaceae" && pb.family === "Fabaceae") || (pb.family === "Amaryllidaceae" && pa.family === "Fabaceae")) {
+          return "Alliums (onion family) can suppress the nitrogen-fixing bacteria legumes need. Keep onions/garlic/leeks away from beans and peas.";
+        }
+        if (pa.family === "Solanaceae" && pb.family === "Solanaceae") {
+          return "Both are nightshades. They share blight, wilt, and hornworms — crowding them stacks disease and makes crop rotation harder.";
+        }
+        if (pa.id === "fennel" || pb.id === "fennel") {
+          return "Fennel is allelopathic: roots release compounds that stunt many vegetables. Grow fennel in its own pot.";
+        }
+        if (pa.family === pb.family) {
+          return `Same plant family (${pa.familyName || pa.family}). They often share pests and diseases and mine the same nutrients. Split them across beds when you can.`;
+        }
+        return `${pa.name} and ${pb.name} are a traditional “avoid” pairing — they compete for water or nutrients, or one inhibits the other.`;
+      }
+      if (rel > 0) {
+        return `${pa.name} and ${pb.name} are a traditional companion pair — similar needs, or one helps the other with pests, shade, or soil.`;
+      }
+      return `${pa.name} and ${pb.name} are neutral together. Not harmful, not a standout team.`;
+    }
+
+    function betterCompanionsFor(plantId, limit = 4) {
+      const key = cropKeyOf(plantId);
+      return PLANT_LIBRARY
+        .filter(p => p.id !== key)
+        .map(p => ({ p, rel: getRelation(key, p.id) }))
+        .filter(x => x.rel > 0)
+        .sort((a, b) => b.rel - a.rel)
+        .slice(0, limit)
+        .map(x => x.p);
+    }
 
     const INITIAL_TASKS = (() => {
       const today = toISODate(new Date());
@@ -3086,7 +3197,7 @@
 
       const clearPlantSelection = () => setSelectedPlantIds([]);
 
-      const commitPlantsToBed = (plantIds, bedId, plantedAtISO) => {
+      const commitPlantsToBed = (plantIds, bedId, plantedAtISO, opts = {}) => {
         const planY = planYear || new Date().getFullYear();
         const profileSaved = JSON.parse(localStorage.getItem("pp_profile") || "{}");
         const bed = bedList.find(b => b.id === bedId);
@@ -3102,10 +3213,27 @@
             const pl = resolvePlant(p.plant, customPlants);
             return pl?.cropId || p.plant;
           });
-          const conflicts = bedCropKeys.filter(pid => getRelation(cropKey, pid) < 0);
-          if (conflicts.length > 0) {
-            const names = conflicts.map(c => PLANT_LIBRARY.find(p => p.id === c)?.name || c).join(", ");
-            if (!confirm(`⚠️ ${plantDisplayName(plantInfo)} may conflict with: ${names}.\n\nPlant anyway?`)) return;
+          const conflicts = [...new Set(bedCropKeys.filter(pid => getRelation(cropKey, pid) < 0))];
+          if (conflicts.length > 0 && !opts.ignoreConflicts) {
+            setConflictSheet({
+              plantInfo,
+              plantId,
+              bedId,
+              bedName,
+              plantedAtISO,
+              remainingIds: plantIds.slice(i + 1),
+              pairs: conflicts.map(cid => {
+                const other = resolvePlant(cid, customPlants) || PLANT_LIBRARY.find(p => p.id === cid);
+                return {
+                  otherId: cid,
+                  otherName: plantDisplayName(other, { fallbackId: cid }),
+                  why: companionWhy(cropKey, cid),
+                  betterForNew: betterCompanionsFor(cropKey),
+                  betterForOther: betterCompanionsFor(cid),
+                };
+              }),
+            });
+            return; // wait for user choice in sheet
           }
           const sched = computePlantingSchedule(plantInfo, profileSaved);
           const care = careScheduleFromPlantDate(plantInfo, plantedAtISO, profileSaved);
@@ -3300,11 +3428,7 @@
         setDragOverBed(null);
       };
 
-      // ----- Companion helpers (must be before onDrop) -----
-      const getRelation = (a, b) => {
-        if (!a || !b || a === b) return 0;
-        return COMPANION_MATRIX[a]?.[b] ?? COMPANION_MATRIX[b]?.[a] ?? 0;
-      };
+      const [conflictSheet, setConflictSheet] = useState(null); // { plantInfo, bedName, pairs, pendingIds, plantedAtISO, bedId }
 
       const computeSuggestions = (bedId = null) => {
         const relevantPlaced = bedId
@@ -3323,13 +3447,18 @@
             let score = 0;
             let goodWith = [];
             let badWith = [];
+            const reasons = [];
             currentIds.forEach(cid => {
               const rel = getRelation(pl.id, cid);
               score += rel;
-              if (rel > 0) goodWith.push(PLANT_LIBRARY.find(x => x.id === cid)?.name || cid);
-              if (rel < 0) badWith.push(PLANT_LIBRARY.find(x => x.id === cid)?.name || cid);
+              const cname = plantNameForId(cid, customPlants);
+              if (rel > 0) {
+                goodWith.push(cname);
+                reasons.push(companionWhy(pl.id, cid));
+              }
+              if (rel < 0) badWith.push(cname);
             });
-            return { ...pl, score, goodWith, badWith };
+            return { ...pl, score, goodWith, badWith, why: reasons[0] || "" };
           })
           .filter(s => s.score > 0 || s.badWith.length > 0)
           .sort((a, b) => b.score - a.score);
@@ -3813,6 +3942,9 @@
                             Good with: {s.goodWith.join(", ")}
                           </p>
                         )}
+                        {s.why && (
+                          <p className="text-[10px] text-sage-500 leading-snug">{s.why}</p>
+                        )}
                         {s.badWith.length > 0 && (
                           <p className="text-[10px] text-red-500 truncate">
                             Avoid near: {s.badWith.join(", ")}
@@ -4063,6 +4195,79 @@
               </div>
             );
           })()}
+
+          {conflictSheet && (
+            <div className="fixed inset-0 bg-black/40 z-[110] flex items-end sm:items-center justify-center px-4 pt-4 pb-24">
+              <div className="bg-white rounded-2xl p-5 w-full max-w-sm max-h-[90vh] overflow-y-auto">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-800 mb-1">Companion conflict</p>
+                <h3 className="font-semibold text-sage-800 mb-1">
+                  {plantDisplayName(conflictSheet.plantInfo)} in {conflictSheet.bedName}
+                </h3>
+                <p className="text-[11px] text-sage-500 mb-3">
+                  This plant may not get along with what’s already in the bed. Here’s why, and what pairs better.
+                </p>
+                {conflictSheet.pairs.map((pair, i) => (
+                  <div key={i} className="mb-3 rounded-xl border border-amber-100 bg-amber-50/60 p-3">
+                    <p className="text-sm font-medium text-sage-800">vs {pair.otherName}</p>
+                    <p className="text-[11px] text-sage-700 leading-snug mt-1">{pair.why}</p>
+                    {pair.betterForNew.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-[10px] font-semibold text-green-800">Better with {plantDisplayName(conflictSheet.plantInfo)}</p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {pair.betterForNew.map(p => (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => {
+                                togglePlantSelect(p.id);
+                                setConflictSheet(null);
+                              }}
+                              className="text-[10px] bg-white border border-green-200 text-green-800 px-2 py-0.5 rounded-full"
+                            >
+                              {p.icon} {p.name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {pair.betterForOther.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-[10px] font-semibold text-green-800">Better with {pair.otherName}</p>
+                        <p className="text-[10px] text-sage-600 mt-0.5">
+                          {pair.betterForOther.map(p => p.name).join(", ")}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setConflictSheet(null)}
+                    className="flex-1 py-2.5 rounded-xl border text-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const sheet = conflictSheet;
+                      setConflictSheet(null);
+                      commitPlantsToBed(
+                        [sheet.plantId, ...(sheet.remainingIds || [])],
+                        sheet.bedId,
+                        sheet.plantedAtISO,
+                        { ignoreConflicts: true }
+                      );
+                    }}
+                    className="flex-1 py-2.5 rounded-xl bg-amber-600 text-white text-sm font-medium"
+                  >
+                    Plant anyway
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {editingBed && (
             <div className="fixed inset-0 bg-black/40 z-[100] flex items-end sm:items-center justify-center px-4 pt-4 pb-24">
@@ -4661,6 +4866,23 @@
 
       const lastFrost = profile?.lastFrost ? new Date(profile.lastFrost + "T12:00:00") : null;
       const firstFrost = profile?.firstFrost ? new Date(profile.firstFrost + "T12:00:00") : null;
+      const season = growingSeasonBounds(profile, new Date(viewYear, viewMonth, 15));
+      const frostWindowDays = 7; // days around each frost date that count as the "frost window"
+
+      const daySeason = (d) => {
+        const dt = new Date(viewYear, viewMonth, d, 12, 0, 0);
+        const iso = toISODate(dt);
+        const start = season.seasonStartISO;
+        const end = season.seasonEndISO;
+        const lfISO = lastFrost ? `${viewYear}-${String(lastFrost.getMonth() + 1).padStart(2, "0")}-${String(lastFrost.getDate()).padStart(2, "0")}` : start;
+        const ffISO = firstFrost ? `${viewYear}-${String(firstFrost.getMonth() + 1).padStart(2, "0")}-${String(firstFrost.getDate()).padStart(2, "0")}` : end;
+        const nearLast = lastFrost && Math.abs((dt - new Date(lfISO + "T12:00:00")) / 86400000) <= frostWindowDays;
+        const nearFirst = firstFrost && Math.abs((dt - new Date(ffISO + "T12:00:00")) / 86400000) <= frostWindowDays;
+        const isLast = iso === lfISO;
+        const isFirst = iso === ffISO;
+        const inSeason = start && end && iso >= start && iso <= end;
+        return { iso, inSeason, nearLast, nearFirst, isLast, isFirst, frostWindow: nearLast || nearFirst };
+      };
 
       // Build events from plant timelines + frost + tasks with due dates
       const eventsByDay = useMemo(() => {
@@ -4743,6 +4965,19 @@
                 Set your frost dates in Settings for personalized sow/transplant timing.
               </div>
             )}
+            {(profile?.lastFrost || profile?.firstFrost) && (
+              <div className="bg-sky-50 border border-sky-200 rounded-xl p-3 mb-3">
+                <p className="text-xs font-semibold text-sky-900 mb-1">Frost window · growing season</p>
+                <p className="text-[11px] text-sky-800 leading-snug">
+                  Last spring frost <strong>{profile.lastFrost ? fmtDate(profile.lastFrost) : "—"}</strong>
+                  {" → "}
+                  First fall frost <strong>{profile.firstFrost ? fmtDate(profile.firstFrost) : "—"}</strong>
+                </p>
+                <p className="text-[10px] text-sky-700/80 mt-1">
+                  Blue days = frost risk (before last / after first). Deeper blue = ±{7} days around a frost date. Green tint = safe growing season.
+                </p>
+              </div>
+            )}
             <div className="flex items-center justify-between mb-4">
               <button onClick={() => shiftMonth(-1)} className="text-sage-500 w-8 h-8"><i className="fas fa-chevron-left"></i></button>
               <h2 className="font-semibold text-sage-800">{monthName}</h2>
@@ -4759,15 +4994,31 @@
                   const has = eventsByDay[d] || [];
                   const isSelected = selected === d;
                   const isToday = d === now.getDate() && viewMonth === now.getMonth() && viewYear === now.getFullYear();
+                  const mark = daySeason(d);
+                  const seasonBg = isSelected ? "" : (
+                    mark.isLast || mark.isFirst ? "bg-sky-200 font-semibold text-sky-900" :
+                    mark.frostWindow ? "bg-sky-100 text-sky-900" :
+                    !mark.inSeason && (profile?.lastFrost || profile?.firstFrost) ? "bg-sky-50 text-sky-800/80" :
+                    mark.inSeason ? "bg-emerald-50/80" : ""
+                  );
                   return (
                     <button
                       key={d}
                       onClick={() => setSelected(d)}
+                      title={
+                        mark.isLast ? "Last spring frost" :
+                        mark.isFirst ? "First fall frost" :
+                        mark.frostWindow ? "Frost window (±7 days)" :
+                        mark.inSeason ? "Growing season" : "Outside growing season"
+                      }
                       className={`aspect-square rounded-lg flex flex-col items-center justify-center text-sm relative ${
                         isSelected ? "bg-sage-600 text-white" : isToday ? "bg-sage-100 font-bold" : "hover:bg-sage-50"
-                      }`}
+                      } ${seasonBg}`}
                     >
                       {d}
+                      {(mark.isLast || mark.isFirst) && !isSelected && (
+                        <span className="absolute top-0.5 right-0.5 text-[7px] leading-none">❄</span>
+                      )}
                       {has.length > 0 && (
                         <div className="flex gap-0.5 mt-0.5 flex-wrap justify-center max-w-full">
                           {has.slice(0, 3).map((h, i) => (
@@ -4776,7 +5027,7 @@
                               h.type === "transplant" ? "bg-green-500" :
                               h.type === "fertilize" ? "bg-orange-400" :
                               h.type === "harvest" ? "bg-purple-400" :
-                              h.type === "frost" ? "bg-sky-400" : "bg-sage-400"
+                              h.type === "frost" ? "bg-sky-500" : "bg-sage-400"
                             } ${isSelected ? "bg-white" : ""}`} />
                           ))}
                         </div>
@@ -4792,6 +5043,15 @@
                 {new Date(viewYear, viewMonth, selected).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                 <span className="text-xs font-normal text-sage-500 ml-2">{dayEvents.length} items</span>
               </h3>
+              {(() => {
+                const mark = daySeason(selected);
+                if (mark.isLast) return <p className="text-[10px] text-sky-800 bg-sky-50 rounded-lg px-2 py-1 mb-2">❄ Last spring frost — start of the safe outdoor window for tender crops.</p>;
+                if (mark.isFirst) return <p className="text-[10px] text-sky-800 bg-sky-50 rounded-lg px-2 py-1 mb-2">❄ First fall frost — harvest tender crops; cover or pull what’s left.</p>;
+                if (mark.frostWindow) return <p className="text-[10px] text-sky-800 bg-sky-50 rounded-lg px-2 py-1 mb-2">Frost window (±7 days of a frost date). Watch overnight lows.</p>;
+                if (!mark.inSeason && (profile?.lastFrost || profile?.firstFrost)) return <p className="text-[10px] text-sky-700 bg-sky-50/70 rounded-lg px-2 py-1 mb-2">Outside growing season for your zone frost dates.</p>;
+                if (mark.inSeason) return <p className="text-[10px] text-emerald-800 bg-emerald-50 rounded-lg px-2 py-1 mb-2">Inside frost-free growing season.</p>;
+                return null;
+              })()}
               <div className="space-y-2">
                 {dayEvents.map((t, i) => (
                   <div key={i} className="bg-white rounded-xl p-3 card-shadow">
@@ -4813,6 +5073,8 @@
                 <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-green-500" />Transplant</div>
                 <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-orange-400" />Fertilize</div>
                 <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-purple-400" />Harvest</div>
+                <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded bg-sky-200 border border-sky-300" />Frost date / window</div>
+                <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded bg-emerald-100 border border-emerald-200" />Growing season</div>
               </div>
             </div>
           </div>
