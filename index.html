@@ -1342,6 +1342,11 @@
           "Introduce or attract ladybugs / lacewings",
           "Pinch off heavily infested tips"
         ],
+        care: {
+          prune: ["Pinch or cut soft tips with heavy colonies", "Discard or crush pests; don’t leave on the ground"],
+          harvest: ["Wash produce well; light aphid presence is cosmetic on fruit"],
+          compost: ["Infested soft tips can go in hot compost if fully cooked; otherwise trash"],
+        },
         prevent: "Avoid excess nitrogen; encourage beneficial insects; use reflective mulch."
       },
       {
@@ -1358,6 +1363,11 @@
           "Wipe leaves with damp cloth",
           "Release predatory mites if available"
         ],
+        care: {
+          prune: ["Remove the worst webbed leaves", "Improve airflow by thinning dense interiors"],
+          harvest: ["Rinse produce; mites are not a food-safety issue on ripe fruit"],
+          compost: ["Webbed leaves OK in active hot compost"],
+        },
         prevent: "Keep plants well watered; avoid dusty conditions; hose foliage regularly."
       },
       {
@@ -1374,6 +1384,11 @@
           "Apply copper or Bacillus-based biofungicide",
           "Mulch to reduce soil splash"
         ],
+        care: {
+          prune: ["Strip lower leaves that touch soil", "Cut out spotted foliage; sterilize pruners with alcohol"],
+          harvest: ["Fruit is usually fine to eat if firm and unspotted"],
+          compost: ["Do not compost infected leaves or stems — bag and trash to avoid reinfection"],
+        },
         prevent: "Rotate nightshades; stake plants; water at soil level; choose resistant varieties."
       },
       {
@@ -1390,6 +1405,11 @@
           "Improve spacing and airflow",
           "Apply neem oil as preventative"
         ],
+        care: {
+          prune: ["Thin crowded growth for airflow", "Remove the most coated leaves"],
+          harvest: ["Wash greens well; discard heavily coated leaves"],
+          compost: ["Prefer hot compost; otherwise trash heavily infected material"],
+        },
         prevent: "Avoid overcrowding; water early in day; resistant varieties when possible."
       },
       {
@@ -1406,6 +1426,11 @@
           "Add calcium if soil test shows deficiency (gypsum or crushed eggshells long-term)",
           "Remove affected fruit; later fruit often improves"
         ],
+        care: {
+          prune: ["No special pruning required"],
+          harvest: ["Cut off the bad end and use the firm part, or compost the fruit"],
+          compost: ["Affected fruit is fine in compost — this is not a contagious disease"],
+        },
         prevent: "Consistent watering; balanced fertility; avoid root damage."
       },
       {
@@ -1422,6 +1447,11 @@
           "Use nitrogen-fixing cover crops next season",
           "Check pH — extreme pH locks up nutrients"
         ],
+        care: {
+          prune: ["Leave yellow older leaves until you feed; then remove if fully spent"],
+          harvest: ["Leafy crops may be pale but still edible if otherwise healthy"],
+          compost: ["Yellow leaves are fine in compost"],
+        },
         prevent: "Regular organic matter additions; rotate with legumes."
       },
       {
@@ -1438,6 +1468,11 @@
           "Remove any rotting material",
           "Check for root rot — firm white roots are healthy"
         ],
+        care: {
+          prune: ["Remove soft, rotting stems or leaves promptly"],
+          harvest: ["Only harvest firm, healthy parts"],
+          compost: ["Rotting tissue: hot compost or trash if foul-smelling"],
+        },
         prevent: "Water deeply but less often; mulch; ensure good drainage."
       },
       {
@@ -1454,6 +1489,11 @@
           "Water in early morning",
           "Consider drip irrigation for consistency"
         ],
+        care: {
+          prune: ["Snip only fully crispy dead tips after rehydration"],
+          harvest: ["Wait until plants recover turgor before harvesting heavily"],
+          compost: ["Dry leaf litter is fine in compost"],
+        },
         prevent: "Mulch; group plants by water need; check soil before watering."
       },
       {
@@ -1470,6 +1510,11 @@
           "Ensure soil pH is in optimal range (most veggies 6.0–7.0)",
           "Warm soil helps phosphorus uptake"
         ],
+        care: {
+          prune: ["No urgent pruning"],
+          harvest: ["Crops remain edible; yield may be lower until corrected"],
+          compost: ["Normal plant waste OK"],
+        },
         prevent: "Maintain organic matter; avoid cold, wet soils at planting."
       },
       {
@@ -1486,9 +1531,28 @@
           "Use row cover on young plants",
           "Encourage birds and beneficial wasps"
         ],
+        care: {
+          prune: ["Remove leaves with large colonies of eggs or larvae"],
+          harvest: ["Cut away chewed portions; remainder is fine to eat"],
+          compost: ["Frass and damaged leaves OK in compost"],
+        },
         prevent: "Scout regularly; remove egg masses; companion plant with dill/yarrow."
       },
     ];
+
+    function getProblemCare(problem) {
+      const care = problem?.care || {};
+      return {
+        treat: problem?.organic || [],
+        prune: care.prune || ["Remove heavily damaged tissue with clean shears", "Sanitize tools between plants"],
+        harvest: care.harvest || ["Harvest healthy, firm produce; discard soft or moldy tissue"],
+        compost: care.compost || (
+          problem?.type === "Disease"
+            ? ["Prefer bagging diseased material — do not risk cool compost piles"]
+            : ["Healthy trimmings can go in compost"]
+        ),
+      };
+    }
 
     // Companion matrix: +1 = beneficial, -1 = antagonistic, 0 or missing = neutral
     // Synthesized from extension guides (Almanac, WSU, GKH) + widely repeated field practice.
@@ -3098,6 +3162,30 @@
               )}
             </section>
 
+            {/* Active plant treatments */}
+            {(placed || []).some(p => p.treatment?.status === "active") && (
+              <section className="bg-amber-50 border border-amber-200 rounded-2xl p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="font-semibold text-sage-800 text-sm flex items-center gap-1.5">
+                    <span>🩺</span> Under treatment
+                  </h2>
+                  <button type="button" onClick={() => setActive && setActive("diagnose")} className="text-[10px] text-sage-600 font-medium">
+                    Diagnose →
+                  </button>
+                </div>
+                <div className="space-y-1.5">
+                  {(placed || []).filter(p => p.treatment?.status === "active").slice(0, 4).map(p => {
+                    const pl = resolvePlant(p.plant, customPlants);
+                    return (
+                      <p key={p.id} className="text-xs text-sage-700">
+                        {pl?.icon || "🌱"} {plantDisplayName(pl, { fallbackId: p.plant })} — {p.treatment.problemName}
+                      </p>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
             {/* Overdue + Today's Tasks */}
             <section className="space-y-4">
               {taskLists.overdue.length > 0 && (
@@ -3959,6 +4047,8 @@
                         {bedPlants.map(item => {
                           const plant = resolvePlant(item.plant, customPlants) || PLANT_LIBRARY.find(pl => pl.id === item.plant);
                           const harvested = item.status === "harvested";
+                          const treating = item.status === "treating" || item.treatment?.status === "active";
+                          const lost = item.status === "lost";
                           const label = plant?.variety || plant?.name || item.plant;
                           const clearLongPress = () => {
                             if (longPressRef.timer) {
@@ -3986,8 +4076,11 @@
                               className={`relative group bg-white/90 rounded-lg px-1.5 py-1 shadow-sm cursor-pointer max-w-[72px] select-none
                                 ${justDropped === item.id ? "animate-bounce" : ""}
                                 ${dragPlacedId === item.id ? "opacity-40" : ""}
-                                ${harvested ? "opacity-40 grayscale" : ""}`}
-                              title={`${label} — tap for info · long-press to remove`}
+                                ${harvested || lost ? "opacity-40 grayscale" : ""}
+                                ${treating ? "ring-2 ring-amber-400" : ""}`}
+                              title={treating
+                                ? `${label} — treating ${item.treatment?.problemName || "issue"}`
+                                : `${label} — tap for info · long-press to remove`}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (longPressRef.fired) {
@@ -4009,6 +4102,8 @@
                               <div className="text-xl text-center leading-none pointer-events-none">{plant?.icon}</div>
                               <p className="text-[8px] leading-tight text-sage-700 text-center mt-0.5 line-clamp-2 font-medium pointer-events-none">{label}</p>
                               {harvested && <span className="absolute -bottom-1 left-0 right-0 text-[8px] text-center text-sage-600">✓</span>}
+                              {treating && <span className="absolute -top-1 -right-1 text-[10px]">🩺</span>}
+                              {lost && <span className="absolute -bottom-1 left-0 right-0 text-[8px] text-center text-red-600">✕</span>}
                             </div>
                           );
                         })}
@@ -4019,7 +4114,7 @@
               </div>
 
               <p className="text-center text-xs text-sage-400 mt-3">
-                Tap a plant → Move to another bed · long-press to remove
+                Tap a plant → Move · 🩺 = active treatment · long-press to remove
               </p>
             </div>
 
@@ -4104,6 +4199,54 @@
                       <p><span className="text-sage-500">Status:</span> {detailItem.status || "growing"}</p>
                       {plant?.notes && <p><span className="text-sage-500">Notes:</span> {plant.notes}</p>}
                     </div>
+                    {detailItem.treatment && detailItem.treatment.status === "active" && (
+                      <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
+                        <p className="text-xs font-semibold text-amber-900">
+                          {detailItem.treatment.icon} Treating: {detailItem.treatment.problemName}
+                        </p>
+                        <p className="text-[10px] text-amber-800 mt-0.5">Since {detailItem.treatment.startedAt}</p>
+                        {detailItem.treatment.care?.treat?.[0] && (
+                          <p className="text-[11px] text-sage-700 mt-1.5">Next: {detailItem.treatment.care.treat[0]}</p>
+                        )}
+                        <div className="flex gap-1.5 mt-2 flex-wrap">
+                          {["treat", "prune", "harvest", "compost"].map(k => (
+                            detailItem.treatment.care?.[k]?.[0] ? (
+                              <span key={k} className="text-[9px] bg-white border border-amber-100 text-sage-700 px-1.5 py-0.5 rounded">
+                                {k}: {detailItem.treatment.care[k][0].slice(0, 40)}{detailItem.treatment.care[k][0].length > 40 ? "…" : ""}
+                              </span>
+                            ) : null
+                          ))}
+                        </div>
+                        <div className="flex gap-2 mt-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPlantStatus(detailItem.id, "growing");
+                              setPlaced(prev => prev.map(p => p.id === detailItem.id
+                                ? { ...p, status: "growing", treatment: { ...p.treatment, status: "healed", endedAt: toISODate(new Date()) } }
+                                : p));
+                              setDetailItem(null);
+                            }}
+                            className="flex-1 py-1.5 rounded-lg bg-green-600 text-white text-[11px] font-medium"
+                          >
+                            Mark healed
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!confirm("Mark this plant as lost?")) return;
+                              setPlaced(prev => prev.map(p => p.id === detailItem.id
+                                ? { ...p, status: "lost", treatment: { ...p.treatment, status: "lost", endedAt: toISODate(new Date()) } }
+                                : p));
+                              setDetailItem(null);
+                            }}
+                            className="flex-1 py-1.5 rounded-lg bg-red-100 text-red-800 text-[11px] font-medium"
+                          >
+                            Plant lost
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     {plant?.homestead && plant.homestead.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-3">
                         {plant.homestead.slice(0, 6).map(h => (
@@ -7916,9 +8059,10 @@
       );
     }
 
-    function DiagnosticScreen({ tasks, setTasks }) {
+    function DiagnosticScreen({ tasks, setTasks, placed, setPlaced, beds, customPlants }) {
       const [step, setStep] = useState(1); // 1=plant, 2=symptoms, 3=context, 4=results
-      const [selectedPlant, setSelectedPlant] = useState(null); // plant id or "unknown"
+      const [selectedPlant, setSelectedPlant] = useState(null); // crop key or "unknown"
+      const [selectedPlacedId, setSelectedPlacedId] = useState(null); // garden placement id
       const [selectedSymptoms, setSelectedSymptoms] = useState([]);
       const [context, setContext] = useState({
         watering: "normal", // dry | normal | wet
@@ -7926,6 +8070,31 @@
         newGrowth: false,
       });
       const [results, setResults] = useState([]);
+      const [expandedCare, setExpandedCare] = useState(null); // problem id for care tabs
+      const [careTab, setCareTab] = useState("treat"); // treat | prune | harvest | compost
+
+      const bedList = beds && beds.length ? beds : DEFAULT_BEDS;
+      const gardenPlants = useMemo(() => {
+        return (placed || [])
+          .filter(p => p.status !== "harvested" && p.status !== "lost" && !p.isCoverCrop)
+          .map(p => {
+            const pl = resolvePlant(p.plant, customPlants) || PLANT_LIBRARY.find(x => x.id === p.plant);
+            const bed = bedList.find(b => b.id === p.bed);
+            return {
+              ...p,
+              cropKey: cropKeyOf(p.plant),
+              label: plantDisplayName(pl, { fallbackId: p.plant }),
+              icon: pl?.icon || "🌱",
+              bedName: bed?.name || p.bed,
+            };
+          })
+          .sort((a, b) => (a.bedName || "").localeCompare(b.bedName || "") || (a.label || "").localeCompare(b.label || ""));
+      }, [placed, beds, customPlants]);
+
+      const activeTreatments = useMemo(
+        () => (placed || []).filter(p => p.treatment && p.treatment.status === "active"),
+        [placed]
+      );
 
       const toggleSymptom = (id) => {
         setSelectedSymptoms(prev =>
@@ -7933,19 +8102,22 @@
         );
       };
 
+      const pickGardenPlant = (item) => {
+        setSelectedPlacedId(item.id);
+        setSelectedPlant(item.cropKey || cropKeyOf(item.plant));
+      };
+
       const scoreProblems = () => {
         const scored = PROBLEMS.map(problem => {
-          // Plant relevance
           let plantBoost = 1;
           if (selectedPlant && selectedPlant !== "unknown") {
             if (problem.plants.length > 0 && !problem.plants.includes(selectedPlant)) {
-              plantBoost = 0.35; // still possible but less likely
+              plantBoost = 0.35;
             } else if (problem.plants.includes(selectedPlant)) {
               plantBoost = 1.25;
             }
           }
 
-          // Symptom evidence
           let evidence = 0;
           let maxPossible = 0;
           const matched = [];
@@ -7957,7 +8129,6 @@
             }
           });
 
-          // Context adjustments
           let contextMod = 1;
           if (problem.id === "spider_mites" && context.watering === "dry") contextMod += 0.2;
           if (problem.id === "overwatering" && context.watering === "wet") contextMod += 0.35;
@@ -7967,7 +8138,6 @@
           if ((problem.id === "aphids" || problem.id === "spider_mites") && context.newGrowth) contextMod += 0.1;
 
           const rawScore = maxPossible > 0 ? (evidence / maxPossible) * plantBoost * contextMod : 0;
-          // Require at least some evidence
           const finalScore = evidence === 0 ? 0 : Math.min(1, rawScore);
 
           return {
@@ -7976,6 +8146,7 @@
             evidence,
             matchedSymptoms: matched,
             confidence: finalScore >= 0.7 ? "High" : finalScore >= 0.4 ? "Medium" : finalScore > 0 ? "Low" : "None",
+            careGuide: getProblemCare(problem),
           };
         })
         .filter(p => p.score > 0.15)
@@ -7985,24 +8156,88 @@
         setStep(4);
       };
 
-      const addTreatmentTask = (problem) => {
-        const newTask = {
-          id: Date.now(),
-          title: `Treat ${problem.name}`,
-          detail: problem.organic[0] || "Follow organic treatment steps",
-          done: false,
-          icon: "🩺",
-        };
-        setTasks(prev => [newTask, ...prev]);
-        alert(`Task added: "${newTask.title}"`);
+      const startTreatmentPlan = (problem) => {
+        const care = getProblemCare(problem);
+        const bed = selectedPlacedId
+          ? bedList.find(b => b.id === (placed || []).find(p => p.id === selectedPlacedId)?.bed)
+          : null;
+        const plantLabel = selectedPlacedId
+          ? plantNameForId((placed || []).find(p => p.id === selectedPlacedId)?.plant, customPlants)
+          : (PLANT_LIBRARY.find(p => p.id === selectedPlant)?.name || "plant");
+
+        if (selectedPlacedId && setPlaced) {
+          setPlaced(prev => prev.map(p => {
+            if (p.id !== selectedPlacedId) return p;
+            return {
+              ...p,
+              status: p.status === "harvested" ? p.status : "treating",
+              treatment: {
+                id: Date.now(),
+                problemId: problem.id,
+                problemName: problem.name,
+                icon: problem.icon,
+                type: problem.type,
+                description: problem.description,
+                prevent: problem.prevent,
+                startedAt: toISODate(new Date()),
+                status: "active",
+                care,
+              },
+            };
+          }));
+        }
+
+        if (setTasks) {
+          const steps = (care.treat || []).slice(0, 3);
+          const batch = steps.map((step, i) => ({
+            id: Date.now() + i + Math.random(),
+            title: `Treat ${problem.name}${plantLabel ? `: ${plantLabel}` : ""}`,
+            detail: step + (bed?.name ? ` · ${bed.name}` : ""),
+            done: false,
+            icon: "🩺",
+            kind: "treatment",
+            due: toISODate(new Date()),
+            linkedPlacedId: selectedPlacedId || null,
+            problemId: problem.id,
+          }));
+          setTasks(prev => [...batch, ...(prev || [])]);
+        }
+        alert(selectedPlacedId
+          ? `Treatment plan linked to ${plantLabel}. It stays on Layout & Home until you mark healed or lost.`
+          : `Treatment tasks added. Link a garden plant next time so it shows on Layout.`);
+      };
+
+      const resolveTreatment = (placedId, outcome) => {
+        // outcome: healed | lost
+        if (!setPlaced) return;
+        setPlaced(prev => prev.map(p => {
+          if (p.id !== placedId) return p;
+          const nextStatus = outcome === "lost" ? "lost" : "growing";
+          return {
+            ...p,
+            status: nextStatus,
+            treatment: p.treatment
+              ? { ...p.treatment, status: outcome === "lost" ? "lost" : "healed", endedAt: toISODate(new Date()) }
+              : p.treatment,
+          };
+        }));
+        if (setTasks) {
+          setTasks(prev => (prev || []).map(t =>
+            t.linkedPlacedId === placedId && t.kind === "treatment"
+              ? { ...t, done: true, completedAt: toISODate(new Date()) }
+              : t
+          ));
+        }
       };
 
       const reset = () => {
         setStep(1);
         setSelectedPlant(null);
+        setSelectedPlacedId(null);
         setSelectedSymptoms([]);
         setContext({ watering: "normal", recentRain: false, newGrowth: false });
         setResults([]);
+        setExpandedCare(null);
       };
 
       return (
@@ -8019,6 +8254,48 @@
           />
 
           <div className="px-4 pt-4 space-y-4">
+            {/* Active treatments overview */}
+            {activeTreatments.length > 0 && step === 1 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 space-y-2">
+                <p className="text-xs font-semibold text-amber-900">Active treatment plans</p>
+                {activeTreatments.map(p => {
+                  const pl = resolvePlant(p.plant, customPlants);
+                  const bed = bedList.find(b => b.id === p.bed);
+                  return (
+                    <div key={p.id} className="bg-white rounded-xl p-2.5 flex gap-2 items-start">
+                      <span className="text-xl">{p.treatment?.icon || "🩺"}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-sage-800 truncate">
+                          {plantDisplayName(pl, { fallbackId: p.plant })} · {p.treatment?.problemName}
+                        </p>
+                        <p className="text-[10px] text-sage-500">{bed?.name} · since {p.treatment?.startedAt}</p>
+                        <div className="flex gap-1.5 mt-1.5">
+                          <button
+                            type="button"
+                            onClick={() => resolveTreatment(p.id, "healed")}
+                            className="text-[10px] px-2 py-1 rounded-lg bg-green-100 text-green-800 font-medium"
+                          >
+                            Mark healed
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (confirm("Mark this plant as lost / dead? You can remove it from Layout later.")) {
+                                resolveTreatment(p.id, "lost");
+                              }
+                            }}
+                            className="text-[10px] px-2 py-1 rounded-lg bg-red-50 text-red-700 font-medium"
+                          >
+                            Plant lost
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             {/* Progress */}
             <div className="flex gap-1">
               {[1, 2, 3, 4].map(s => (
@@ -8029,18 +8306,55 @@
               ))}
             </div>
 
-            {/* Step 1: Plant */}
+            {/* Step 1: Plant from garden */}
             {step === 1 && (
               <div className="bg-white rounded-2xl p-4 card-shadow">
                 <h3 className="font-semibold text-sage-800 mb-1">Which plant is affected?</h3>
-                <p className="text-xs text-sage-500 mb-3">Improves accuracy of the diagnosis</p>
+                <p className="text-xs text-sage-500 mb-3">
+                  Pick a plant from your garden so the treatment plan stays on Layout until it’s healed or lost.
+                </p>
+                {gardenPlants.length > 0 ? (
+                  <div className="space-y-1.5 mb-3 max-h-56 overflow-y-auto">
+                    {gardenPlants.map(item => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => pickGardenPlant(item)}
+                        className={`w-full flex items-center gap-2.5 p-2.5 rounded-xl text-left transition ${
+                          selectedPlacedId === item.id
+                            ? "ring-2 ring-sage-600 bg-sage-50"
+                            : "bg-sage-50 hover:bg-sage-100"
+                        }`}
+                      >
+                        <span className="text-2xl">{item.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-sage-800 truncate">{item.label}</p>
+                          <p className="text-[10px] text-sage-500">
+                            {item.bedName}
+                            {item.treatment?.status === "active" ? ` · treating ${item.treatment.problemName}` : ""}
+                          </p>
+                        </div>
+                        {item.status === "treating" && <span className="text-xs">🩺</span>}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-sage-500 mb-3 bg-sage-50 rounded-xl p-3">
+                    No plants in Layout yet. Add plants on the Layout tab, or continue with a general crop type.
+                  </p>
+                )}
+                <p className="text-[10px] text-sage-400 mb-1.5">Or choose a crop type (not linked to a bed)</p>
                 <div className="grid grid-cols-4 gap-2 mb-3">
-                  {PLANT_LIBRARY.map(p => (
+                  {PLANT_LIBRARY.filter(p => ["tomato", "pepper", "basil", "lettuce", "carrot", "cucumber", "bean", "squash"].includes(p.id)).map(p => (
                     <button
                       key={p.id}
-                      onClick={() => setSelectedPlant(p.id)}
+                      type="button"
+                      onClick={() => {
+                        setSelectedPlacedId(null);
+                        setSelectedPlant(p.id);
+                      }}
                       className={`rounded-xl p-2 text-center transition ${
-                        selectedPlant === p.id
+                        !selectedPlacedId && selectedPlant === p.id
                           ? "ring-2 ring-sage-600 bg-sage-50"
                           : "bg-sage-50 hover:bg-sage-100"
                       }`}
@@ -8051,9 +8365,13 @@
                   ))}
                 </div>
                 <button
-                  onClick={() => setSelectedPlant("unknown")}
+                  type="button"
+                  onClick={() => {
+                    setSelectedPlacedId(null);
+                    setSelectedPlant("unknown");
+                  }}
                   className={`w-full py-2.5 rounded-xl text-sm font-medium mb-4 ${
-                    selectedPlant === "unknown"
+                    !selectedPlacedId && selectedPlant === "unknown"
                       ? "bg-sage-600 text-white"
                       : "bg-sage-100 text-sage-700"
                   }`}
@@ -8061,6 +8379,7 @@
                   Not sure / Other plant
                 </button>
                 <button
+                  type="button"
                   disabled={!selectedPlant}
                   onClick={() => setStep(2)}
                   className={`w-full py-3 rounded-xl font-medium ${
@@ -8194,10 +8513,11 @@
                 <div className="bg-white rounded-2xl p-4 card-shadow">
                   <h3 className="font-semibold text-sage-800 mb-1">Likely causes</h3>
                   <p className="text-xs text-sage-500">
-                    {selectedPlant && selectedPlant !== "unknown"
-                      ? `For ${PLANT_LIBRARY.find(p => p.id === selectedPlant)?.name}`
-                      : "General garden plants"}{" "}
-                    · {selectedSymptoms.length} symptom{selectedSymptoms.length !== 1 ? "s" : ""}
+                    {selectedPlacedId
+                      ? `Linked to garden plant · ${selectedSymptoms.length} symptom${selectedSymptoms.length !== 1 ? "s" : ""}`
+                      : selectedPlant && selectedPlant !== "unknown"
+                        ? `For ${PLANT_LIBRARY.find(p => p.id === selectedPlant)?.name} · ${selectedSymptoms.length} symptoms`
+                        : `General · ${selectedSymptoms.length} symptoms`}
                   </p>
                 </div>
 
@@ -8216,7 +8536,11 @@
                     </button>
                   </div>
                 ) : (
-                  results.map((r, idx) => (
+                  results.map((r) => {
+                    const care = r.careGuide || getProblemCare(r);
+                    const open = expandedCare === r.id;
+                    const tabLines = care[careTab] || care.treat || [];
+                    return (
                     <div key={r.id} className="bg-white rounded-2xl p-4 card-shadow">
                       <div className="flex items-start gap-3 mb-2">
                         <span className="text-3xl">{r.icon}</span>
@@ -8242,10 +8566,29 @@
                       </div>
 
                       <div className="mt-3">
-                        <p className="text-xs font-semibold text-sage-700 mb-1.5">Organic treatment</p>
+                        <p className="text-xs font-semibold text-sage-700 mb-1.5">Care guide</p>
+                        <div className="flex gap-1 mb-2 overflow-x-auto">
+                          {[
+                            { id: "treat", label: "Treat" },
+                            { id: "prune", label: "Prune" },
+                            { id: "harvest", label: "Harvest" },
+                            { id: "compost", label: "Compost" },
+                          ].map(t => (
+                            <button
+                              key={t.id}
+                              type="button"
+                              onClick={() => { setExpandedCare(r.id); setCareTab(t.id); }}
+                              className={`shrink-0 px-2.5 py-1 rounded-full text-[10px] font-medium ${
+                                open && careTab === t.id ? "bg-sage-600 text-white" : "bg-sage-100 text-sage-600"
+                              }`}
+                            >
+                              {t.label}
+                            </button>
+                          ))}
+                        </div>
                         <ol className="list-decimal list-inside space-y-1">
-                          {r.organic.map((step, i) => (
-                            <li key={i} className="text-xs text-sage-600">{step}</li>
+                          {(open ? tabLines : care.treat).map((line, i) => (
+                            <li key={i} className="text-xs text-sage-600">{line}</li>
                           ))}
                         </ol>
                       </div>
@@ -8255,13 +8598,22 @@
                       </p>
 
                       <button
-                        onClick={() => addTreatmentTask(r)}
-                        className="mt-3 w-full py-2 rounded-xl bg-sage-100 text-sage-700 text-xs font-medium hover:bg-sage-200 transition"
+                        type="button"
+                        onClick={() => startTreatmentPlan(r)}
+                        className="mt-3 w-full py-2.5 rounded-xl bg-sage-600 text-white text-xs font-medium hover:bg-sage-700 transition"
                       >
-                        + Add treatment task
+                        {selectedPlacedId
+                          ? "Start treatment plan on this plant"
+                          : "Add treatment tasks"}
                       </button>
+                      {!selectedPlacedId && (
+                        <p className="text-[10px] text-amber-700 mt-1.5 text-center">
+                          Tip: pick a garden plant in step 1 so the plan shows on Layout until healed.
+                        </p>
+                      )}
                     </div>
-                  ))
+                    );
+                  })
                 )}
 
                 <button
@@ -8501,7 +8853,16 @@
               beds={beds}
             />
           )}
-          {active === "diagnose" && <DiagnosticScreen tasks={tasks} setTasks={setTasks} />}
+          {active === "diagnose" && (
+            <DiagnosticScreen
+              tasks={tasks}
+              setTasks={setTasks}
+              placed={placed}
+              setPlaced={setPlaced}
+              beds={beds}
+              customPlants={customPlants}
+            />
+          )}
           {active === "vault" && (
             <SeedVault
               seeds={seeds}
