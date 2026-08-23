@@ -3397,6 +3397,8 @@
       // Ask for real plant date before committing (supports backdating)
       const [pendingPlacement, setPendingPlacement] = useState(null); // { bedId, plantIds: string[] }
       const [plantDateDraft, setPlantDateDraft] = useState(() => toISODate(new Date()));
+      const [movingItem, setMovingItem] = useState(null); // placed plant waiting for a destination bed
+      const [moveTarget, setMoveTarget] = useState(""); // select value in detail sheet
 
       const togglePlantSelect = (plantId) => {
         setSelectedPlantIds(prev =>
@@ -3502,12 +3504,65 @@
       };
 
       const handleBedTap = (bedId) => {
+        if (movingItem) {
+          if (movingItem.bed === bedId) {
+            setMovingItem(null);
+            return;
+          }
+          movePlantToBed(movingItem.id, bedId);
+          return;
+        }
         if (selectedPlantIds.length > 0) {
           placeSelectedOnBed(bedId);
           return;
         }
         const b = bedList.find(x => x.id === bedId);
         if (b) openEditBed(b);
+      };
+
+      const movePlantToBed = (placedId, destBedId, opts = {}) => {
+        const item = (placed || []).find(p => p.id === placedId);
+        if (!item || item.bed === destBedId) {
+          setMovingItem(null);
+          return;
+        }
+        const dest = bedList.find(b => b.id === destBedId);
+        const plantInfo = resolvePlant(item.plant, customPlants) || PLANT_LIBRARY.find(p => p.id === item.plant);
+        const cropKey = plantInfo?.cropId || plantInfo?.id || item.plant;
+        const destCropKeys = (placed || []).filter(p => p.bed === destBedId && p.id !== placedId).map(p => {
+          const pl = resolvePlant(p.plant, customPlants);
+          return pl?.cropId || p.plant;
+        });
+        const conflicts = [...new Set(destCropKeys.filter(pid => getRelation(cropKey, pid) < 0))];
+        if (conflicts.length && !opts.ignoreConflicts) {
+          setConflictSheet({
+            plantInfo,
+            plantId: item.plant,
+            bedId: destBedId,
+            bedName: dest?.name || destBedId,
+            plantedAtISO: item.plantedAt,
+            remainingIds: [],
+            movePlacedId: placedId,
+            pairs: conflicts.map(cid => {
+              const other = resolvePlant(cid, customPlants) || PLANT_LIBRARY.find(p => p.id === cid);
+              return {
+                otherId: cid,
+                otherName: plantDisplayName(other, { fallbackId: cid }),
+                why: companionWhy(cropKey, cid),
+                betterForNew: betterCompanionsFor(cropKey),
+                betterForOther: betterCompanionsFor(cid),
+              };
+            }),
+          });
+          return;
+        }
+        pushUndo(placed);
+        setPlaced(prev => prev.map(p => p.id === placedId ? { ...p, bed: destBedId } : p));
+        setJustDropped(placedId);
+        setTimeout(() => setJustDropped(null), 600);
+        setMovingItem(null);
+        setDetailItem(null);
+        setMoveTarget("");
       };
 
       const openEditBed = (bed) => {
@@ -3759,7 +3814,15 @@
               <p className="text-[10px] text-sage-400 mb-2">
                 Beds are in-ground plots. Pots track container plants anywhere on the property — optional on the map.
               </p>
-              {selectedPlantIds.length > 0 && (
+              {movingItem && (
+                <div className="mb-2 flex items-center gap-2 bg-amber-600 text-white rounded-xl px-3 py-2 text-xs font-medium">
+                  <span className="flex-1">
+                    Moving {plantNameForId(movingItem.plant, customPlants)} — tap the new bed or pot
+                  </span>
+                  <button type="button" onClick={() => setMovingItem(null)} className="underline opacity-90">Cancel</button>
+                </div>
+              )}
+              {selectedPlantIds.length > 0 && !movingItem && (
                 <div className="mb-2 flex items-center gap-2 bg-sage-600 text-white rounded-xl px-3 py-2 text-xs font-medium">
                   <span className="flex-1">{selectedPlantIds.length} selected — tap a bed to plant</span>
                   <button type="button" onClick={clearPlantSelection} className="underline opacity-90">Clear</button>
@@ -3775,6 +3838,11 @@
                   onDragOver={onDragOver}
                   onDragLeave={onDragLeave}
                   onDrop={(e, bedId) => {
+                    if (movingItem) {
+                      e.preventDefault();
+                      movePlantToBed(movingItem.id, bedId);
+                      return;
+                    }
                     if (selectedPlantIds.length) {
                       e.preventDefault();
                       placeSelectedOnBed(bedId);
@@ -3951,7 +4019,7 @@
               </div>
 
               <p className="text-center text-xs text-sage-400 mt-3">
-                Tap plant for details · long-press to remove
+                Tap a plant → Move to another bed · long-press to remove
               </p>
             </div>
 
@@ -4043,6 +4111,42 @@
                         ))}
                       </div>
                     )}
+                    <div className="mb-3">
+                      <label className="text-[10px] text-sage-500 block mb-1">Move to another bed or pot</label>
+                      <div className="flex gap-2">
+                        <select
+                          className="flex-1 border rounded-xl px-2 py-2 text-xs bg-white"
+                          value={moveTarget}
+                          onChange={e => setMoveTarget(e.target.value)}
+                        >
+                          <option value="">Choose destination…</option>
+                          {bedList.filter(b => b.id !== detailItem.bed).map(b => (
+                            <option key={b.id} value={b.id}>
+                              {b.kind === "container" ? "Pot · " : ""}{b.name}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          disabled={!moveTarget}
+                          onClick={() => movePlantToBed(detailItem.id, moveTarget)}
+                          className="px-3 py-2 rounded-xl bg-sage-600 text-white text-xs font-medium disabled:opacity-40"
+                        >
+                          Move
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMovingItem(detailItem);
+                          setDetailItem(null);
+                          setMoveTarget("");
+                        }}
+                        className="mt-1.5 text-[11px] text-sage-600 font-medium"
+                      >
+                        Or tap the map / a bed instead →
+                      </button>
+                    </div>
                     <div className="flex gap-2">
                       <button
                         type="button"
@@ -4462,6 +4566,10 @@
                     onClick={() => {
                       const sheet = conflictSheet;
                       setConflictSheet(null);
+                      if (sheet.movePlacedId) {
+                        movePlantToBed(sheet.movePlacedId, sheet.bedId, { ignoreConflicts: true });
+                        return;
+                      }
                       commitPlantsToBed(
                         [sheet.plantId, ...(sheet.remainingIds || [])],
                         sheet.bedId,
