@@ -2752,10 +2752,9 @@
         const fallbackWeather = () => {
           // Realistic demo data so UI always works offline / rate-limited
           const today = new Date();
-          const iso = (d) => d.toISOString().slice(0, 10);
-          const d0 = iso(today);
-          const d1 = iso(new Date(today.getTime() + 86400000));
-          const d2 = iso(new Date(today.getTime() + 172800000));
+          const iso = (d) => toISODate(d);
+          const days = [];
+          for (let i = -3; i <= 6; i++) days.push(addDays(today, i));
           return {
             current: {
               temperature_2m: 74,
@@ -2765,17 +2764,17 @@
               precipitation: 0,
             },
             daily: {
-              time: [d0, d1, d2],
-              temperature_2m_max: [82, 79, 85],
-              temperature_2m_min: [61, 58, 63],
-              precipitation_sum: [0, 0.12, 0],
-              weather_code: [2, 61, 1],
-              precipitation_probability_max: [10, 40, 5],
+              time: days.map(iso),
+              temperature_2m_max: days.map((_, i) => 80 + (i % 3)),
+              temperature_2m_min: days.map((_, i) => 58 + (i % 3)),
+              precipitation_sum: days.map((_, i) => (i === 4 ? 0.12 : 0)),
+              weather_code: days.map((_, i) => (i === 4 ? 61 : 2)),
+              precipitation_probability_max: days.map((_, i) => (i === 4 ? 40 : 10)),
             },
           };
         };
 
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${location.lat}&longitude=${location.lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,precipitation&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code,precipitation_probability_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=3`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${location.lat}&longitude=${location.lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,precipitation&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code,precipitation_probability_max&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&forecast_days=7&past_days=3`;
         fetch(url)
           .then(r => r.json())
           .then(data => {
@@ -2818,15 +2817,49 @@
         }
       };
 
+      const weatherSignals = useMemo(() => {
+        const daily = weather?.daily;
+        if (!daily?.precipitation_sum || !daily.time) return null;
+        const today = toISODate(new Date());
+        let idx = daily.time.indexOf(today);
+        if (idx < 0) idx = Math.max(0, daily.time.findIndex(d => d >= today));
+        if (idx < 0) idx = 0;
+        const p = daily.precipitation_sum.map(n => Number(n) || 0);
+        const pr = (daily.precipitation_probability_max || []).map(n => Number(n) || 0);
+        const sumRange = (from, to) => {
+          let s = 0;
+          for (let i = Math.max(0, from); i <= Math.min(p.length - 1, to); i++) s += p[i];
+          return s;
+        };
+        const past3 = sumRange(idx - 3, idx - 1);
+        const todayP = p[idx] || 0;
+        const next3 = sumRange(idx + 1, idx + 3);
+        const nextProb = Math.max(0, ...(pr.slice(idx, idx + 4)));
+        const maxToday = daily.temperature_2m_max?.[idx];
+        const t = weather?.current?.temperature_2m;
+        const humidity = weather?.current?.relative_humidity_2m;
+        const dryPast = past3 < 0.15;
+        const littleSoon = next3 < 0.2 && nextProb < 45;
+        const rainingNow = (weather?.current?.precipitation || 0) > 0.02 || todayP >= 0.15;
+        const heavyRecent = past3 >= 0.5 || todayP >= 0.4;
+        const hot = (t != null && t >= 85) || (maxToday != null && maxToday >= 88);
+        const drought = dryPast && littleSoon && (hot || past3 < 0.05);
+        const needWater = !rainingNow && dryPast && littleSoon;
+        const inspectAfterRain = heavyRecent || (todayP >= 0.25 && humidity >= 70);
+        return {
+          idx, past3, todayP, next3, nextProb, dryPast, littleSoon, rainingNow,
+          heavyRecent, hot, drought, needWater, inspectAfterRain, humidity, t, maxToday,
+        };
+      }, [weather]);
+
       // Garden advice from weather
       const gardenAdvice = () => {
         if (!weather?.current) return [];
         const tips = [];
         const t = weather.current.temperature_2m;
-        const minTonight = weather.daily?.temperature_2m_min?.[0];
-        const precip = weather.current.precipitation || 0;
-        const precipToday = weather.daily?.precipitation_sum?.[0] || 0;
+        const minTonight = weather.daily?.temperature_2m_min?.[weatherSignals?.idx ?? 0];
         const humidity = weather.current.relative_humidity_2m;
+        const sig = weatherSignals;
 
         if (minTonight != null && minTonight <= 36) {
           tips.push({ level: "warn", text: `Frost risk tonight (low ${Math.round(minTonight)}°F) — cover tender plants` });
@@ -2836,21 +2869,89 @@
           tips.push({ level: "ok", text: "Low frost risk tonight" });
         }
 
-        if (precipToday >= 0.15 || precip > 0) {
-          tips.push({ level: "ok", text: "Rain expected — skip or reduce watering" });
-        } else if (t >= 85 && humidity < 50) {
-          tips.push({ level: "warn", text: "Hot & dry — water deeply this morning or evening" });
+        if (sig?.drought) {
+          tips.push({ level: "warn", text: "Drought pattern — little rain behind or ahead. Water beds and pots deeply." });
+        } else if (sig?.needWater) {
+          tips.push({ level: "warn", text: "Dry stretch, little rain in the forecast — water the garden." });
+        } else if (sig?.rainingNow || (sig?.todayP || 0) >= 0.15) {
+          tips.push({ level: "ok", text: "Rain on the way or falling — skip extra watering." });
         } else if (t >= 75) {
           tips.push({ level: "info", text: "Warm day — check soil moisture on containers" });
         } else {
           tips.push({ level: "info", text: "Good conditions for outdoor work" });
         }
 
-        if (humidity >= 80 && t >= 60) {
+        if (sig?.inspectAfterRain) {
+          tips.push({ level: "warn", text: "Heavy or lingering rain — check leaves for fungus, slugs, and standing water." });
+        } else if (humidity >= 80 && t >= 60) {
           tips.push({ level: "info", text: "High humidity — watch for fungal issues" });
         }
         return tips;
       };
+
+      // Auto-add weather pattern tasks (once per kind per day)
+      useEffect(() => {
+        if (!weatherSignals || !setTasks) return;
+        const today = toISODate(new Date());
+        const stamp = (kind) => `pp_wx_task_${kind}_${today}`;
+        const addIfNeeded = (kind, payload) => {
+          if (localStorage.getItem(stamp(kind))) return;
+          setTasks(prev => {
+            const exists = (prev || []).some(t =>
+              t.kind === kind && !t.done && (t.due === today || t.windowStart === today)
+            );
+            if (exists) {
+              try { localStorage.setItem(stamp(kind), "1"); } catch (_) {}
+              return prev;
+            }
+            try { localStorage.setItem(stamp(kind), "1"); } catch (_) {}
+            return [payload, ...(prev || [])];
+          });
+        };
+
+        if (weatherSignals.drought) {
+          addIfNeeded("weather_drought", {
+            id: Date.now() + 0.11,
+            kind: "weather_drought",
+            title: "Drought watering",
+            plants: ["Garden"],
+            detail: `Little rain in the last days (~${weatherSignals.past3.toFixed(2)}" past 3d) and low chance ahead. Water beds and pots deeply this morning or evening.`,
+            done: false,
+            icon: "🏜️",
+            due: today,
+            windowStart: today,
+            windowEnd: toISODate(addDays(new Date(), 2)),
+          });
+        } else if (weatherSignals.needWater) {
+          addIfNeeded("weather_water", {
+            id: Date.now() + 0.12,
+            kind: "weather_water",
+            title: "Water the garden",
+            plants: ["Garden"],
+            detail: `Dry spell and little rain in the 3-day forecast (next ~${weatherSignals.next3.toFixed(2)}"). Check soil 2" down; water if dry.`,
+            done: false,
+            icon: "💧",
+            due: today,
+            windowStart: today,
+            windowEnd: toISODate(addDays(new Date(), 2)),
+          });
+        }
+
+        if (weatherSignals.inspectAfterRain) {
+          addIfNeeded("weather_inspect", {
+            id: Date.now() + 0.13,
+            kind: "weather_inspect",
+            title: "Check after rain",
+            plants: ["Garden"],
+            detail: "After heavy or lingering rain: look for powdery mildew, blight spots, slugs/snails, and standing water. Improve airflow; don’t compost badly diseased leaves.",
+            done: false,
+            icon: "🍄",
+            due: today,
+            windowStart: today,
+            windowEnd: toISODate(addDays(new Date(), 2)),
+          });
+        }
+      }, [weatherSignals, setTasks]);
 
       const currentWx = weather?.current ? weatherIcon(weather.current.weather_code) : null;
       const temp = weather?.current ? Math.round(weather.current.temperature_2m) : null;
