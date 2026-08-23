@@ -6075,9 +6075,18 @@
     }
 
     // ========== PHASE 1: 3-year plan, schedules, succession, harvest ==========
+    function harvestVarietyKey(plantId, customPlants) {
+      const pl = resolvePlant(plantId, customPlants) || PLANT_LIBRARY.find(p => p.id === plantId);
+      if (!pl) return String(plantId || "unknown");
+      const crop = pl.cropId || pl.id;
+      const variety = (pl.variety || "").toLowerCase().trim();
+      return variety ? `${crop}::${variety}` : String(crop);
+    }
+
     function PlanScreen({
       profile, planYear, setPlanYear, placed, setPlaced, beds, setBeds,
       harvests, setHarvests, setTasks, seeds, setSeeds, rotationHistory, customPlants,
+      journal, setJournal,
     }) {
       const y0 = new Date().getFullYear();
       const years = [y0, y0 + 1, y0 + 2];
@@ -6088,6 +6097,9 @@
       const [bedForm, setBedForm] = useState({ name: "", widthFt: 4, lengthFt: 8, sun: "Full sun", mapX: 10, mapY: 10 });
       const [harvestForm, setHarvestForm] = useState({ placedId: "", plantId: "", bedId: "", qty: "", unit: "lb", notes: "" });
       const [showGardenMap, setShowGardenMap] = useState(true);
+      const [compareKey, setCompareKey] = useState(""); // variety key for multi-year panel
+      const [analysisNotes, setAnalysisNotes] = useState("");
+      const [showAnalysis, setShowAnalysis] = useState(false);
 
       const yearPlaced = useMemo(
         () => (placed || []).filter(p => (p.year || y0) === planYear),
@@ -6638,11 +6650,13 @@
           return;
         }
 
+        const vKey = harvestVarietyKey(plantId, customPlants);
         setHarvests(prev => [{
           id: Date.now(),
           date: toISODate(new Date()),
           year: planYear,
           plantId,
+          varietyKey: vKey,
           bedId: bedId || null,
           placedId: placedId || null,
           qty,
@@ -6653,6 +6667,81 @@
       };
 
       const yearHarvests = (harvests || []).filter(h => (h.year || y0) === planYear);
+
+      /** Group harvests by variety across years for comparison */
+      const yieldByVariety = useMemo(() => {
+        const map = {};
+        (harvests || []).forEach(h => {
+          const key = h.varietyKey || harvestVarietyKey(h.plantId, customPlants);
+          const year = h.year || (h.date ? Number(String(h.date).slice(0, 4)) : y0);
+          if (!map[key]) {
+            const pl = resolvePlant(h.plantId, customPlants) || PLANT_LIBRARY.find(p => p.id === h.plantId);
+            map[key] = {
+              key,
+              plantId: h.plantId,
+              label: plantDisplayName(pl, { withCrop: true }) || h.plantId,
+              icon: pl?.icon || "🧺",
+              byYear: {},
+            };
+          }
+          if (!map[key].byYear[year]) map[key].byYear[year] = { total: 0, unit: h.unit || "lb", entries: 0, notes: [] };
+          const bucket = map[key].byYear[year];
+          // Only sum same unit; track mixed units as separate note
+          if (!bucket.unit) bucket.unit = h.unit || "lb";
+          if ((h.unit || "lb") === bucket.unit) {
+            bucket.total += Number(h.qty) || 0;
+            bucket.entries += 1;
+          } else {
+            bucket.notes.push(`${h.qty} ${h.unit}`);
+          }
+          if (h.notes) bucket.notes.push(h.notes);
+        });
+        return Object.values(map)
+          .map(row => {
+            const yearList = Object.keys(row.byYear).map(Number).sort((a, b) => a - b);
+            return { ...row, years: yearList, multiYear: yearList.length > 1 };
+          })
+          .sort((a, b) => (b.multiYear - a.multiYear) || a.label.localeCompare(b.label));
+      }, [harvests, customPlants, y0]);
+
+      const compareRow = yieldByVariety.find(r => r.key === compareKey) || null;
+
+      const saveYieldAnalysisToJournal = () => {
+        if (!compareRow || !setJournal) return;
+        const lines = [
+          `Yield comparison: ${compareRow.label}`,
+          ...compareRow.years.map(y => {
+            const b = compareRow.byYear[y];
+            return `· ${y}: ${Number(b.total.toFixed(2))} ${b.unit} (${b.entries} log${b.entries === 1 ? "" : "s"})`;
+          }),
+        ];
+        if (compareRow.years.length >= 2) {
+          const last = compareRow.years[compareRow.years.length - 1];
+          const prev = compareRow.years[compareRow.years.length - 2];
+          const a = compareRow.byYear[last]?.total || 0;
+          const b = compareRow.byYear[prev]?.total || 0;
+          if (b > 0) {
+            const pct = Math.round(((a - b) / b) * 100);
+            lines.push(`· Change ${prev} → ${last}: ${pct >= 0 ? "+" : ""}${pct}%`);
+          }
+        }
+        if (analysisNotes.trim()) {
+          lines.push("", "My notes:", analysisNotes.trim());
+        }
+        setJournal(prev => [{
+          id: Date.now(),
+          date: toISODate(new Date()),
+          text: lines.join("\n"),
+          bed: null,
+          mood: "ok",
+          type: "yield_analysis",
+          varietyKey: compareRow.key,
+          plantId: compareRow.plantId,
+        }, ...prev]);
+        setAnalysisNotes("");
+        setShowAnalysis(false);
+        alert("Saved to Journal. Open Journal to review or add more thoughts later.");
+      };
 
       return (
         <div className="pb-24">
@@ -6887,7 +6976,120 @@
                 </div>
               )}
             </section>
+
+            {/* Year-over-year yield comparison */}
+            <section>
+              <h3 className="font-semibold text-sage-800 text-sm mb-1">Yield by variety (years)</h3>
+              <p className="text-[10px] text-sage-500 mb-2">
+                Compare the same variety across seasons, then log what you changed in the Journal.
+              </p>
+              {yieldByVariety.length === 0 ? (
+                <p className="text-xs text-sage-400 text-center bg-white rounded-xl p-3 card-shadow">
+                  Log harvests for the same variety in more than one year to unlock comparison.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {yieldByVariety.slice(0, 12).map(row => (
+                    <button
+                      key={row.key}
+                      type="button"
+                      onClick={() => {
+                        setCompareKey(row.key);
+                        setShowAnalysis(true);
+                        setAnalysisNotes("");
+                      }}
+                      className={`w-full text-left bg-white rounded-2xl p-3 card-shadow transition ${
+                        compareKey === row.key ? "ring-2 ring-sage-500" : ""
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-lg">{row.icon}</span>
+                        <p className="text-sm font-medium text-sage-800 flex-1 min-w-0 truncate">{row.label}</p>
+                        {row.multiYear && (
+                          <span className="text-[9px] bg-green-100 text-green-800 px-1.5 py-0.5 rounded-full font-medium">
+                            {row.years.length} yrs
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {row.years.map(y => {
+                          const b = row.byYear[y];
+                          return (
+                            <span key={y} className="text-[10px] bg-sage-50 text-sage-700 px-2 py-0.5 rounded-lg">
+                              {y}: <strong>{Number(b.total.toFixed(2))}</strong> {b.unit}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </section>
           </div>
+
+          {showAnalysis && compareRow && (
+            <div className="fixed inset-0 bg-black/40 z-[100] flex items-end sm:items-center justify-center px-4 pt-4 pb-24">
+              <div className="bg-white rounded-2xl p-5 w-full max-w-sm max-h-[min(85vh,calc(100dvh-7rem))] overflow-y-auto shadow-xl">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wide text-sage-500 font-semibold">Yield analysis</p>
+                    <h3 className="font-semibold text-sage-800 text-lg leading-tight">
+                      {compareRow.icon} {compareRow.label}
+                    </h3>
+                  </div>
+                  <button type="button" onClick={() => setShowAnalysis(false)} className="text-sage-400 text-sm">✕</button>
+                </div>
+                <div className="space-y-1.5 mb-3">
+                  {compareRow.years.map(y => {
+                    const b = compareRow.byYear[y];
+                    return (
+                      <div key={y} className="flex justify-between text-xs bg-sage-50 rounded-xl px-3 py-2">
+                        <span className="font-medium text-sage-800">{y}</span>
+                        <span className="text-sage-700">
+                          {Number(b.total.toFixed(2))} {b.unit}
+                          <span className="text-sage-400"> · {b.entries} log{b.entries === 1 ? "" : "s"}</span>
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+                {compareRow.years.length >= 2 && (() => {
+                  const last = compareRow.years[compareRow.years.length - 1];
+                  const prev = compareRow.years[compareRow.years.length - 2];
+                  const a = compareRow.byYear[last]?.total || 0;
+                  const b = compareRow.byYear[prev]?.total || 0;
+                  if (!(b > 0)) return null;
+                  const pct = Math.round(((a - b) / b) * 100);
+                  return (
+                    <p className={`text-xs font-medium mb-3 ${pct >= 0 ? "text-green-700" : "text-amber-800"}`}>
+                      {prev} → {last}: {pct >= 0 ? "+" : ""}{pct}%
+                      {pct >= 0 ? " higher yield" : " lower yield"}
+                    </p>
+                  );
+                })()}
+                <p className="text-[11px] text-sage-600 mb-1">
+                  What did you change? (fertilizer, water, bed, companions, weather, pruning…)
+                </p>
+                <textarea
+                  className="w-full border rounded-xl px-3 py-2 text-sm h-28 mb-3"
+                  placeholder="e.g. Moved to full-sun bed, mulched mid-June, side-dressed once after fruit set…"
+                  value={analysisNotes}
+                  onChange={e => setAnalysisNotes(e.target.value)}
+                />
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setShowAnalysis(false)} className="flex-1 py-2.5 rounded-xl border text-sm">Close</button>
+                  <button
+                    type="button"
+                    onClick={saveYieldAnalysisToJournal}
+                    className="flex-1 py-2.5 rounded-xl bg-sage-600 text-white text-sm font-medium"
+                  >
+                    Save to Journal
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {showAdd && (
             <div className="fixed inset-0 bg-black/40 z-[100] flex items-end sm:items-center justify-center px-4 pt-4 pb-24">
@@ -7289,8 +7491,12 @@
             {journal.map(e => (
               <div key={e.id} className="bg-white rounded-2xl p-4 card-shadow">
                 <div className="flex justify-between items-start mb-1">
-                  <p className="text-xs text-sage-500">{fmtDate(e.date)} {e.bed && `· ${bedLabel(bedList, e.bed)}`}</p>
-                  <span>{moodIcon[e.mood] || "😐"}</span>
+                  <p className="text-xs text-sage-500">
+                    {fmtDate(e.date)}
+                    {e.bed && ` · ${bedLabel(bedList, e.bed)}`}
+                    {e.type === "yield_analysis" && " · Yield analysis"}
+                  </p>
+                  <span>{e.type === "yield_analysis" ? "📊" : (moodIcon[e.mood] || "😐")}</span>
                 </div>
                 <p className="text-sm text-sage-800 whitespace-pre-wrap">{e.text}</p>
                 <button
@@ -8815,6 +9021,8 @@
               setSeeds={setSeeds}
               rotationHistory={rotationHistory}
               customPlants={customPlants}
+              journal={journal}
+              setJournal={setJournal}
             />
           )}
           {active === "kitchen" && (
