@@ -4726,6 +4726,24 @@
         source: "purchased",
         notes: "",
       });
+      const [cropTypeFilter, setCropTypeFilter] = useState("Vegetable");
+      const [cropSearch, setCropSearch] = useState("");
+
+      const CROP_PICKER_TYPES = ["Vegetable", "Herb", "Flower", "Fruit", "Cover"];
+
+      const cropOptions = useMemo(() => {
+        const q = (cropSearch || "").trim().toLowerCase();
+        return PLANT_LIBRARY
+          .filter(p => {
+            if (!CROP_PICKER_TYPES.includes(p.type)) return false;
+            if (cropTypeFilter !== "All" && p.type !== cropTypeFilter) return false;
+            if (q && !(p.name || "").toLowerCase().includes(q)
+              && !(p.scientific || "").toLowerCase().includes(q)) return false;
+            return true;
+          })
+          .slice()
+          .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+      }, [cropTypeFilter, cropSearch]);
 
       const openAdd = () => {
         setForm({
@@ -4739,6 +4757,8 @@
           source: "purchased",
           notes: "",
         });
+        setCropTypeFilter("Vegetable");
+        setCropSearch("");
         setShowAdd(true);
       };
 
@@ -5101,20 +5121,53 @@
               <div className="bg-white rounded-2xl w-full max-w-sm max-h-[min(85vh,calc(100dvh-7rem))] flex flex-col shadow-xl">
                 <div className="p-4 pb-2 shrink-0">
                   <h3 className="font-semibold text-sage-800">Add to Seed Vault</h3>
-                  <p className="text-[10px] text-sage-500">Pick from plant library, then set quantity.</p>
+                  <p className="text-[10px] text-sage-500">Filter by type, search, then pick a crop.</p>
                 </div>
                 <div className="px-4 overflow-y-auto flex-1 min-h-0 space-y-2 pb-2">
-                  <label className="text-xs text-sage-500">Crop</label>
+                  <label className="text-xs text-sage-500">Crop type</label>
+                  <div className="flex gap-1.5 overflow-x-auto pb-0.5 -mx-0.5 px-0.5">
+                    {CROP_PICKER_TYPES.map(t => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => {
+                          setCropTypeFilter(t);
+                          setCropSearch("");
+                          const first = PLANT_LIBRARY.filter(p => p.type === t).sort((a, b) => a.name.localeCompare(b.name))[0];
+                          if (first) setForm(f => ({ ...f, plantId: first.id, varietyId: "", varietyName: "" }));
+                        }}
+                        className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium ${
+                          cropTypeFilter === t ? "bg-sage-600 text-white" : "bg-sage-100 text-sage-600"
+                        }`}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                  <label className="text-xs text-sage-500">Search crop</label>
+                  <input
+                    className="w-full border rounded-xl px-3 py-2 text-sm"
+                    placeholder="e.g. tomato, basil…"
+                    value={cropSearch}
+                    onChange={e => setCropSearch(e.target.value)}
+                  />
+                  <label className="text-xs text-sage-500">
+                    Crop {cropOptions.length ? `(${cropOptions.length})` : ""}
+                  </label>
                   <select
                     className="w-full border rounded-xl px-3 py-2 text-sm"
-                    value={form.plantId}
+                    value={cropOptions.some(p => p.id === form.plantId) ? form.plantId : (cropOptions[0]?.id || "")}
                     onChange={e => setForm(f => ({ ...f, plantId: e.target.value, varietyId: "", varietyName: "" }))}
+                    size={Math.min(8, Math.max(4, cropOptions.length || 4))}
                   >
-                    {PLANT_LIBRARY.map(p => (
+                    {cropOptions.length === 0 && (
+                      <option value="">No crops match — try another type or search</option>
+                    )}
+                    {cropOptions.map(p => (
                       <option key={p.id} value={p.id}>{p.icon} {p.name}</option>
                     ))}
                   </select>
-                  <label className="text-xs text-sage-500">Variety (library or type your own)</label>
+                  <label className="text-xs text-sage-500">Variety (optional)</label>
                   <select
                     className="w-full border rounded-xl px-3 py-2 text-sm mb-1"
                     value={form.varietyId}
