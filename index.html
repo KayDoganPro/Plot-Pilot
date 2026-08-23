@@ -1057,25 +1057,60 @@
       return tasks;
     }
 
-    /** Merge same-kind + overlapping windows into one (list all plant varieties) */
+    const MERGEABLE_TASK_KINDS = new Set([
+      "germ", "fert", "water", "treatment", "care",
+      "weather_water", "weather_drought", "weather_inspect",
+    ]);
+
+    function loadDismissedRestock() {
+      try {
+        const raw = JSON.parse(localStorage.getItem("pp_dismissed_restock") || "{}");
+        return raw && typeof raw === "object" ? raw : {};
+      } catch { return {}; }
+    }
+    function saveDismissedRestock(map) {
+      try { localStorage.setItem("pp_dismissed_restock", JSON.stringify(map || {})); } catch (_) {}
+    }
+    function dismissRestockReminder(seedId, seedName) {
+      const map = loadDismissedRestock();
+      if (seedId != null) map["id:" + String(seedId)] = toISODate(new Date());
+      if (seedName) map["name:" + String(seedName).toLowerCase().trim()] = toISODate(new Date());
+      saveDismissedRestock(map);
+    }
+    function isRestockDismissed(seed) {
+      const map = loadDismissedRestock();
+      if (!seed) return false;
+      if (seed.id != null && map["id:" + String(seed.id)]) return true;
+      const n = String(seed.name || "").toLowerCase().trim();
+      return !!(n && map["name:" + n]);
+    }
+
+    /** Merge same-kind + overlapping windows into one (list all plant varieties).
+     *  Only care-style work (fertilize, water, treat, germ check). Sow / plant / harvest stay per plant. */
     function mergeCareTasksInto(prevTasks, incoming) {
       const next = [...(prevTasks || [])];
-      const kindTitle = { germ: "Check germination", fert: "Fertilize garden", harvest: "Harvest window", water: "Water garden" };
+      const kindTitle = { germ: "Check germination", fert: "Fertilize garden", water: "Water garden" };
       incoming.forEach(t => {
         const kind = t.kind || "care";
         const due = t.due || "";
         const wStart = t.windowStart || due;
         const wEnd = t.windowEnd || due;
+        const canMerge = MERGEABLE_TASK_KINDS.has(kind);
+        const plants = Array.isArray(t.plants) ? t.plants : (t.plants ? [t.plants] : []);
         const idx = next.findIndex(x => {
           if (x.done || (x.kind || "") !== kind) return false;
-          // Merge if same due day or overlapping windows
+          if (!canMerge) {
+            // Same plant + same kind + same due only — never lump different crops
+            const xp = (x.plants || []).join("|");
+            const tp = plants.join("|");
+            return xp && tp && xp === tp && (x.due || "") === due;
+          }
           if ((x.due || "") === due) return true;
           const xs = x.windowStart || x.due || "";
           const xe = x.windowEnd || x.due || "";
           if (!xs || !wStart) return false;
           return xs <= wEnd && wStart <= xe;
         });
-        const plants = Array.isArray(t.plants) ? t.plants : (t.plants ? [t.plants] : []);
         if (idx >= 0) {
           const existing = next[idx];
           const set = new Set([...(existing.plants || []), ...plants]);
@@ -1215,7 +1250,17 @@
         }
         if (harvestDue && inWin(harvestWin, harvestDue, 14)) {
           const d = new Date((harvestWin?.due || harvestDue) + "T12:00:00");
-          addBriefBucket("harvest", d, label, "🧺", "med");
+          push({
+            id: `brief-harvest-${item.id || label}`,
+            title: `Harvest ${label}`,
+            detail: `${fmtDate(d)}${item.bed ? " · " + bedLabel(bedList, item.bed) : ""}`,
+            icon: "🧺",
+            priority: "med",
+            source: "care",
+            kind: "harvest",
+            plants: [label],
+            due: toISODate(d),
+          });
         }
         if (germDue && inWin(germWin, germDue, 7)) {
           const d = new Date((germWin?.due || germDue) + "T12:00:00");
@@ -1237,8 +1282,8 @@
         });
       });
 
-      // Low seed stock
-      (seeds || []).filter(s => s.low || s.qty <= 3).forEach(s => {
+      // Low seed stock — skip if user already cleared the restock reminder
+      (seeds || []).filter(s => (s.low || s.qty <= 3) && !isRestockDismissed(s)).forEach(s => {
         push({
           id: `brief-seed-${s.id}`,
           title: `Restock ${s.name}`,
@@ -1246,6 +1291,9 @@
           icon: "📦",
           priority: "med",
           source: "vault",
+          kind: "restock",
+          seedId: s.id,
+          seedName: s.name,
         });
       });
 
@@ -2575,9 +2623,12 @@
         setTasks(prev => prev.map(t => {
           if (t.id !== id) return t;
           if (t.done) {
-            // Undo — reopen task
             const { completedAt, ...rest } = t;
             return { ...rest, done: false };
+          }
+          if (t.kind === "restock" || String(t.title || "").toLowerCase().startsWith("restock ")) {
+            const name = t.seedName || String(t.title || "").replace(/^restock\s+/i, "").trim();
+            dismissRestockReminder(t.seedId, name);
           }
           return { ...t, done: true, completedAt: new Date().toISOString() };
         }));
@@ -2628,16 +2679,37 @@
         [placed, seeds, profile, rotationHistory, tasks, bedList]
       );
 
+      // Honor restock tasks already checked off (don't nag if vault wasn't updated)
+      useEffect(() => {
+        (tasks || []).forEach(t => {
+          if (!t.done) return;
+          if (t.kind === "restock" || String(t.title || "").toLowerCase().startsWith("restock ")) {
+            const name = t.seedName || String(t.title || "").replace(/^restock\s+/i, "").trim();
+            dismissRestockReminder(t.seedId, name);
+          }
+        });
+      }, [tasks]);
+
       const addBriefAsTask = (item) => {
         setTasks(prev => {
           if (prev.some(t => !t.done && t.title === item.title)) return prev;
+          // Already completed this restock reminder — stay dismissed
+          if ((item.kind === "restock" || item.source === "vault") &&
+              prev.some(t => t.done && (t.seedId === item.seedId || t.title === item.title))) {
+            dismissRestockReminder(item.seedId, item.seedName);
+            return prev;
+          }
           return [{
             id: Date.now() + Math.random(),
             title: item.title,
             detail: item.detail,
             done: false,
             icon: item.icon,
-            due: toISODate(new Date()),
+            due: item.due || toISODate(new Date()),
+            kind: item.kind || (item.source === "vault" ? "restock" : undefined),
+            seedId: item.seedId,
+            seedName: item.seedName,
+            plants: item.plants,
           }, ...prev];
         });
       };
