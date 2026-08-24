@@ -1248,7 +1248,7 @@
           const d = new Date((fertWin?.due || fertDue) + "T12:00:00");
           addBriefBucket("fert", d, label, "🧪", "med");
         }
-        if (harvestDue && inWin(harvestWin, harvestDue, 14)) {
+        if (harvestDue && inWin(harvestWin, harvestDue, 7)) {
           const d = new Date((harvestWin?.due || harvestDue) + "T12:00:00");
           push({
             id: `brief-harvest-${item.id || label}`,
@@ -1267,8 +1267,11 @@
           addBriefBucket("germ", d, label, "🌱", "low");
         }
       });
+      const weekEndISO = toISODate(weekEnd);
+      const todayISO = toISODate(today);
       Object.values(briefBuckets).forEach(b => {
-        const titleMap = { fert: "Fertilize garden", harvest: "Harvest window", germ: "Check germination" };
+        if (b.dueISO < todayISO || b.dueISO > weekEndISO) return;
+        const titleMap = { fert: "Fertilize garden", germ: "Check germination" };
         push({
           id: `brief-${b.kind}-${b.dueISO}`,
           title: titleMap[b.kind] || b.kind,
@@ -3027,7 +3030,15 @@
 
       const currentWx = weather?.current ? weatherIcon(weather.current.weather_code) : null;
       const temp = weather?.current ? Math.round(weather.current.temperature_2m) : null;
-      const minT = weather?.daily?.temperature_2m_min?.[0];
+      const wxTodayIdx = weatherSignals?.idx ?? (() => {
+        const times = weather?.daily?.time || [];
+        const today = toISODate(new Date());
+        let i = times.indexOf(today);
+        if (i < 0) i = times.findIndex(d => d >= today);
+        return i < 0 ? 0 : i;
+      })();
+      const minT = weather?.daily?.temperature_2m_min?.[wxTodayIdx];
+      const maxT = weather?.daily?.temperature_2m_max?.[wxTodayIdx];
       const frostLevel =
         minT == null ? "unknown" :
         minT <= 32 ? "likely" :
@@ -3138,7 +3149,7 @@
                     <div>
                       <p className="text-2xl font-bold text-sage-800">{temp}°F</p>
                       <p className="text-xs text-sage-500">
-                        {currentWx?.label} · H {Math.round(weather.daily.temperature_2m_max[0])}° / L {Math.round(weather.daily.temperature_2m_min[0])}°
+                        {currentWx?.label} · H {Math.round(maxT ?? weather.daily.temperature_2m_max[wxTodayIdx] ?? weather.daily.temperature_2m_max[0])}° / L {Math.round(minT ?? weather.daily.temperature_2m_min[wxTodayIdx] ?? weather.daily.temperature_2m_min[0])}°
                       </p>
                       <p className="text-[10px] text-sage-400">
                         Humidity {weather.current.relative_humidity_2m}% · Wind {Math.round(weather.current.wind_speed_10m)} mph
@@ -3146,10 +3157,11 @@
                     </div>
                   </div>
 
-                  {/* 3-day strip */}
+                  {/* Upcoming 3 days starting today (API also returns past days for rain logic) */}
                   <div className="grid grid-cols-3 gap-2 mb-3">
-                    {weather.daily.time.slice(0, 3).map((day, i) => {
-                      const w = weatherIcon(weather.daily.weather_code[i]);
+                    {weather.daily.time.slice(wxTodayIdx, wxTodayIdx + 3).map((day, i) => {
+                      const abs = wxTodayIdx + i;
+                      const w = weatherIcon(weather.daily.weather_code[abs]);
                       const d = new Date(day + "T12:00:00");
                       const label = i === 0 ? "Today" : d.toLocaleDateString("en-US", { weekday: "short" });
                       return (
@@ -3157,7 +3169,7 @@
                           <p className="text-[10px] text-sage-500 font-medium">{label}</p>
                           <p className="text-lg my-0.5">{w.icon}</p>
                           <p className="text-[10px] text-sage-700">
-                            {Math.round(weather.daily.temperature_2m_max[i])}° / {Math.round(weather.daily.temperature_2m_min[i])}°
+                            {Math.round(weather.daily.temperature_2m_max[abs])}° / {Math.round(weather.daily.temperature_2m_min[abs])}°
                           </p>
                         </div>
                       );
