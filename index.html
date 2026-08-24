@@ -2222,7 +2222,85 @@
       { plantId: "thyme", amount: 4, unit: "sprig", yieldPerPlant: 20 },
       { plantId: "basil", amount: 4, unit: "leaf", yieldPerPlant: 40 },
     ];
-
+const FERMENT_GUIDES = [
+  {
+    id: "kraut",
+    name: "Sauerkraut / cabbage ferment",
+    icon: "🥬",
+    plants: ["cabbage", "kale"],
+    difficulty: "Easy",
+    time: "1–4 weeks",
+    safety: "Use 1.5–2% salt by weight of cabbage. Keep under brine. White kahm yeast is common — skim it. Fuzzy colored mold = toss.",
+    steps: [
+      "Weigh shredded cabbage; add 1.5–2% sea salt (no iodine)",
+      "Massage until brine forms; pack tightly in a clean jar",
+      "Weight cabbage under the brine; loose lid or airlock",
+      "Ferment 65–72°F out of direct sun 5–14+ days; taste as you go",
+      "Refrigerate when tangy enough; use clean utensils only",
+    ],
+  },
+  {
+    id: "lacto-pickles",
+    name: "Lacto vegetable pickles",
+    icon: "🥒",
+    plants: ["cucumber", "carrot", "bean", "pepper", "beet", "radish", "garlic", "onion"],
+    difficulty: "Easy",
+    time: "3–14 days",
+    safety: "Brine ~2–3% salt (about 1–1.5 Tbsp salt per quart water). Always keep food under brine.",
+    steps: [
+      "Wash produce; trim blossom ends on cucumbers",
+      "Pack jar with veg + garlic/dill/spices if desired",
+      "Cover with cooled salt brine; weight under liquid",
+      "Ferment at room temp; burp jars daily if sealed tight",
+      "When sour enough, move to fridge",
+    ],
+  },
+  {
+    id: "hot-sauce",
+    name: "Fermented hot sauce",
+    icon: "🌶️",
+    plants: ["pepper", "garlic", "onion", "tomato"],
+    difficulty: "Medium",
+    time: "1–3 weeks + blend",
+    safety: "Same brine rules as pickles. Blend only after active ferment smells clean and sour, not rotten.",
+    steps: [
+      "Chop peppers (and onion/garlic); cover with 2–3% brine",
+      "Ferment until bubbly and pleasantly sour",
+      "Strain (save brine); blend solids with some brine + vinegar to taste",
+      "Simmer briefly if you want a longer pantry life; bottle and refrigerate",
+    ],
+  },
+  {
+    id: "kimchi-style",
+    name: "Kimchi-style mixed ferment",
+    icon: "배추",
+    plants: ["cabbage", "radish", "carrot", "garlic", "onion"],
+    difficulty: "Medium",
+    time: "3–10 days",
+    safety: "Salt cabbage first; keep under brine or paste. Refrigerate when tangy.",
+    steps: [
+      "Salt napa or green cabbage 1–2 hours; rinse if very salty",
+      "Mix with grated radish/carrot, garlic, onion, chili to taste",
+      "Pack into jar; press down so liquid rises",
+      "Ferment cool room temp; refrigerate when ready",
+    ],
+  },
+  {
+    id: "fruit-shrub",
+    name: "Fruit ferment / shrub base",
+    icon: "🫐",
+    plants: ["strawberry", "blueberry", "tomato"],
+    difficulty: "Easy",
+    time: "3–7 days",
+    safety: "Use sound fruit only. If it smells like nail polish or moldy, discard.",
+    steps: [
+      "Layer fruit + sugar (roughly equal by weight) in a jar",
+      "Loose lid; stir daily until juicy and lightly fizzy",
+      "Strain; mix liquid with vinegar for a shrub, or use as a flavor base",
+      "Refrigerate",
+    ],
+  },
+];
     const PRESERVE_GUIDES = [
       { plantId: "tomato", methods: [
         { id: "can", name: "Water-bath can (acidified)", difficulty: "Medium", time: "2–4 hrs", equipment: ["Canner / large pot", "Jars + lids", "Jar lifter", "Lemon juice or citric acid"], safety: "Tomatoes need added acid. Use a current tested recipe (USDA / extension). Never invent times.",
@@ -5805,8 +5883,27 @@
     }
 
     // ========== PHASE 2 UI: Kitchen ==========
+   function recipesForPlant(plantId) {
+  const key = cropKeyOf ? cropKeyOf(plantId) : plantId;
+  return (RECIPES || []).filter(r =>
+    (r.ingredients || []).some(ing => {
+      const id = ing.plantId || ing.id;
+      return id === plantId || id === key || (cropKeyOf && cropKeyOf(id) === key);
+    })
+  );
+}
+
+function fermentsForPlant(plantId) {
+  const key = cropKeyOf ? cropKeyOf(plantId) : plantId;
+  return FERMENT_GUIDES.filter(f =>
+    (f.plants || []).some(p => p === plantId || p === key || (cropKeyOf && cropKeyOf(p) === key))
+  );
+}
     function KitchenScreen({ profile, planYear, setPlanYear, placed, setPlaced, beds, setTasks, setSeeds, setActive }) {
-      const [tab, setTab] = useState("recipes"); // recipes | preserve | herbs
+      const [tab, setTab] = useState("recipes"); // recipes | preserve | ferment
+const [preserveView, setPreserveView] = useState("plant"); // plant | methods
+const [recipePlantFilter, setRecipePlantFilter] = useState(""); // crop id or ""
+const [recipeScope, setRecipeScope] = useState("garden"); // garden | all
       const [preserveMethodId, setPreserveMethodId] = useState(null);
       const [preserveStepDone, setPreserveStepDone] = useState({}); // key: `${plantId}:${methodId}` -> boolean[]
       const [preserveStepIndex, setPreserveStepIndex] = useState(0);
@@ -5969,7 +6066,7 @@
               {[
                 { id: "recipes", label: "Recipes" },
                 { id: "preserve", label: "Preserve" },
-                { id: "herbs", label: "Herbs" },
+                { id: "ferment", label: "Ferment" },
               ].map(t => (
                 <button
                   key={t.id}
@@ -5984,7 +6081,9 @@
               ))}
             </div>
 
-            {tab === "recipes" && (
+          {tab === "recipes" && recipePlantFilter && (
+  <p className="text-xs text-sage-500">Filtered by search — clear search to see all.</p>
+)}
               <>
                 <p className="text-xs text-sage-500">
                   Select recipes you want to cook or put up. PlotPilot builds a grow list and can add plantings to your {planYear} plan.
@@ -6024,8 +6123,23 @@
                 )}
               </>
             )}
-
-            {tab === "preserve" && (() => {
+<div className="flex gap-1 mb-2">
+  <button type="button" onClick={() => setRecipeScope("garden")}
+    className={`flex-1 py-1.5 rounded-lg text-[11px] font-semibold ${recipeScope === "garden" ? "bg-sage-600 text-white" : "bg-sage-100 text-sage-700"}`}>
+    My garden
+  </button>
+  <button type="button" onClick={() => setRecipeScope("all")}
+    className={`flex-1 py-1.5 rounded-lg text-[11px] font-semibold ${recipeScope === "all" ? "bg-sage-600 text-white" : "bg-sage-100 text-sage-700"}`}>
+    Full library
+  </button>
+</div>
+<input
+  className="w-full border rounded-xl px-3 py-2 text-sm mb-2"
+  placeholder="Search plants…"
+  value={recipePlantFilter}
+  onChange={e => setRecipePlantFilter(e.target.value)}
+/>
+            {tab === "preserve" && (() => 
               const methods = preserveGuide?.methods || [];
               const activeMethod = methods.find(m => m.id === preserveMethodId) || null;
               const stepKey = activeMethod ? `${preservePlant}:${activeMethod.id}` : null;
@@ -6043,7 +6157,39 @@
                   return { ...prev, [stepKey]: next };
                 });
               };
-
+{(() => {
+  const q = recipePlantFilter.trim().toLowerCase();
+  const gardenIds = new Set((placed || []).map(p => p.plant));
+  let list = PLANT_LIBRARY.filter(p => !p.isVariety);
+  if (recipeScope === "garden") {
+    list = list.filter(p => gardenIds.has(p.id) || [...gardenIds].some(id => (p.id === id)));
+    // also include varieties placed in garden
+    const extra = PLANT_LIBRARY.filter(p => gardenIds.has(p.id));
+    list = [...new Map([...list, ...extra].map(x => [x.id, x])).values()];
+  }
+  if (q) list = list.filter(p => (p.name || "").toLowerCase().includes(q) || (p.type || "").toLowerCase().includes(q));
+  return (
+    <div className="space-y-2 max-h-64 overflow-y-auto mb-3">
+      {list.slice(0, 40).map(p => {
+        const recs = recipesForPlant(p.id);
+        const ferms = fermentsForPlant(p.id);
+        return (
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => setPreservePlant(p.id)}
+            className={`w-full text-left bg-white rounded-xl p-2.5 card-shadow ${preservePlant === p.id ? "ring-2 ring-sage-500" : ""}`}
+          >
+            <span className="text-sm font-medium text-sage-800">{p.icon} {p.name}</span>
+            <span className="block text-[10px] text-sage-500">
+              {recs.length} recipe(s) · {ferms.length} ferment(s)
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+})()}
               const schedulePreserveTask = () => {
                 if (!activeMethod || !setTasks) return;
                 const pl = PLANT_LIBRARY.find(p => p.id === preservePlant);
@@ -6223,28 +6369,33 @@
               );
             })()}
 
-            {tab === "herbs" && (
-              <>
-                <p className="text-xs text-sage-500">
-                  Culinary and household ideas only — not medical advice.
-                </p>
-                <div className="space-y-2">
-                  {HERBAL_NOTES.map(h => {
-                    const pl = PLANT_LIBRARY.find(p => p.id === h.plantId);
-                    return (
-                      <div key={h.plantId} className="bg-white rounded-xl p-3 card-shadow">
-                        <p className="font-medium text-sm text-sage-800">{pl?.icon || "🌿"} {pl?.name || h.plantId}</p>
-                        <ul className="mt-1 text-xs text-sage-600 list-disc pl-4 space-y-0.5">
-                          {h.uses.map((u, i) => <li key={i}>{u}</li>)}
-                        </ul>
-                        <p className="text-[10px] text-sage-400 mt-1">{h.caution}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
-            )}
+          {tab === "ferment" && (
+  <div className="space-y-3">
+    <p className="text-xs text-sage-500">
+      Lacto-fermentation for garden harvests. Keep food under brine; when in doubt, throw it out.
+    </p>
+    {FERMENT_GUIDES.map(f => (
+      <div key={f.id} className="bg-white rounded-2xl p-4 card-shadow">
+        <div className="flex items-start gap-2 mb-2">
+          <span className="text-2xl">{f.icon}</span>
+          <div className="flex-1">
+            <h3 className="font-semibold text-sage-800 text-sm">{f.name}</h3>
+            <p className="text-[10px] text-sage-500">{f.difficulty} · {f.time}</p>
+            <p className="text-[10px] text-sage-500 mt-0.5">
+              Crops: {(f.plants || []).join(", ")}
+            </p>
           </div>
+        </div>
+        <p className="text-[11px] text-amber-800 bg-amber-50 rounded-lg px-2 py-1.5 mb-2">{f.safety}</p>
+        <ol className="list-decimal list-inside space-y-1">
+          {(f.steps || []).map((s, i) => (
+            <li key={i} className="text-xs text-sage-700">{s}</li>
+          ))}
+        </ol>
+      </div>
+    ))}
+  </div>
+)}
 
           {detail && (
             <div className="fixed inset-0 bg-black/40 z-[100] flex items-end sm:items-center justify-center px-4 pt-4 pb-24" onClick={() => setDetail(null)}>
