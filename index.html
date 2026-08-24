@@ -2029,7 +2029,7 @@
     // Legacy alias so older UI that references BEDS still works until fully migrated
     const BEDS = DEFAULT_BEDS;
 
-    // ========== PHASE 2: Kitchen — recipes, preserve, herbs ==========
+    // ========== PHASE 2: Kitchen — recipes, preserve, ferment=========
     // ingredients: { plantId, amount, unit, optional }
     // yieldPerPlant: rough harvest per plant in same unit (for plant-count estimate)
     const RECIPE_LIBRARY = [
@@ -5901,8 +5901,8 @@ function fermentsForPlant(plantId) {
 }
     function KitchenScreen({ profile, planYear, setPlanYear, placed, setPlaced, beds, setTasks, setSeeds, setActive }) {
       const [tab, setTab] = useState("recipes"); // recipes | preserve | ferment
-const [preserveView, setPreserveView] = useState("plant"); // plant | methods
-const [recipePlantFilter, setRecipePlantFilter] = useState(""); // crop id or ""
+const [preserveView, setPreserveView] = useState("plant"); // optional, not required below
+const [recipePlantFilter, setRecipePlantFilter] = useState("");
 const [recipeScope, setRecipeScope] = useState("garden"); // garden | all
       const [preserveMethodId, setPreserveMethodId] = useState(null);
       const [preserveStepDone, setPreserveStepDone] = useState({}); // key: `${plantId}:${methodId}` -> boolean[]
@@ -6139,54 +6139,218 @@ const [recipeScope, setRecipeScope] = useState("garden"); // garden | all
   value={recipePlantFilter}
   onChange={e => setRecipePlantFilter(e.target.value)}
 />
-            {tab === "preserve" && (() => 
-              const methods = preserveGuide?.methods || [];
-              const activeMethod = methods.find(m => m.id === preserveMethodId) || null;
-              const stepKey = activeMethod ? `${preservePlant}:${activeMethod.id}` : null;
-              const doneArr = stepKey ? (preserveStepDone[stepKey] || (activeMethod.steps || []).map(() => false)) : [];
-              const doneCount = doneArr.filter(Boolean).length;
-              const totalSteps = activeMethod?.steps?.length || 0;
-              const progress = totalSteps ? Math.round((doneCount / totalSteps) * 100) : 0;
-
-              const toggleStep = (idx) => {
-                if (!stepKey || !activeMethod) return;
-                setPreserveStepDone(prev => {
-                  const cur = prev[stepKey] || activeMethod.steps.map(() => false);
-                  const next = [...cur];
-                  next[idx] = !next[idx];
-                  return { ...prev, [stepKey]: next };
-                });
-              };
-{(() => {
-  const q = recipePlantFilter.trim().toLowerCase();
+{tab === "preserve" && (() => {
+  const q = (recipePlantFilter || "").trim().toLowerCase();
   const gardenIds = new Set((placed || []).map(p => p.plant));
-  let list = PLANT_LIBRARY.filter(p => !p.isVariety);
+  let plantList = PLANT_LIBRARY.filter(p => !p.isVariety);
   if (recipeScope === "garden") {
-    list = list.filter(p => gardenIds.has(p.id) || [...gardenIds].some(id => (p.id === id)));
-    // also include varieties placed in garden
-    const extra = PLANT_LIBRARY.filter(p => gardenIds.has(p.id));
-    list = [...new Map([...list, ...extra].map(x => [x.id, x])).values()];
+    const fromGarden = PLANT_LIBRARY.filter(p => gardenIds.has(p.id));
+    plantList = fromGarden.length ? fromGarden : plantList.slice(0, 12);
   }
-  if (q) list = list.filter(p => (p.name || "").toLowerCase().includes(q) || (p.type || "").toLowerCase().includes(q));
+  if (q) {
+    plantList = PLANT_LIBRARY.filter(p =>
+      (p.name || "").toLowerCase().includes(q) ||
+      (p.type || "").toLowerCase().includes(q) ||
+      (p.id || "").toLowerCase().includes(q)
+    ).slice(0, 50);
+  }
+
+  const methods = preserveGuide?.methods || [];
+  const activeMethod = methods.find(m => m.id === preserveMethodId) || null;
+  const stepKey = activeMethod ? `${preservePlant}:${activeMethod.id}` : null;
+  const doneArr = stepKey
+    ? (preserveStepDone[stepKey] || (activeMethod.steps || []).map(() => false))
+    : [];
+  const doneCount = doneArr.filter(Boolean).length;
+  const totalSteps = activeMethod?.steps?.length || 0;
+  const progress = totalSteps ? Math.round((doneCount / totalSteps) * 100) : 0;
+
+  const toggleStep = (idx) => {
+    if (!stepKey || !activeMethod) return;
+    setPreserveStepDone(prev => {
+      const cur = prev[stepKey] || activeMethod.steps.map(() => false);
+      const next = [...cur];
+      next[idx] = !next[idx];
+      return { ...prev, [stepKey]: next };
+    });
+  };
+
+  const recs = typeof recipesForPlant === "function" ? recipesForPlant(preservePlant) : [];
+  const ferms = typeof fermentsForPlant === "function" ? fermentsForPlant(preservePlant) : [];
+  const selectedPl = PLANT_LIBRARY.find(p => p.id === preservePlant);
+
   return (
-    <div className="space-y-2 max-h-64 overflow-y-auto mb-3">
-      {list.slice(0, 40).map(p => {
-        const recs = recipesForPlant(p.id);
-        const ferms = fermentsForPlant(p.id);
-        return (
-          <button
-            key={p.id}
-            type="button"
-            onClick={() => setPreservePlant(p.id)}
-            className={`w-full text-left bg-white rounded-xl p-2.5 card-shadow ${preservePlant === p.id ? "ring-2 ring-sage-500" : ""}`}
-          >
-            <span className="text-sm font-medium text-sage-800">{p.icon} {p.name}</span>
-            <span className="block text-[10px] text-sage-500">
-              {recs.length} recipe(s) · {ferms.length} ferment(s)
-            </span>
-          </button>
-        );
-      })}
+    <div className="space-y-3">
+      <div className="flex gap-1">
+        <button
+          type="button"
+          onClick={() => setRecipeScope("garden")}
+          className={`flex-1 py-1.5 rounded-lg text-[11px] font-semibold ${
+            recipeScope === "garden" ? "bg-sage-600 text-white" : "bg-sage-100 text-sage-700"
+          }`}
+        >
+          My garden
+        </button>
+        <button
+          type="button"
+          onClick={() => setRecipeScope("all")}
+          className={`flex-1 py-1.5 rounded-lg text-[11px] font-semibold ${
+            recipeScope === "all" ? "bg-sage-600 text-white" : "bg-sage-100 text-sage-700"
+          }`}
+        >
+          Full library
+        </button>
+      </div>
+
+      <input
+        className="w-full border rounded-xl px-3 py-2 text-sm"
+        placeholder="Search plants…"
+        value={recipePlantFilter || ""}
+        onChange={e => setRecipePlantFilter(e.target.value)}
+      />
+
+      <div className="space-y-1.5 max-h-40 overflow-y-auto">
+        {plantList.length === 0 ? (
+          <p className="text-xs text-sage-400 text-center py-2">No plants match. Try Full library.</p>
+        ) : (
+          plantList.slice(0, 30).map(p => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => {
+                setPreservePlant(p.id);
+                setPreserveMethodId(null);
+                setPreserveStepIndex(0);
+              }}
+              className={`w-full text-left rounded-xl px-3 py-2 text-sm ${
+                preservePlant === p.id ? "bg-sage-600 text-white" : "bg-white card-shadow text-sage-800"
+              }`}
+            >
+              {p.icon} {p.name}
+            </button>
+          ))
+        )}
+      </div>
+
+      {selectedPl && (
+        <div className="bg-white rounded-2xl p-3 card-shadow">
+          <p className="font-semibold text-sage-800 text-sm mb-1">
+            {selectedPl.icon} {selectedPl.name}
+          </p>
+          <p className="text-[10px] text-sage-500 mb-2">
+            {(preserveGuide?.methods || []).length} preserve method(s)
+            {recs.length ? ` · ${recs.length} recipe(s)` : ""}
+            {ferms.length ? ` · ${ferms.length} ferment(s)` : ""}
+          </p>
+
+          {!activeMethod ? (
+            <>
+              <p className="text-[11px] font-medium text-sage-700 mb-1.5">Choose a method</p>
+              <div className="space-y-1.5">
+                {(methods.length ? methods : [{ id: "none", name: "No guide yet — try Ferment tab", steps: [] }]).map(m => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    disabled={!m.steps || !m.steps.length}
+                    onClick={() => {
+                      if (!m.steps?.length) return;
+                      setPreserveMethodId(m.id);
+                      setPreserveStepIndex(0);
+                    }}
+                    className="w-full text-left rounded-xl border border-sage-100 px-3 py-2 text-xs font-medium text-sage-800 hover:bg-sage-50 disabled:opacity-50"
+                  >
+                    {m.name || m.id}
+                    {m.time ? <span className="text-sage-400"> · {m.time}</span> : null}
+                  </button>
+                ))}
+              </div>
+
+              {recs.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-[11px] font-medium text-sage-700 mb-1">Recipes using this plant</p>
+                  {recs.slice(0, 5).map(r => (
+                    <p key={r.id} className="text-xs text-sage-600">• {r.name}</p>
+                  ))}
+                </div>
+              )}
+
+              {ferms.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-[11px] font-medium text-sage-700 mb-1">Ferments</p>
+                  {ferms.map(f => (
+                    <p key={f.id} className="text-xs text-sage-600">• {f.icon} {f.name}</p>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setTab("ferment")}
+                    className="text-[10px] text-sage-600 font-medium mt-1 underline"
+                  >
+                    Open Ferment tab
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-2">
+                <button
+                  type="button"
+                  onClick={() => setPreserveMethodId(null)}
+                  className="text-[11px] text-sage-600 font-medium"
+                >
+                  ← Methods
+                </button>
+                <span className="text-[10px] text-sage-500">{progress}%</span>
+              </div>
+              <h4 className="text-sm font-semibold text-sage-800 mb-1">{activeMethod.name}</h4>
+              {activeMethod.safety && (
+                <p className="text-[10px] text-amber-800 bg-amber-50 rounded-lg px-2 py-1.5 mb-2">
+                  {activeMethod.safety}
+                </p>
+              )}
+              <div className="h-1.5 bg-sage-100 rounded-full mb-3 overflow-hidden">
+                <div className="h-full bg-sage-600 rounded-full" style={{ width: `${progress}%` }} />
+              </div>
+              <ul className="space-y-2">
+                {(activeMethod.steps || []).map((step, idx) => (
+                  <li key={idx}>
+                    <button
+                      type="button"
+                      onClick={() => toggleStep(idx)}
+                      className={`w-full text-left flex gap-2 items-start rounded-xl px-2.5 py-2 text-xs ${
+                        doneArr[idx] ? "bg-green-50 text-green-900" : "bg-sage-50 text-sage-800"
+                      }`}
+                    >
+                      <span className="mt-0.5">{doneArr[idx] ? "✅" : "⬜"}</span>
+                      <span>{step}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
+      )}
+
+      {readyPreserve && readyPreserve.length > 0 && (
+        <div className="bg-amber-50 border border-amber-100 rounded-2xl p-3">
+          <p className="text-xs font-semibold text-amber-900 mb-1">Harvest window soon</p>
+          {readyPreserve.slice(0, 4).map(x => (
+            <button
+              key={x.id}
+              type="button"
+              onClick={() => {
+                setPreservePlant(x.plant);
+                setPreserveMethodId(null);
+              }}
+              className="block w-full text-left text-xs text-amber-900 py-0.5"
+            >
+              {x.pl?.icon} {x.pl?.name || x.plant}
+              {x.days < 0 ? " · harvesting" : ` · in ~${x.days}d`}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 })()}
