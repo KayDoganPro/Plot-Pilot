@@ -6076,7 +6076,7 @@ function KitchenScreen({ profile, planYear, setPlanYear, placed, setPlaced, beds
   }, [placed, planYear]);
 
   const visibleRecipes = useMemo(() => {
-    const q = recipeSearch.trim().toLowerCase();
+    const q = (recipeSearch || "").trim().toLowerCase();
     return (recipeList || []).filter(r => {
       if (!q) return true;
       if ((r.name || "").toLowerCase().includes(q)) return true;
@@ -6113,7 +6113,7 @@ function KitchenScreen({ profile, planYear, setPlanYear, placed, setPlaced, beds
             <input
               className="w-full border rounded-xl px-3 py-2 text-sm"
               placeholder="Search recipes or plant id…"
-              value={recipeSearch}
+              value={recipeSearch || ""}
               onChange={e => setRecipeSearch(e.target.value)}
             />
             {selected.size > 0 && (
@@ -6146,7 +6146,11 @@ function KitchenScreen({ profile, planYear, setPlanYear, placed, setPlaced, beds
                         {on ? "✓" : ""}
                       </button>
                       <div className="flex-1 min-w-0">
-                        <button type="button" onClick={() => setDetail(detail === r.id ? null : r.id)} className="text-left w-full">
+                        <button
+                          type="button"
+                          onClick={() => setDetail(detail === r.id ? null : r.id)}
+                          className="text-left w-full"
+                        >
                           <p className="font-semibold text-sage-800 text-sm">{r.name}</p>
                           <p className="text-[10px] text-sage-500">{r.time || r.difficulty || ""}</p>
                         </button>
@@ -6160,7 +6164,9 @@ function KitchenScreen({ profile, planYear, setPlanYear, placed, setPlaced, beds
                                 </p>
                               );
                             })}
-                            {r.steps && <p className="text-sage-500 mt-1 whitespace-pre-wrap">{r.steps}</p>}
+                            {r.steps && (
+                              <p className="text-sage-500 mt-1 whitespace-pre-wrap">{r.steps}</p>
+                            )}
                           </div>
                         )}
                       </div>
@@ -6209,8 +6215,8 @@ function KitchenScreen({ profile, planYear, setPlanYear, placed, setPlaced, beds
             });
           };
 
-          const recs = recipesForPlant(preservePlant);
-          const ferms = fermentsForPlant(preservePlant);
+          const recs = typeof recipesForPlant === "function" ? recipesForPlant(preservePlant) : [];
+          const ferms = typeof fermentsForPlant === "function" ? fermentsForPlant(preservePlant) : [];
           const selectedPl = PLANT_LIBRARY.find(p => p.id === preservePlant);
 
           return (
@@ -6238,7 +6244,7 @@ function KitchenScreen({ profile, planYear, setPlanYear, placed, setPlaced, beds
               <input
                 className="w-full border rounded-xl px-3 py-2 text-sm"
                 placeholder="Search plants…"
-                value={recipePlantFilter}
+                value={recipePlantFilter || ""}
                 onChange={e => setRecipePlantFilter(e.target.value)}
               />
               <div className="space-y-1.5 max-h-40 overflow-y-auto">
@@ -6249,7 +6255,6 @@ function KitchenScreen({ profile, planYear, setPlanYear, placed, setPlaced, beds
                     onClick={() => {
                       setPreservePlant(p.id);
                       setPreserveMethodId(null);
-                      setPreserveStepIndex(0);
                     }}
                     className={`w-full text-left rounded-xl px-3 py-2 text-sm ${
                       preservePlant === p.id ? "bg-sage-600 text-white" : "bg-white card-shadow text-sage-800"
@@ -6262,7 +6267,7 @@ function KitchenScreen({ profile, planYear, setPlanYear, placed, setPlaced, beds
 
               {selectedPl && (
                 <div className="bg-white rounded-2xl p-3 card-shadow">
-                  <p className="font-semibold text-sage-800 text-sm mb-1">
+                  <p className="font-semibold text-sage-800 text-sm">
                     {selectedPl.icon} {selectedPl.name}
                   </p>
                   <p className="text-[10px] text-sage-500 mb-2">
@@ -6273,69 +6278,37 @@ function KitchenScreen({ profile, planYear, setPlanYear, placed, setPlaced, beds
 
                   {!activeMethod ? (
                     <>
-                      <p className="text-[11px] font-medium text-sage-700 mb-1.5">Preserve methods</p>
-                      <div className="space-y-1.5">
-                        {(methods.length ? methods : []).map(m => (
-                          <button
-                            key={m.id}
-                            type="button"
-                            onClick={() => {
-                              setPreserveMethodId(m.id);
-                              setPreserveStepIndex(0);
-                            }}
-                            className="w-full text-left rounded-xl border border-sage-100 px-3 py-2 text-xs font-medium text-sage-800 hover:bg-sage-50"
-                          >
-                            {m.name || m.id}
-                            {m.time ? <span className="text-sage-400"> · {m.time}</span> : null}
-                          </button>
-                        ))}
-                        {!methods.length && (
-                          <p className="text-xs text-sage-400">No canning/freeze guide for this plant yet. Try Ferment.</p>
-                        )}
-                      </div>
-                      {recs.length > 0 && (
-                        <div className="mt-3">
-                          <p className="text-[11px] font-medium text-sage-700 mb-1">Recipes</p>
-                          {recs.slice(0, 6).map(r => (
-                            <p key={r.id} className="text-xs text-sage-600">• {r.name}</p>
-                          ))}
-                        </div>
-                      )}
-                      {ferms.length > 0 && (
-                        <div className="mt-2">
-                          <p className="text-[11px] font-medium text-sage-700 mb-1">Ferments</p>
-                          {ferms.map(f => (
-                            <p key={f.id} className="text-xs text-sage-600">• {f.icon} {f.name}</p>
-                          ))}
-                          <button type="button" onClick={() => setTab("ferment")} className="text-[10px] text-sage-600 underline mt-1">
-                            Open Ferment tab
-                          </button>
-                        </div>
+                      {(methods || []).map(m => (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => setPreserveMethodId(m.id)}
+                          className="w-full text-left rounded-xl border border-sage-100 px-3 py-2 text-xs font-medium text-sage-800 mb-1.5"
+                        >
+                          {m.name || m.id}
+                        </button>
+                      ))}
+                      {!methods.length && (
+                        <p className="text-xs text-sage-400">No preserve guide for this plant. Try Ferment.</p>
                       )}
                     </>
                   ) : (
                     <>
-                      <div className="flex justify-between mb-2">
-                        <button type="button" onClick={() => setPreserveMethodId(null)} className="text-[11px] text-sage-600 font-medium">
-                          ← Methods
-                        </button>
-                        <span className="text-[10px] text-sage-500">{progress}%</span>
-                      </div>
-                      <h4 className="text-sm font-semibold text-sage-800 mb-1">{activeMethod.name}</h4>
-                      {activeMethod.safety && (
-                        <p className="text-[10px] text-amber-800 bg-amber-50 rounded-lg px-2 py-1.5 mb-2">{activeMethod.safety}</p>
-                      )}
-                      <div className="h-1.5 bg-sage-100 rounded-full mb-3 overflow-hidden">
-                        <div className="h-full bg-sage-600 rounded-full" style={{ width: `${progress}%` }} />
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setPreserveMethodId(null)}
+                        className="text-[11px] text-sage-600 font-medium mb-2"
+                      >
+                        ← Methods ({progress}%)
+                      </button>
                       <ul className="space-y-2">
                         {(activeMethod.steps || []).map((step, idx) => (
                           <li key={idx}>
                             <button
                               type="button"
                               onClick={() => toggleStep(idx)}
-                              className={`w-full text-left flex gap-2 items-start rounded-xl px-2.5 py-2 text-xs ${
-                                doneArr[idx] ? "bg-green-50 text-green-900" : "bg-sage-50 text-sage-800"
+                              className={`w-full text-left flex gap-2 rounded-xl px-2.5 py-2 text-xs ${
+                                doneArr[idx] ? "bg-green-50" : "bg-sage-50"
                               }`}
                             >
                               <span>{doneArr[idx] ? "✅" : "⬜"}</span>
@@ -6348,23 +6321,6 @@ function KitchenScreen({ profile, planYear, setPlanYear, placed, setPlaced, beds
                   )}
                 </div>
               )}
-
-              {readyPreserve.length > 0 && (
-                <div className="bg-amber-50 border border-amber-100 rounded-2xl p-3">
-                  <p className="text-xs font-semibold text-amber-900 mb-1">Harvest window soon</p>
-                  {readyPreserve.slice(0, 4).map(x => (
-                    <button
-                      key={x.id}
-                      type="button"
-                      onClick={() => { setPreservePlant(x.plant); setPreserveMethodId(null); }}
-                      className="block w-full text-left text-xs text-amber-900 py-0.5"
-                    >
-                      {x.pl?.icon} {x.pl?.name || x.plant}
-                      {x.days < 0 ? " · harvesting" : ` · in ~${x.days}d`}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
           );
         })()}
@@ -6373,18 +6329,16 @@ function KitchenScreen({ profile, planYear, setPlanYear, placed, setPlaced, beds
         {tab === "ferment" && (
           <div className="space-y-3">
             <p className="text-xs text-sage-500">
-              Lacto-fermentation for garden harvests. Keep food under brine. Fuzzy colored mold = toss. White kahm yeast can be skimmed.
+              Keep food under brine. Colored fuzzy mold = toss.
             </p>
             {(typeof FERMENT_GUIDES !== "undefined" ? FERMENT_GUIDES : []).map(f => (
               <div key={f.id} className="bg-white rounded-2xl p-4 card-shadow">
-                <div className="flex items-start gap-2 mb-2">
-                  <span className="text-2xl">{f.icon}</span>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-sage-800 text-sm">{f.name}</h3>
-                    <p className="text-[10px] text-sage-500">{f.difficulty} · {f.time}</p>
-                    <p className="text-[10px] text-sage-500 mt-0.5">Crops: {(f.plants || []).join(", ")}</p>
-                  </div>
-                </div>
+                <p className="font-semibold text-sm text-sage-800">
+                  {f.icon} {f.name}
+                </p>
+                <p className="text-[10px] text-sage-500 mb-2">
+                  {f.difficulty} · {f.time} · {(f.plants || []).join(", ")}
+                </p>
                 {f.safety && (
                   <p className="text-[11px] text-amber-800 bg-amber-50 rounded-lg px-2 py-1.5 mb-2">{f.safety}</p>
                 )}
@@ -6395,18 +6349,12 @@ function KitchenScreen({ profile, planYear, setPlanYear, placed, setPlaced, beds
                 </ol>
               </div>
             ))}
-            {typeof FERMENT_GUIDES === "undefined" && (
-              <p className="text-xs text-red-600">
-                Add the FERMENT_GUIDES array above KitchenScreen (see earlier message).
-              </p>
-            )}
           </div>
         )}
       </div>
     </div>
   );
 }
-
     // ========== PHASE 1: 3-year plan, schedules, succession, harvest ==========
     function harvestVarietyKey(plantId, customPlants) {
       const pl = resolvePlant(plantId, customPlants) || PLANT_LIBRARY.find(p => p.id === plantId);
