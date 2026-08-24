@@ -218,6 +218,10 @@
       { id: "zinnia", name: "Zinnia", scientific: "Zinnia elegans", type: "Flower", spacing: "8-12 in", spacingIn: 10, sun: "Full sun", icon: "🌸", family: "Asteraceae", familyName: "Aster", germDays: 5, daysToHarvest: 60, fertilizeEveryDays: 21, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0, method: "direct", successionDays: 14, homestead: ["pollinator", "cutflower", "compost"] },
       { id: "cosmos", name: "Cosmos", scientific: "Cosmos bipinnatus", type: "Flower", spacing: "12 in", spacingIn: 12, sun: "Full sun", icon: "🌺", family: "Asteraceae", familyName: "Aster", germDays: 7, daysToHarvest: 70, fertilizeEveryDays: 0, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0, method: "direct", successionDays: 14, homestead: ["pollinator", "cutflower", "selfseed"] },
       { id: "echinacea", name: "Echinacea", scientific: "Echinacea purpurea", type: "Flower", spacing: "12-18 in", spacingIn: 18, sun: "Full sun", icon: "💜", family: "Asteraceae", familyName: "Aster", germDays: 14, daysToHarvest: 100, fertilizeEveryDays: 45, startWeeksBeforeFrost: 8, transplantWeeksBeforeFrost: 2, method: "indoor", successionDays: 0, homestead: ["pollinator", "cutflower", "tea", "perennial"] },
+      { id: "aster", name: "Aster", scientific: "Symphyotrichum spp.", type: "Flower", spacing: "12-18 in", spacingIn: 14, sun: "Full sun", icon: "💜", family: "Asteraceae", familyName: "Aster", germDays: 14, daysToHarvest: 100, fertilizeEveryDays: 30, startWeeksBeforeFrost: 8, transplantWeeksBeforeFrost: 2, method: "indoor", successionDays: 0, homestead: ["pollinator", "cutflower", "perennial", "beneficialinsects"] },
+      { id: "china-aster", name: "China Aster", scientific: "Callistephus chinensis", type: "Flower", spacing: "8-12 in", spacingIn: 10, sun: "Full sun", icon: "🌸", family: "Asteraceae", familyName: "Aster", germDays: 10, daysToHarvest: 90, fertilizeEveryDays: 21, startWeeksBeforeFrost: 6, transplantWeeksBeforeFrost: 1, method: "indoor", successionDays: 0, homestead: ["pollinator", "cutflower"] },
+      { id: "new-england-aster", name: "New England Aster", scientific: "Symphyotrichum novae-angliae", type: "Flower", spacing: "18-24 in", spacingIn: 18, sun: "Full sun", icon: "🟣", family: "Asteraceae", familyName: "Aster", germDays: 14, daysToHarvest: 120, fertilizeEveryDays: 45, startWeeksBeforeFrost: 8, transplantWeeksBeforeFrost: 2, method: "indoor", successionDays: 0, homestead: ["pollinator", "perennial", "beneficialinsects", "cutflower"] },
+      { id: "michaelmas-daisy", name: "Michaelmas Daisy", scientific: "Symphyotrichum novi-belgii", type: "Flower", spacing: "12-18 in", spacingIn: 14, sun: "Full sun", icon: "💙", family: "Asteraceae", familyName: "Aster", germDays: 14, daysToHarvest: 110, fertilizeEveryDays: 30, startWeeksBeforeFrost: 8, transplantWeeksBeforeFrost: 2, method: "indoor", successionDays: 0, homestead: ["pollinator", "perennial", "cutflower"] },
       { id: "yarrow", name: "Yarrow", scientific: "Achillea millefolium", type: "Flower", spacing: "12 in", spacingIn: 12, sun: "Full sun", icon: "🤍", family: "Asteraceae", familyName: "Aster", germDays: 10, daysToHarvest: 90, fertilizeEveryDays: 0, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0, method: "direct", successionDays: 0, homestead: ["pollinator", "compost", "perennial"] },
       { id: "borage", name: "Borage", scientific: "Borago officinalis", type: "Herb", spacing: "12 in", spacingIn: 12, sun: "Full sun", icon: "🔵", family: "Boraginaceae", familyName: "Borage", germDays: 7, daysToHarvest: 50, fertilizeEveryDays: 0, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0, method: "direct", successionDays: 0, homestead: ["pollinator", "chicken", "compost", "edibleflower"] },
       { id: "nasturtium", name: "Nasturtium", scientific: "Tropaeolum majus", type: "Flower", spacing: "8-12 in", spacingIn: 10, sun: "Full sun", icon: "🧡", family: "Tropaeolaceae", familyName: "Nasturtium", germDays: 7, daysToHarvest: 45, fertilizeEveryDays: 0, startWeeksBeforeFrost: 0, transplantWeeksBeforeFrost: 0, method: "direct", successionDays: 0, homestead: ["pollinator", "edibleflower", "pesttrap", "chicken"] },
@@ -526,6 +530,26 @@
       echinacea: [
         ["purple-coneflower", "Purple Coneflower", "EB"], ["white-swan", "White Swan", "EB"],
         ["magnus", "Magnus", "EB"], ["cheyenne-spirit", "Cheyenne Spirit", "EB"],
+      ],
+      aster: [
+        ["mix", "Aster Mix", "EB"], ["powder-puff", "Powder Puff Mix", "EB"],
+        ["crego-mix", "Crego Mix", "EB"], ["ostrich-plume", "Ostrich Plume", "EB"],
+        ["alpine", "Alpine Aster", "EB"], ["september-ruby", "September Ruby", "EB"],
+        ["purple-dome", "Purple Dome", "EB"], ["alma-potschke", "Alma Potschke", "EB"],
+        ["andenken", "Andenken an Alma Potschke", "EB"], ["wood's-purple", "Wood's Purple", "EB"],
+      ],
+      "china-aster": [
+        ["giant-princess", "Giant Princess Mix", "EB"], ["matsumoto", "Matsumoto Mix", "EB"],
+        ["powderpuff-china", "Powderpuff China Aster", "EB"], ["spider-mix", "Spider Mix", "EB"],
+        ["duchess", "Duchess Mix", "EB"], ["bouquet", "Bouquet Mix", "EB"],
+      ],
+      "new-england-aster": [
+        ["purple-dome-ne", "Purple Dome", "EB"], ["vibrant-dome", "Vibrant Dome", "EB"],
+        ["andenken-ne", "Alma Potschke", "EB"], ["september-rubies", "September Rubies", "EB"],
+      ],
+      "michaelmas-daisy": [
+        ["professor-anton", "Professor Anton Kippenberg", "EB"], ["royal-ruby", "Royal Ruby", "EB"],
+        ["white-ladies", "White Ladies", "EB"], ["patricia-ballard", "Patricia Ballard", "EB"],
       ],
       yarrow: [
         ["colorado-mix", "Colorado Mix", "EB"], ["cerise-queen", "Cerise Queen", "EB"], ["white-common", "Common White", "EB"],
