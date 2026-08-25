@@ -2780,18 +2780,42 @@
     function Dashboard({ tasks, setTasks, seeds, placed, setActive, journal, customPlants, profile, rotationHistory, beds }) {
       const lowStock = seeds.filter(s => s.low || s.qty <= 3).length;
       const toggleTask = (id) => {
-        setTasks(prev => prev.map(t => {
-          if (t.id !== id) return t;
-          if (t.done) {
-            const { completedAt, ...rest } = t;
-            return { ...rest, done: false };
+        setTasks(prev => {
+          const target = (prev || []).find(t => t.id === id);
+          if (!target) return prev;
+          if (target.done) {
+            return prev.map(t => {
+              if (t.id !== id) return t;
+              const { completedAt, ...rest } = t;
+              return { ...rest, done: false };
+            });
           }
-          if (t.kind === "restock" || String(t.title || "").toLowerCase().startsWith("restock ")) {
-            const name = t.seedName || String(t.title || "").replace(/^restock\s+/i, "").trim();
-            dismissRestockReminder(t.seedId, name);
+          if (target.kind === "restock" || String(target.title || "").toLowerCase().startsWith("restock ")) {
+            const name = target.seedName || String(target.title || "").replace(/^restock\s+/i, "").trim();
+            dismissRestockReminder(target.seedId, name);
           }
-          return { ...t, done: true, completedAt: new Date().toISOString() };
-        }));
+          const isWxWater = (t) =>
+            t.kind === "weather_drought" ||
+            t.kind === "weather_water" ||
+            /drought watering|water the garden/i.test(String(t.title || ""));
+          // Completing any weather water/drought clears all open siblings + 7-day cooldown
+          if (isWxWater(target)) {
+            try {
+              const until = toISODate(addDays(new Date(), 7));
+              localStorage.setItem("pp_wx_cooldown_weather_water", until);
+              localStorage.setItem("pp_wx_cooldown_weather_drought", until);
+            } catch (_) {}
+            return prev.map(t => {
+              if (t.id === id || (isWxWater(t) && !t.done)) {
+                return { ...t, done: true, completedAt: new Date().toISOString() };
+              }
+              return t;
+            });
+          }
+          return prev.map(t =>
+            t.id === id ? { ...t, done: true, completedAt: new Date().toISOString() } : t
+          );
+        });
       };
       const undoTask = (id) => {
         setTasks(prev => prev.map(t => {
@@ -3121,17 +3145,16 @@
         return tips;
       };
 
-      // Auto-add weather tasks sparingly: at most one water + one inspect every 4 days
+      // Auto-add weather tasks sparingly: at most one water task every 7 days
       useEffect(() => {
         if (!weatherSignals || !setTasks) return;
         const today = toISODate(new Date());
-        const cooldownDays = 4;
+        const cooldownDays = 7;
         const inCooldown = (kind) => {
           try {
             const raw = localStorage.getItem(`pp_wx_cooldown_${kind}`);
             if (!raw) return false;
-            const until = raw;
-            return until >= today;
+            return raw >= today;
           } catch (_) {
             return false;
           }
@@ -3144,59 +3167,72 @@
             );
           } catch (_) {}
         };
-        const addIfNeeded = (kind, payload) => {
-          if (inCooldown(kind)) return;
-          setTasks(prev => {
-            const open = (prev || []).some(t =>
-              (t.kind === kind || t.kind === "weather_drought" || t.kind === "weather_water") &&
-              !t.done &&
-              (kind === "weather_inspect" ? t.kind === "weather_inspect" : (t.kind === "weather_water" || t.kind === "weather_drought"))
+
+        // Always collapse stacked open drought/water tasks first
+        setTasks(prev => {
+          const isWxWater = (t) =>
+            t && !t.done && (
+              t.kind === "weather_drought" ||
+              t.kind === "weather_water" ||
+              /drought watering|water the garden/i.test(String(t.title || ""))
             );
-            // Any open water/drought task already counts — don't stack
-            if (kind !== "weather_inspect") {
-              const openWater = (prev || []).some(t =>
-                !t.done && (t.kind === "weather_water" || t.kind === "weather_drought")
-              );
-              if (openWater) {
-                setCooldown("weather_water");
-                return prev;
-              }
-            } else if (open) {
-              setCooldown(kind);
+          const open = (prev || []).filter(isWxWater);
+          if (open.length <= 1) return prev;
+          // Keep newest one only
+          const keepId = open[0].id;
+          setCooldown("weather_water");
+          setCooldown("weather_drought");
+          return (prev || []).filter(t => !isWxWater(t) || t.id === keepId);
+        });
+
+        if (weatherSignals.needWater && !inCooldown("weather_water") && !inCooldown("weather_drought")) {
+          setTasks(prev => {
+            const openWater = (prev || []).some(t =>
+              !t.done && (
+                t.kind === "weather_water" ||
+                t.kind === "weather_drought" ||
+                /drought watering|water the garden/i.test(String(t.title || ""))
+              )
+            );
+            if (openWater) {
+              setCooldown("weather_water");
               return prev;
             }
-            setCooldown(kind);
-            return [payload, ...(prev || [])];
-          });
-        };
-
-        if (weatherSignals.needWater) {
-          addIfNeeded("weather_water", {
-            id: Date.now() + 0.12,
-            kind: "weather_water",
-            title: "Water the garden",
-            plants: ["Garden"],
-            detail: `Very dry (~${weatherSignals.past3.toFixed(2)}" in 3 days, little rain ahead). Water deeply if soil is dry 2" down.`,
-            done: false,
-            icon: "💧",
-            due: today,
-            windowStart: today,
-            windowEnd: toISODate(addDays(new Date(), 3)),
+            setCooldown("weather_water");
+            return [{
+              id: Date.now() + 0.12,
+              kind: "weather_water",
+              title: "Water the garden",
+              plants: ["Garden"],
+              detail: `Very dry (~${weatherSignals.past3.toFixed(2)}" in 3 days, little rain ahead). Water deeply if soil is dry 2" down.`,
+              done: false,
+              icon: "💧",
+              due: today,
+              windowStart: today,
+              windowEnd: toISODate(addDays(new Date(), 1)),
+            }, ...(prev || [])];
           });
         }
 
-        if (weatherSignals.inspectAfterRain) {
-          addIfNeeded("weather_inspect", {
-            id: Date.now() + 0.13,
-            kind: "weather_inspect",
-            title: "Check after heavy rain",
-            plants: ["Garden"],
-            detail: "Optional: look for mildew, standing water, or slug damage after a heavy rain.",
-            done: false,
-            icon: "🍄",
-            due: today,
-            windowStart: today,
-            windowEnd: toISODate(addDays(new Date(), 2)),
+        if (weatherSignals.inspectAfterRain && !inCooldown("weather_inspect")) {
+          setTasks(prev => {
+            if ((prev || []).some(t => !t.done && t.kind === "weather_inspect")) {
+              setCooldown("weather_inspect");
+              return prev;
+            }
+            setCooldown("weather_inspect");
+            return [{
+              id: Date.now() + 0.13,
+              kind: "weather_inspect",
+              title: "Check after heavy rain",
+              plants: ["Garden"],
+              detail: "Optional: look for mildew, standing water, or slug damage after a heavy rain.",
+              done: false,
+              icon: "🍄",
+              due: today,
+              windowStart: today,
+              windowEnd: toISODate(addDays(new Date(), 1)),
+            }, ...(prev || [])];
           });
         }
       }, [weatherSignals, setTasks]);
@@ -9306,7 +9342,24 @@
       const [active, setActive] = useState("home");
       const [tasks, setTasks] = useState(() => {
         const saved = localStorage.getItem("pp_tasks");
-        return saved ? JSON.parse(saved) : INITIAL_TASKS;
+        let list = saved ? JSON.parse(saved) : INITIAL_TASKS;
+        // One-time cleanup: drop stacked drought/water weather nags (old builds created many)
+        try {
+          const isWxWater = (t) =>
+            t && !t.done && (
+              t.kind === "weather_drought" ||
+              t.kind === "weather_water" ||
+              /drought watering|water the garden/i.test(String(t.title || ""))
+            );
+          const openWx = (list || []).filter(isWxWater);
+          if (openWx.length) {
+            list = (list || []).filter(t => !isWxWater(t));
+            const until = toISODate(addDays(new Date(), 7));
+            localStorage.setItem("pp_wx_cooldown_weather_water", until);
+            localStorage.setItem("pp_wx_cooldown_weather_drought", until);
+          }
+        } catch (_) {}
+        return list;
       });
       const [seeds, setSeeds] = useState(() => {
         const saved = localStorage.getItem("pp_seeds");
