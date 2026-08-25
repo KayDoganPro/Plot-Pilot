@@ -2029,7 +2029,7 @@
     // Legacy alias so older UI that references BEDS still works until fully migrated
     const BEDS = DEFAULT_BEDS;
 
-    // ========== PHASE 2: Kitchen — recipes, preserve, ferment=========
+    // ========== PHASE 2: Kitchen — recipes, preserve, herbs ==========
     // ingredients: { plantId, amount, unit, optional }
     // yieldPerPlant: rough harvest per plant in same unit (for plant-count estimate)
     const RECIPE_LIBRARY = [
@@ -2222,85 +2222,7 @@
       { plantId: "thyme", amount: 4, unit: "sprig", yieldPerPlant: 20 },
       { plantId: "basil", amount: 4, unit: "leaf", yieldPerPlant: 40 },
     ];
-const FERMENT_GUIDES = [
-  {
-    id: "kraut",
-    name: "Sauerkraut / cabbage ferment",
-    icon: "🥬",
-    plants: ["cabbage", "kale"],
-    difficulty: "Easy",
-    time: "1–4 weeks",
-    safety: "Use 1.5–2% salt by weight of cabbage. Keep under brine. White kahm yeast is common — skim it. Fuzzy colored mold = toss.",
-    steps: [
-      "Weigh shredded cabbage; add 1.5–2% sea salt (no iodine)",
-      "Massage until brine forms; pack tightly in a clean jar",
-      "Weight cabbage under the brine; loose lid or airlock",
-      "Ferment 65–72°F out of direct sun 5–14+ days; taste as you go",
-      "Refrigerate when tangy enough; use clean utensils only",
-    ],
-  },
-  {
-    id: "lacto-pickles",
-    name: "Lacto vegetable pickles",
-    icon: "🥒",
-    plants: ["cucumber", "carrot", "bean", "pepper", "beet", "radish", "garlic", "onion"],
-    difficulty: "Easy",
-    time: "3–14 days",
-    safety: "Brine ~2–3% salt (about 1–1.5 Tbsp salt per quart water). Always keep food under brine.",
-    steps: [
-      "Wash produce; trim blossom ends on cucumbers",
-      "Pack jar with veg + garlic/dill/spices if desired",
-      "Cover with cooled salt brine; weight under liquid",
-      "Ferment at room temp; burp jars daily if sealed tight",
-      "When sour enough, move to fridge",
-    ],
-  },
-  {
-    id: "hot-sauce",
-    name: "Fermented hot sauce",
-    icon: "🌶️",
-    plants: ["pepper", "garlic", "onion", "tomato"],
-    difficulty: "Medium",
-    time: "1–3 weeks + blend",
-    safety: "Same brine rules as pickles. Blend only after active ferment smells clean and sour, not rotten.",
-    steps: [
-      "Chop peppers (and onion/garlic); cover with 2–3% brine",
-      "Ferment until bubbly and pleasantly sour",
-      "Strain (save brine); blend solids with some brine + vinegar to taste",
-      "Simmer briefly if you want a longer pantry life; bottle and refrigerate",
-    ],
-  },
-  {
-    id: "kimchi-style",
-    name: "Kimchi-style mixed ferment",
-    icon: "배추",
-    plants: ["cabbage", "radish", "carrot", "garlic", "onion"],
-    difficulty: "Medium",
-    time: "3–10 days",
-    safety: "Salt cabbage first; keep under brine or paste. Refrigerate when tangy.",
-    steps: [
-      "Salt napa or green cabbage 1–2 hours; rinse if very salty",
-      "Mix with grated radish/carrot, garlic, onion, chili to taste",
-      "Pack into jar; press down so liquid rises",
-      "Ferment cool room temp; refrigerate when ready",
-    ],
-  },
-  {
-    id: "fruit-shrub",
-    name: "Fruit ferment / shrub base",
-    icon: "🫐",
-    plants: ["strawberry", "blueberry", "tomato"],
-    difficulty: "Easy",
-    time: "3–7 days",
-    safety: "Use sound fruit only. If it smells like nail polish or moldy, discard.",
-    steps: [
-      "Layer fruit + sugar (roughly equal by weight) in a jar",
-      "Loose lid; stir daily until juicy and lightly fizzy",
-      "Strain; mix liquid with vinegar for a shrub, or use as a flavor base",
-      "Refrigerate",
-    ],
-  },
-];
+
     const PRESERVE_GUIDES = [
       { plantId: "tomato", methods: [
         { id: "can", name: "Water-bath can (acidified)", difficulty: "Medium", time: "2–4 hrs", equipment: ["Canner / large pot", "Jars + lids", "Jar lifter", "Lemon juice or citric acid"], safety: "Tomatoes need added acid. Use a current tested recipe (USDA / extension). Never invent times.",
@@ -2507,6 +2429,107 @@ const FERMENT_GUIDES = [
       { plantId: "dill", uses: ["Culinary: pickles, fish, yogurt sauces", "Seed heads for brines"], caution: "Culinary use only." },
       { plantId: "mint", uses: ["Culinary: teas, desserts, salads"], caution: "Aggressive spreader — pot it. Culinary only." },
     ];
+
+    // Fermentation guides (Kitchen → Ferment tab)
+    const FERMENT_GUIDES = [
+      {
+        id: "kraut",
+        name: "Sauerkraut / cabbage ferment",
+        icon: "🥬",
+        plants: ["cabbage", "kale"],
+        difficulty: "Easy",
+        time: "1–4 weeks",
+        safety: "Use 1.5–2% salt by weight of cabbage. Keep under brine. White kahm yeast is common — skim it. Fuzzy colored mold = toss.",
+        steps: [
+          "Weigh shredded cabbage; add 1.5–2% sea salt (no iodine)",
+          "Massage until brine forms; pack tightly in a clean jar",
+          "Weight cabbage under the brine; loose lid or airlock",
+          "Ferment 65–72°F out of direct sun 5–14+ days; taste as you go",
+          "Refrigerate when tangy enough; use clean utensils only",
+        ],
+      },
+      {
+        id: "lacto-pickles",
+        name: "Lacto vegetable pickles",
+        icon: "🥒",
+        plants: ["cucumber", "carrot", "bean", "pepper", "beet", "radish", "garlic", "onion"],
+        difficulty: "Easy",
+        time: "3–14 days",
+        safety: "Brine ~2–3% salt (about 1–1.5 Tbsp salt per quart water). Always keep food under brine.",
+        steps: [
+          "Wash produce; trim blossom ends on cucumbers",
+          "Pack jar with veg + garlic/dill/spices if desired",
+          "Cover with cooled salt brine; weight under liquid",
+          "Ferment at room temp; burp jars daily if sealed tight",
+          "When sour enough, move to fridge",
+        ],
+      },
+      {
+        id: "hot-sauce",
+        name: "Fermented hot sauce",
+        icon: "🌶️",
+        plants: ["pepper", "garlic", "onion", "tomato"],
+        difficulty: "Medium",
+        time: "1–3 weeks + blend",
+        safety: "Same brine rules as pickles. Blend only after active ferment smells clean and sour, not rotten.",
+        steps: [
+          "Chop peppers (and onion/garlic); cover with 2–3% brine",
+          "Ferment until bubbly and pleasantly sour",
+          "Strain (save brine); blend solids with some brine + vinegar to taste",
+          "Simmer briefly if you want longer fridge life; bottle and refrigerate",
+        ],
+      },
+      {
+        id: "kimchi-style",
+        name: "Kimchi-style mixed ferment",
+        icon: "🥬",
+        plants: ["cabbage", "radish", "carrot", "garlic", "onion"],
+        difficulty: "Medium",
+        time: "3–10 days",
+        safety: "Salt cabbage first; keep under brine or paste. Refrigerate when tangy.",
+        steps: [
+          "Salt napa or green cabbage 1–2 hours; rinse if very salty",
+          "Mix with grated radish/carrot, garlic, onion, chili to taste",
+          "Pack into jar; press down so liquid rises",
+          "Ferment cool room temp; refrigerate when ready",
+        ],
+      },
+      {
+        id: "fruit-shrub",
+        name: "Fruit ferment / shrub base",
+        icon: "🫐",
+        plants: ["strawberry", "blueberry", "tomato"],
+        difficulty: "Easy",
+        time: "3–7 days",
+        safety: "Use sound fruit only. If it smells like nail polish or moldy, discard.",
+        steps: [
+          "Layer fruit + sugar (roughly equal by weight) in a jar",
+          "Loose lid; stir daily until juicy and lightly fizzy",
+          "Strain; mix liquid with vinegar for a shrub, or use as a flavor base",
+          "Refrigerate",
+        ],
+      },
+    ];
+
+    function recipesForPlantId(plantId) {
+      const key = typeof cropKeyOf === "function" ? cropKeyOf(plantId) : plantId;
+      return (RECIPE_LIBRARY || []).filter(r =>
+        (r.ingredients || []).some(ing => {
+          const id = ing.plantId || ing.id;
+          if (!id) return false;
+          if (id === plantId || id === key) return true;
+          if (typeof cropKeyOf === "function" && cropKeyOf(id) === key) return true;
+          return false;
+        })
+      );
+    }
+
+    function fermentsForPlantId(plantId) {
+      const key = typeof cropKeyOf === "function" ? cropKeyOf(plantId) : plantId;
+      return (FERMENT_GUIDES || []).filter(f =>
+        (f.plants || []).some(p => p === plantId || p === key || (typeof cropKeyOf === "function" && cropKeyOf(p) === key))
+      );
+    }
 
     function plantsNeededForIngredient(ing) {
       const y = Number(ing.yieldPerPlant) || 1;
@@ -5883,478 +5906,575 @@ const FERMENT_GUIDES = [
     }
 
     // ========== PHASE 2 UI: Kitchen ==========
-   function recipesForPlant(plantId) {
-  const key = cropKeyOf ? cropKeyOf(plantId) : plantId;
-  return (RECIPES || []).filter(r =>
-    (r.ingredients || []).some(ing => {
-      const id = ing.plantId || ing.id;
-      return id === plantId || id === key || (cropKeyOf && cropKeyOf(id) === key);
-    })
-  );
-}
+    function KitchenScreen({ profile, planYear, setPlanYear, placed, setPlaced, beds, setTasks, setSeeds, setActive }) {
+      const [tab, setTab] = useState("recipes"); // recipes | preserve | ferment
+      const [preserveMethodId, setPreserveMethodId] = useState(null);
+      const [preserveStepDone, setPreserveStepDone] = useState({}); // key: `${plantId}:${methodId}` -> boolean[]
+      const [preserveStepIndex, setPreserveStepIndex] = useState(0);
+      const [selected, setSelected] = useState(() => new Set());
+      const [detail, setDetail] = useState(null);
+      const [preservePlant, setPreservePlant] = useState("tomato");
+      const [recipeSearch, setRecipeSearch] = useState("");
+      const [recipeScope, setRecipeScope] = useState("garden"); // garden | all
+      const [recipePlantFilter, setRecipePlantFilter] = useState("");
 
-function fermentsForPlant(plantId) {
-  const key = cropKeyOf ? cropKeyOf(plantId) : plantId;
-  return FERMENT_GUIDES.filter(f =>
-    (f.plants || []).some(p => p === plantId || p === key || (cropKeyOf && cropKeyOf(p) === key))
-  );
-}
-function KitchenScreen({ profile, planYear, setPlanYear, placed, setPlaced, beds, setTasks, setSeeds, setActive }) {
-  const [tab, setTab] = useState("recipes"); // recipes | preserve | ferment
-  const [preserveMethodId, setPreserveMethodId] = useState(null);
-  const [preserveStepDone, setPreserveStepDone] = useState({});
-  const [preserveStepIndex, setPreserveStepIndex] = useState(0);
-  const [selected, setSelected] = useState(() => new Set());
-  const [detail, setDetail] = useState(null);
-  const [preservePlant, setPreservePlant] = useState("tomato");
-  const [recipePlantFilter, setRecipePlantFilter] = useState("");
-  const [recipeScope, setRecipeScope] = useState("garden"); // garden | all
-  const [recipeSearch, setRecipeSearch] = useState("");
-
-  const recipeList = typeof RECIPES !== "undefined" ? RECIPES : (typeof GARDEN_RECIPES !== "undefined" ? GARDEN_RECIPES : []);
-
-  const recipesForPlant = (plantId) => {
-    const key = typeof cropKeyOf === "function" ? cropKeyOf(plantId) : plantId;
-    return (recipeList || []).filter(r =>
-      (r.ingredients || []).some(ing => {
-        const id = ing.plantId || ing.id;
-        if (!id) return false;
-        if (id === plantId || id === key) return true;
-        if (typeof cropKeyOf === "function" && cropKeyOf(id) === key) return true;
-        return false;
-      })
-    );
-  };
-
-  const fermentsForPlant = (plantId) => {
-    const guides = typeof FERMENT_GUIDES !== "undefined" ? FERMENT_GUIDES : [];
-    const key = typeof cropKeyOf === "function" ? cropKeyOf(plantId) : plantId;
-    return guides.filter(f =>
-      (f.plants || []).some(p => p === plantId || p === key || (typeof cropKeyOf === "function" && cropKeyOf(p) === key))
-    );
-  };
-
-  const toggleRecipe = (id) => {
-    setSelected(prev => {
-      const n = new Set(prev);
-      if (n.has(id)) n.delete(id); else n.add(id);
-      return n;
-    });
-  };
-
-  const growList = useMemo(() => {
-    if (typeof growListFromRecipes === "function") return growListFromRecipes([...selected]);
-    return [];
-  }, [selected]);
-
-  const isTooLateThisSeason = (sched) => {
-    if (!sched) return true;
-    const today = new Date();
-    today.setHours(12, 0, 0, 0);
-    const sow = new Date((sched.sowDate || sched.plantOutDate) + "T12:00:00");
-    const plantOut = new Date((sched.plantOutDate || sched.sowDate) + "T12:00:00");
-    if (sow < addDays(today, -3) && plantOut < today) return true;
-    if (profile?.firstFrost) {
-      const ff = new Date(profile.firstFrost + "T12:00:00");
-      const daysLeft = Math.round((ff - today) / 86400000);
-      const harvest = new Date((sched.harvestStart || sched.plantOutDate) + "T12:00:00");
-      if (daysLeft < 21 && harvest > ff) return true;
-    }
-    return false;
-  };
-
-  const profileForYear = (year) => {
-    if (!profile?.lastFrost) return profile;
-    const lf = profile.lastFrost;
-    const ff = profile.firstFrost;
-    return {
-      ...profile,
-      lastFrost: lf.length >= 10 ? `${year}-${lf.slice(5)}` : lf,
-      firstFrost: ff && ff.length >= 10 ? `${year}-${ff.slice(5)}` : ff,
-    };
-  };
-
-  const planFromRecipes = () => {
-    if (!growList.length) {
-      alert("Select at least one recipe first.");
-      return;
-    }
-    const bedId = beds[0]?.id || "tomato";
-    const y0 = planYear || new Date().getFullYear();
-    const newItems = [];
-    const tasksToAdd = [];
-    let rolledNext = 0;
-    let sameYear = 0;
-
-    growList.forEach((g, idx) => {
-      const pl = PLANT_LIBRARY.find(p => p.id === g.plantId);
-      if (!pl) return;
-      let targetYear = y0;
-      let sched = computePlantingSchedule(pl, profileForYear(y0));
-      if (!sched) return;
-      if (isTooLateThisSeason(sched)) {
-        targetYear = y0 + 1;
-        sched = computePlantingSchedule(pl, profileForYear(targetYear));
-        if (!sched) return;
-        rolledNext += 1;
-      } else {
-        sameYear += 1;
-      }
-      for (let i = 0; i < Math.min(g.plants, 12); i++) {
-        newItems.push({
-          id: Date.now() + idx * 100 + i + Math.random(),
-          bed: bedId,
-          plant: g.plantId,
-          plantedAt: sched.plantOutDate,
-          status: "planned",
-          year: targetYear,
-          method: sched.method,
-          sowDate: sched.sowDate,
-          transplantDate: sched.transplantDate,
-          harvestStart: sched.harvestStart,
-          fromRecipe: true,
-          rolledToNextYear: targetYear > y0,
+      const toggleRecipe = (id) => {
+        setSelected(prev => {
+          const n = new Set(prev);
+          if (n.has(id)) n.delete(id); else n.add(id);
+          return n;
         });
-      }
-      tasksToAdd.push({
-        id: Date.now() + 500 + idx,
-        title: `Grow ${pl.name} for recipes`,
-        detail: `~${g.plants} plant(s) · sow ${sched.sowDate}${targetYear > y0 ? ` · ${targetYear}` : ""}`,
-        done: false,
-        icon: pl.icon || "🌱",
-        due: sched.sowDate,
-        year: targetYear,
-      });
-    });
+      };
 
-    setPlaced(prev => [...prev, ...newItems]);
-    setTasks(prev => [...tasksToAdd, ...prev]);
-    setSeeds(prev => prev.map(s => {
-      const hit = growList.find(g => {
-        const pl = PLANT_LIBRARY.find(p => p.id === g.plantId);
-        return pl && (s.name || "").toLowerCase().includes(pl.name.toLowerCase());
-      });
-      if (!hit || s.qty <= 0) return s;
-      const qty = Math.max(0, s.qty - hit.plants);
-      return { ...s, qty, low: qty <= 3 };
-    }));
+      const growList = useMemo(() => growListFromRecipes([...selected]), [selected]);
 
-    if (rolledNext > 0 && sameYear === 0 && setPlanYear) setPlanYear(y0 + 1);
+      // Too late this season if sow date is more than a few days in the past
+      // (or plant-out is past for direct seed / transplants)
+      const isTooLateThisSeason = (sched) => {
+        if (!sched) return true;
+        const today = new Date();
+        today.setHours(12, 0, 0, 0);
+        const sow = new Date((sched.sowDate || sched.plantOutDate) + "T12:00:00");
+        const plantOut = new Date((sched.plantOutDate || sched.sowDate) + "T12:00:00");
+        // Grace: still OK if sow was within last 3 days
+        if (sow < addDays(today, -3) && plantOut < today) return true;
+        // Also too late if first frost is within 30 days and crop needs long season
+        if (profile?.firstFrost) {
+          const ff = new Date(profile.firstFrost + "T12:00:00");
+          const daysLeft = Math.round((ff - today) / 86400000);
+          const harvest = new Date((sched.harvestStart || sched.plantOutDate) + "T12:00:00");
+          if (daysLeft < 21 && harvest > ff) return true;
+        }
+        return false;
+      };
 
-    let msg = `Added ${newItems.length} planting(s).`;
-    if (rolledNext > 0 && sameYear > 0) {
-      msg += ` ${rolledNext} crop(s) were too late this season → ${y0 + 1}.`;
-    } else if (rolledNext > 0) {
-      msg += ` Too late this season — scheduled for ${y0 + 1}.`;
-    } else {
-      msg += ` On your ${y0} plan.`;
-    }
-    alert(msg);
-    if (setActive) setActive("plan");
-  };
+      const profileForYear = (year) => {
+        if (!profile?.lastFrost) return profile;
+        // Shift frost dates to the target year (keep MM-DD)
+        const lf = profile.lastFrost;
+        const ff = profile.firstFrost;
+        return {
+          ...profile,
+          lastFrost: lf.length >= 10 ? `${year}-${lf.slice(5)}` : lf,
+          firstFrost: ff && ff.length >= 10 ? `${year}-${ff.slice(5)}` : ff,
+        };
+      };
 
-  const preserveGuide =
-    (typeof PRESERVE_GUIDES !== "undefined" && PRESERVE_GUIDES.find(p => p.plantId === preservePlant)) ||
-    (typeof PRESERVE_GUIDES !== "undefined" && PRESERVE_GUIDES.find(p => p.plantId === "herb")) ||
-    null;
+      const planFromRecipes = () => {
+        if (!growList.length) {
+          alert("Select at least one recipe first.");
+          return;
+        }
+        const bedId = beds[0]?.id || "tomato";
+        const y0 = planYear || new Date().getFullYear();
+        const newItems = [];
+        const tasksToAdd = [];
+        let rolledNext = 0;
+        let sameYear = 0;
 
-  const readyPreserve = useMemo(() => {
-    const today = new Date();
-    today.setHours(12, 0, 0, 0);
-    const guides = typeof PRESERVE_GUIDES !== "undefined" ? PRESERVE_GUIDES : [];
-    return (placed || [])
-      .filter(p => p.harvestStart && (p.year || new Date().getFullYear()) === (planYear || new Date().getFullYear()))
-      .map(p => {
-        const h = new Date(p.harvestStart + "T12:00:00");
-        const days = Math.round((h - today) / 86400000);
-        const pl = PLANT_LIBRARY.find(x => x.id === p.plant);
-        const guide = guides.find(g => g.plantId === p.plant);
-        return { ...p, days, pl, guide };
-      })
-      .filter(x => x.days >= -7 && x.days <= 21 && x.guide)
-      .sort((a, b) => a.days - b.days);
-  }, [placed, planYear]);
+        growList.forEach((g, idx) => {
+          const pl = PLANT_LIBRARY.find(p => p.id === g.plantId);
+          if (!pl) return;
 
-  const visibleRecipes = useMemo(() => {
-    const q = (recipeSearch || "").trim().toLowerCase();
-    return (recipeList || []).filter(r => {
-      if (!q) return true;
-      if ((r.name || "").toLowerCase().includes(q)) return true;
-      return (r.ingredients || []).some(ing => String(ing.plantId || "").toLowerCase().includes(q));
-    });
-  }, [recipeList, recipeSearch]);
+          let targetYear = y0;
+          let sched = computePlantingSchedule(pl, profileForYear(y0));
+          if (!sched) return;
 
-  return (
-    <div className="pb-24">
-      <Header title="Kitchen" />
-      <div className="px-4 pt-3 space-y-4">
-        <div className="flex gap-1 bg-white rounded-xl p-1 card-shadow">
-          {[
-            { id: "recipes", label: "Recipes" },
-            { id: "preserve", label: "Preserve" },
-            { id: "ferment", label: "Ferment" },
-          ].map(t => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTab(t.id)}
-              className={`flex-1 py-2 rounded-lg text-xs font-semibold ${
-                tab === t.id ? "bg-sage-600 text-white" : "text-sage-600"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+          if (isTooLateThisSeason(sched)) {
+            targetYear = y0 + 1;
+            sched = computePlantingSchedule(pl, profileForYear(targetYear));
+            if (!sched) return;
+            rolledNext += 1;
+          } else {
+            sameYear += 1;
+          }
 
-        {/* ——— RECIPES ——— */}
-        {tab === "recipes" && (
-          <div className="space-y-3">
-            <input
-              className="w-full border rounded-xl px-3 py-2 text-sm"
-              placeholder="Search recipes or plant id…"
-              value={recipeSearch || ""}
-              onChange={e => setRecipeSearch(e.target.value)}
-            />
-            {selected.size > 0 && (
-              <div className="bg-sage-50 rounded-xl p-3 flex gap-2 items-center">
-                <p className="text-xs text-sage-700 flex-1">{selected.size} recipe(s) selected</p>
+          for (let i = 0; i < Math.min(g.plants, 12); i++) {
+            newItems.push({
+              id: Date.now() + idx * 100 + i + Math.random(),
+              bed: bedId,
+              plant: g.plantId,
+              plantedAt: sched.plantOutDate,
+              status: "planned",
+              year: targetYear,
+              method: sched.method,
+              sowDate: sched.sowDate,
+              transplantDate: sched.transplantDate,
+              harvestStart: sched.harvestStart,
+              fromRecipe: true,
+              rolledToNextYear: targetYear > y0,
+            });
+          }
+          tasksToAdd.push({
+            id: Date.now() + 500 + idx,
+            title: `Grow ${pl.name} for recipes`,
+            detail: `~${g.plants} plant(s) · sow ${sched.sowDate}${targetYear > y0 ? ` · ${targetYear}` : ""}`,
+            done: false,
+            icon: pl.icon || "🌱",
+            due: sched.sowDate,
+            year: targetYear,
+          });
+        });
+
+        setPlaced(prev => [...prev, ...newItems]);
+        setTasks(prev => [...tasksToAdd, ...prev]);
+        setSeeds(prev => prev.map(s => {
+          const hit = growList.find(g => {
+            const pl = PLANT_LIBRARY.find(p => p.id === g.plantId);
+            return pl && (s.name || "").toLowerCase().includes(pl.name.toLowerCase());
+          });
+          if (!hit || s.qty <= 0) return s;
+          const qty = Math.max(0, s.qty - hit.plants);
+          return { ...s, qty, low: qty <= 3 };
+        }));
+
+        // Jump plan year if everything rolled forward
+        if (rolledNext > 0 && sameYear === 0 && setPlanYear) {
+          setPlanYear(y0 + 1);
+        }
+
+        let msg = `Added ${newItems.length} planting(s).`;
+        if (rolledNext > 0 && sameYear > 0) {
+          msg += ` ${rolledNext} crop(s) were too late for this season and were scheduled for ${y0 + 1}.`;
+        } else if (rolledNext > 0) {
+          msg += ` Too late to start these this season — all set for ${y0 + 1}.`;
+        } else {
+          msg += ` On your ${y0} plan.`;
+        }
+        alert(msg);
+        if (setActive) setActive("plan");
+      };
+
+      const preserveGuide = PRESERVE_GUIDES.find(p => p.plantId === preservePlant)
+        || PRESERVE_GUIDES.find(p => p.plantId === "herb");
+
+      // Ready-to-preserve: harvest window within 14 days
+      const readyPreserve = useMemo(() => {
+        const today = new Date();
+        today.setHours(12, 0, 0, 0);
+        return (placed || [])
+          .filter(p => p.harvestStart && (p.year || new Date().getFullYear()) === (planYear || new Date().getFullYear()))
+          .map(p => {
+            const h = new Date(p.harvestStart + "T12:00:00");
+            const days = Math.round((h - today) / 86400000);
+            const pl = PLANT_LIBRARY.find(x => x.id === p.plant);
+            const guide = PRESERVE_GUIDES.find(g => g.plantId === p.plant);
+            return { ...p, days, pl, guide };
+          })
+          .filter(x => x.days >= -7 && x.days <= 21 && x.guide)
+          .sort((a, b) => a.days - b.days);
+      }, [placed, planYear]);
+
+      return (
+        <div className="pb-24">
+          <Header title="Kitchen" />
+          <div className="px-4 pt-3 space-y-4">
+            <div className="flex gap-1 bg-white rounded-xl p-1 card-shadow">
+              {[
+                { id: "recipes", label: "Recipes" },
+                { id: "preserve", label: "Preserve" },
+                { id: "ferment", label: "Ferment" },
+              ].map(t => (
                 <button
+                  key={t.id}
                   type="button"
-                  onClick={planFromRecipes}
-                  className="px-3 py-1.5 rounded-lg bg-sage-600 text-white text-xs font-semibold"
+                  onClick={() => setTab(t.id)}
+                  className={`flex-1 py-2 rounded-lg text-xs font-semibold ${
+                    tab === t.id ? "bg-sage-600 text-white" : "text-sage-600"
+                  }`}
                 >
-                  Add crops to plan
+                  {t.label}
                 </button>
-              </div>
-            )}
-            {visibleRecipes.length === 0 ? (
-              <p className="text-xs text-sage-400 text-center py-8">No recipes found</p>
-            ) : (
-              visibleRecipes.map(r => {
-                const on = selected.has(r.id);
-                return (
-                  <div key={r.id} className="bg-white rounded-2xl p-4 card-shadow">
-                    <div className="flex items-start gap-2">
-                      <button
-                        type="button"
-                        onClick={() => toggleRecipe(r.id)}
-                        className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center text-xs ${
-                          on ? "bg-sage-600 border-sage-600 text-white" : "border-sage-300"
-                        }`}
-                      >
-                        {on ? "✓" : ""}
-                      </button>
-                      <div className="flex-1 min-w-0">
-                        <button
-                          type="button"
-                          onClick={() => setDetail(detail === r.id ? null : r.id)}
-                          className="text-left w-full"
-                        >
-                          <p className="font-semibold text-sage-800 text-sm">{r.name}</p>
-                          <p className="text-[10px] text-sage-500">{r.time || r.difficulty || ""}</p>
+              ))}
+            </div>
+
+            {tab === "recipes" && (
+              <>
+                <p className="text-xs text-sage-500">
+                  Select recipes you want to cook or put up. PlotPilot builds a grow list and can add plantings to your {planYear} plan.
+                </p>
+                <input
+                  className="w-full border border-sage-200 rounded-xl px-3 py-2 text-sm"
+                  placeholder="Search recipes or plant (tomato, basil…)"
+                  value={recipeSearch}
+                  onChange={e => setRecipeSearch(e.target.value)}
+                />
+                <div className="space-y-2">
+                  {RECIPE_LIBRARY.filter(r => {
+                    const q = recipeSearch.trim().toLowerCase();
+                    if (!q) return true;
+                    if ((r.name || "").toLowerCase().includes(q)) return true;
+                    if ((r.tags || []).some(t => String(t).toLowerCase().includes(q))) return true;
+                    return (r.ingredients || []).some(ing => {
+                      const pl = PLANT_LIBRARY.find(p => p.id === ing.plantId);
+                      return (ing.plantId || "").includes(q) || (pl?.name || "").toLowerCase().includes(q);
+                    });
+                  }).map(r => (
+                    <div key={r.id} className={`bg-white rounded-xl p-3 card-shadow border-2 ${selected.has(r.id) ? "border-sage-500" : "border-transparent"}`}>
+                      <div className="flex items-start gap-2">
+                        <button type="button" onClick={() => toggleRecipe(r.id)} className="mt-1 text-sage-600">
+                          <i className={`fas ${selected.has(r.id) ? "fa-check-square" : "fa-square"} text-lg`}></i>
                         </button>
-                        {detail === r.id && (
-                          <div className="mt-2 text-xs text-sage-600 space-y-1">
-                            {(r.ingredients || []).map((ing, i) => {
-                              const pl = PLANT_LIBRARY.find(p => p.id === (ing.plantId || ing.id));
-                              return (
-                                <p key={i}>
-                                  {pl?.icon || "·"} {ing.amount} {ing.unit} {pl?.name || ing.plantId}
-                                </p>
-                              );
-                            })}
-                            {r.steps && (
-                              <p className="text-sage-500 mt-1 whitespace-pre-wrap">{r.steps}</p>
-                            )}
-                          </div>
-                        )}
+                        <button type="button" className="flex-1 text-left" onClick={() => setDetail(r)}>
+                          <p className="font-medium text-sm text-sage-800">{r.icon} {r.name}</p>
+                          <p className="text-[10px] text-sage-500">{r.servings} servings · {r.time} · {(r.tags || []).join(", ")}</p>
+                        </button>
                       </div>
                     </div>
+                  ))}
+                </div>
+
+                {selected.size > 0 && (
+                  <div className="bg-sage-50 border border-sage-200 rounded-2xl p-4 space-y-2 sticky bottom-20">
+                    <p className="text-sm font-semibold text-sage-800">Grow list ({growList.length} crops)</p>
+                    {growList.map(g => {
+                      const pl = PLANT_LIBRARY.find(p => p.id === g.plantId);
+                      return (
+                        <div key={g.plantId} className="flex justify-between text-xs text-sage-700">
+                          <span>{pl?.icon} {pl?.name || g.plantId}</span>
+                          <span className="font-medium">~{g.plants} plant(s)</span>
+                        </div>
+                      );
+                    })}
+                    <button type="button" onClick={planFromRecipes} className="w-full mt-2 py-2.5 rounded-xl bg-sage-600 text-white text-sm font-medium">
+                      Add to {planYear} garden plan
+                    </button>
                   </div>
-                );
-              })
+                )}
+              </>
             )}
-          </div>
-        )}
 
-        {/* ——— PRESERVE ——— */}
-        {tab === "preserve" && (() => {
-          const q = (recipePlantFilter || "").trim().toLowerCase();
-          const gardenIds = new Set((placed || []).map(p => p.plant));
-          let plantList = PLANT_LIBRARY.filter(p => !p.isVariety);
-          if (recipeScope === "garden") {
-            const fromGarden = PLANT_LIBRARY.filter(p => gardenIds.has(p.id));
-            plantList = fromGarden.length ? fromGarden : plantList.slice(0, 12);
-          }
-          if (q) {
-            plantList = PLANT_LIBRARY.filter(p =>
-              (p.name || "").toLowerCase().includes(q) ||
-              (p.type || "").toLowerCase().includes(q) ||
-              (p.id || "").toLowerCase().includes(q)
-            ).slice(0, 50);
-          }
+            {tab === "preserve" && (() => {
+              const methods = preserveGuide?.methods || [];
+              const activeMethod = methods.find(m => m.id === preserveMethodId) || null;
+              const stepKey = activeMethod ? `${preservePlant}:${activeMethod.id}` : null;
+              const doneArr = stepKey ? (preserveStepDone[stepKey] || (activeMethod.steps || []).map(() => false)) : [];
+              const doneCount = doneArr.filter(Boolean).length;
+              const totalSteps = activeMethod?.steps?.length || 0;
+              const progress = totalSteps ? Math.round((doneCount / totalSteps) * 100) : 0;
 
-          const methods = preserveGuide?.methods || [];
-          const activeMethod = methods.find(m => m.id === preserveMethodId) || null;
-          const stepKey = activeMethod ? `${preservePlant}:${activeMethod.id}` : null;
-          const doneArr = stepKey
-            ? (preserveStepDone[stepKey] || (activeMethod.steps || []).map(() => false))
-            : [];
-          const doneCount = doneArr.filter(Boolean).length;
-          const totalSteps = activeMethod?.steps?.length || 0;
-          const progress = totalSteps ? Math.round((doneCount / totalSteps) * 100) : 0;
+              const toggleStep = (idx) => {
+                if (!stepKey || !activeMethod) return;
+                setPreserveStepDone(prev => {
+                  const cur = prev[stepKey] || activeMethod.steps.map(() => false);
+                  const next = [...cur];
+                  next[idx] = !next[idx];
+                  return { ...prev, [stepKey]: next };
+                });
+              };
 
-          const toggleStep = (idx) => {
-            if (!stepKey || !activeMethod) return;
-            setPreserveStepDone(prev => {
-              const cur = prev[stepKey] || activeMethod.steps.map(() => false);
-              const next = [...cur];
-              next[idx] = !next[idx];
-              return { ...prev, [stepKey]: next };
-            });
-          };
+              const schedulePreserveTask = () => {
+                if (!activeMethod || !setTasks) return;
+                const pl = PLANT_LIBRARY.find(p => p.id === preservePlant);
+                setTasks(prev => [{
+                  id: Date.now() + Math.random(),
+                  title: `Preserve ${pl?.name || preservePlant}: ${activeMethod.name}`,
+                  detail: `${totalSteps} steps · ${activeMethod.difficulty || ""} · ${activeMethod.time || ""}`,
+                  done: false,
+                  icon: "🫙",
+                  due: toISODate(new Date()),
+                  year: planYear,
+                }, ...prev]);
+                alert("Added to your task list for today.");
+              };
 
-          const recs = typeof recipesForPlant === "function" ? recipesForPlant(preservePlant) : [];
-          const ferms = typeof fermentsForPlant === "function" ? fermentsForPlant(preservePlant) : [];
-          const selectedPl = PLANT_LIBRARY.find(p => p.id === preservePlant);
+              return (
+              <>
+                {readyPreserve.length > 0 && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 space-y-2">
+                    <p className="text-xs font-semibold text-amber-900">Ready to preserve</p>
+                    {readyPreserve.slice(0, 5).map(x => (
+                      <button
+                        key={x.id}
+                        type="button"
+                        className="w-full text-xs text-amber-900 flex justify-between hover:bg-amber-100/80 rounded-lg px-1 py-0.5"
+                        onClick={() => {
+                          const pid = x.pl?.cropId || x.pl?.id || x.plant;
+                          if (PRESERVE_GUIDES.some(g => g.plantId === pid)) {
+                            setPreservePlant(pid);
+                            setPreserveMethodId(null);
+                          }
+                        }}
+                      >
+                        <span>{x.pl?.icon} {x.pl?.name}</span>
+                        <span>{x.days < 0 ? "harvest window open" : `in ${x.days}d`}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
 
-          return (
-            <div className="space-y-3">
-              <div className="flex gap-1">
-                <button
-                  type="button"
-                  onClick={() => setRecipeScope("garden")}
-                  className={`flex-1 py-1.5 rounded-lg text-[11px] font-semibold ${
-                    recipeScope === "garden" ? "bg-sage-600 text-white" : "bg-sage-100 text-sage-700"
-                  }`}
-                >
-                  My garden
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRecipeScope("all")}
-                  className={`flex-1 py-1.5 rounded-lg text-[11px] font-semibold ${
-                    recipeScope === "all" ? "bg-sage-600 text-white" : "bg-sage-100 text-sage-700"
-                  }`}
-                >
-                  Full library
-                </button>
-              </div>
-              <input
-                className="w-full border rounded-xl px-3 py-2 text-sm"
-                placeholder="Search plants…"
-                value={recipePlantFilter || ""}
-                onChange={e => setRecipePlantFilter(e.target.value)}
-              />
-              <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                {plantList.slice(0, 30).map(p => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => {
-                      setPreservePlant(p.id);
-                      setPreserveMethodId(null);
-                    }}
-                    className={`w-full text-left rounded-xl px-3 py-2 text-sm ${
-                      preservePlant === p.id ? "bg-sage-600 text-white" : "bg-white card-shadow text-sage-800"
-                    }`}
-                  >
-                    {p.icon} {p.name}
+                <label className="text-xs text-sage-500">1. Choose crop</label>
+                <div className="flex gap-1 mb-1.5">
+                  <button type="button" onClick={() => setRecipeScope("garden")}
+                    className={`flex-1 py-1.5 rounded-lg text-[11px] font-semibold ${recipeScope === "garden" ? "bg-sage-600 text-white" : "bg-sage-100 text-sage-700"}`}>
+                    My garden
                   </button>
-                ))}
-              </div>
-
-              {selectedPl && (
-                <div className="bg-white rounded-2xl p-3 card-shadow">
-                  <p className="font-semibold text-sage-800 text-sm">
-                    {selectedPl.icon} {selectedPl.name}
-                  </p>
-                  <p className="text-[10px] text-sage-500 mb-2">
-                    {methods.length} method(s)
-                    {recs.length ? ` · ${recs.length} recipe(s)` : ""}
-                    {ferms.length ? ` · ${ferms.length} ferment(s)` : ""}
-                  </p>
-
-                  {!activeMethod ? (
-                    <>
-                      {(methods || []).map(m => (
+                  <button type="button" onClick={() => setRecipeScope("all")}
+                    className={`flex-1 py-1.5 rounded-lg text-[11px] font-semibold ${recipeScope === "all" ? "bg-sage-600 text-white" : "bg-sage-100 text-sage-700"}`}>
+                    Full library
+                  </button>
+                </div>
+                <input
+                  className="w-full border border-sage-200 rounded-xl px-3 py-2 text-sm mb-1.5"
+                  placeholder="Search plants…"
+                  value={recipePlantFilter}
+                  onChange={e => setRecipePlantFilter(e.target.value)}
+                />
+                <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 max-h-28 flex-wrap">
+                  {(() => {
+                    const q = recipePlantFilter.trim().toLowerCase();
+                    const gardenIds = new Set((placed || []).map(p => p.plant));
+                    let list = [];
+                    if (recipeScope === "garden" && gardenIds.size) {
+                      list = [...gardenIds].map(id => PLANT_LIBRARY.find(p => p.id === id)).filter(Boolean);
+                      // also show preserve-guide crops that match placed crop keys
+                      PRESERVE_GUIDES.forEach(g => {
+                        if ([...gardenIds].some(id => id === g.plantId || (typeof cropKeyOf === "function" && cropKeyOf(id) === g.plantId))) {
+                          const pl = PLANT_LIBRARY.find(p => p.id === g.plantId);
+                          if (pl && !list.some(x => x.id === pl.id)) list.push(pl);
+                        }
+                      });
+                    } else {
+                      const guidePlants = PRESERVE_GUIDES.map(g => PLANT_LIBRARY.find(p => p.id === g.plantId)).filter(Boolean);
+                      const base = PLANT_LIBRARY.filter(p => !p.isVariety).slice(0, 80);
+                      list = [...guidePlants];
+                      base.forEach(p => { if (!list.some(x => x.id === p.id)) list.push(p); });
+                    }
+                    if (q) {
+                      list = PLANT_LIBRARY.filter(p =>
+                        (p.name || "").toLowerCase().includes(q) ||
+                        (p.id || "").toLowerCase().includes(q) ||
+                        (p.type || "").toLowerCase().includes(q)
+                      ).slice(0, 40);
+                    }
+                    if (!list.length) list = PRESERVE_GUIDES.map(g => PLANT_LIBRARY.find(p => p.id === g.plantId)).filter(Boolean);
+                    return list.slice(0, 40).map(pl => {
+                      const selectedCrop = preservePlant === pl.id || preservePlant === (pl.cropId || "");
+                      return (
                         <button
-                          key={m.id}
+                          key={pl.id}
                           type="button"
-                          onClick={() => setPreserveMethodId(m.id)}
-                          className="w-full text-left rounded-xl border border-sage-100 px-3 py-2 text-xs font-medium text-sage-800 mb-1.5"
+                          onClick={() => {
+                            const guideId = PRESERVE_GUIDES.some(g => g.plantId === pl.id) ? pl.id
+                              : (PRESERVE_GUIDES.find(g => g.plantId === (pl.cropId || ""))?.plantId || pl.id);
+                            setPreservePlant(guideId);
+                            setPreserveMethodId(null);
+                            setPreserveStepIndex(0);
+                          }}
+                          className={`shrink-0 px-3 py-2 rounded-xl text-xs font-medium ${
+                            selectedCrop ? "bg-sage-600 text-white" : "bg-white text-sage-700 card-shadow"
+                          }`}
                         >
-                          {m.name || m.id}
+                          {pl.icon || "🌿"} {pl.name}
                         </button>
-                      ))}
-                      {!methods.length && (
-                        <p className="text-xs text-sage-400">No preserve guide for this plant. Try Ferment.</p>
+                      );
+                    });
+                  })()}
+                </div>
+                {(() => {
+                  const recs = recipesForPlantId(preservePlant);
+                  const ferms = fermentsForPlantId(preservePlant);
+                  if (!recs.length && !ferms.length) return null;
+                  return (
+                    <div className="text-[10px] text-sage-600 bg-sage-50 rounded-xl px-2.5 py-2">
+                      {recs.length > 0 && <p>Recipes: {recs.map(r => r.name).slice(0, 4).join(", ")}{recs.length > 4 ? "…" : ""}</p>}
+                      {ferms.length > 0 && (
+                        <p className="mt-0.5">
+                          Ferments: {ferms.map(f => f.name).join(", ")}{" "}
+                          <button type="button" className="underline text-sage-700" onClick={() => setTab("ferment")}>Open Ferment</button>
+                        </p>
                       )}
-                    </>
-                  ) : (
-                    <>
+                    </div>
+                  );
+                })()}
+
+                <label className="text-xs text-sage-500 mt-2 block">2. Choose process</label>
+                <div className="space-y-2">
+                  {methods.map(m => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => { setPreserveMethodId(m.id); setPreserveStepIndex(0); }}
+                      className={`w-full text-left bg-white rounded-xl p-3 card-shadow border-2 transition ${
+                        preserveMethodId === m.id ? "border-sage-600" : "border-transparent"
+                      }`}
+                    >
+                      <div className="flex justify-between items-start gap-2">
+                        <p className="font-medium text-sm text-sage-800">{m.name}</p>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded shrink-0 ${
+                          m.difficulty === "Easy" ? "bg-green-100 text-green-800"
+                          : m.difficulty === "Advanced" ? "bg-red-100 text-red-800"
+                          : "bg-amber-100 text-amber-900"
+                        }`}>{m.difficulty || "—"}</span>
+                      </div>
+                      <p className="text-[10px] text-sage-500 mt-1">⏱ {m.time || "—"} · {m.steps?.length || 0} steps</p>
+                    </button>
+                  ))}
+                </div>
+
+                {activeMethod && (
+                  <div className="bg-white rounded-2xl p-4 card-shadow space-y-3 mt-2">
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-semibold text-sage-800 text-sm">{activeMethod.name}</h3>
+                      <button type="button" onClick={() => setPreserveMethodId(null)} className="text-[10px] text-sage-500">Close</button>
+                    </div>
+
+                    {/* Progress */}
+                    <div>
+                      <div className="flex justify-between text-[10px] text-sage-500 mb-1">
+                        <span>{doneCount} / {totalSteps} steps</span>
+                        <span>{progress}%</span>
+                      </div>
+                      <div className="h-2 bg-sage-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-sage-600 transition-all" style={{ width: `${progress}%` }} />
+                      </div>
+                    </div>
+
+                    {activeMethod.safety && (
+                      <div className="bg-amber-50 border border-amber-200 rounded-xl p-2.5 text-[10px] text-amber-950">
+                        <p className="font-semibold mb-0.5">Safety</p>
+                        <p>{activeMethod.safety}</p>
+                      </div>
+                    )}
+
+                    {activeMethod.equipment && (
+                      <div>
+                        <p className="text-[10px] font-semibold text-sage-600 uppercase tracking-wide mb-1">Equipment checklist</p>
+                        <div className="flex flex-wrap gap-1">
+                          {activeMethod.equipment.map(eq => (
+                            <span key={eq} className="text-[10px] bg-sage-50 text-sage-700 px-2 py-1 rounded-lg border border-sage-100">{eq}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <p className="text-[10px] font-semibold text-sage-600 uppercase tracking-wide mb-2">Step-by-step</p>
+                      <div className="space-y-2">
+                        {(activeMethod.steps || []).map((step, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => toggleStep(idx)}
+                            className={`w-full flex gap-2 items-start text-left rounded-xl px-2.5 py-2 border ${
+                              doneArr[idx] ? "bg-emerald-50 border-emerald-200" : "bg-sage-50 border-sage-100"
+                            }`}
+                          >
+                            <span className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                              doneArr[idx] ? "bg-emerald-600 text-white" : "bg-white border border-sage-300 text-sage-500"
+                            }`}>
+                              {doneArr[idx] ? "✓" : idx + 1}
+                            </span>
+                            <span className={`text-xs ${doneArr[idx] ? "text-emerald-900 line-through" : "text-sage-800"}`}>{step}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
                       <button
                         type="button"
-                        onClick={() => setPreserveMethodId(null)}
-                        className="text-[11px] text-sage-600 font-medium mb-2"
+                        onClick={() => {
+                          if (!stepKey || !activeMethod) return;
+                          setPreserveStepDone(prev => ({
+                            ...prev,
+                            [stepKey]: activeMethod.steps.map(() => true),
+                          }));
+                        }}
+                        className="flex-1 py-2 rounded-xl border text-xs font-medium text-sage-700"
                       >
-                        ← Methods ({progress}%)
+                        Mark all done
                       </button>
-                      <ul className="space-y-2">
-                        {(activeMethod.steps || []).map((step, idx) => (
-                          <li key={idx}>
-                            <button
-                              type="button"
-                              onClick={() => toggleStep(idx)}
-                              className={`w-full text-left flex gap-2 rounded-xl px-2.5 py-2 text-xs ${
-                                doneArr[idx] ? "bg-green-50" : "bg-sage-50"
-                              }`}
-                            >
-                              <span>{doneArr[idx] ? "✅" : "⬜"}</span>
-                              <span>{step}</span>
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })()}
+                      <button
+                        type="button"
+                        onClick={schedulePreserveTask}
+                        className="flex-1 py-2 rounded-xl bg-sage-600 text-white text-xs font-medium"
+                      >
+                        Add to tasks
+                      </button>
+                    </div>
 
-        {/* ——— FERMENT ——— */}
-        {tab === "ferment" && (
-          <div className="space-y-3">
-            <p className="text-xs text-sage-500">
-              Keep food under brine. Colored fuzzy mold = toss.
-            </p>
-            {(typeof FERMENT_GUIDES !== "undefined" ? FERMENT_GUIDES : []).map(f => (
-              <div key={f.id} className="bg-white rounded-2xl p-4 card-shadow">
-                <p className="font-semibold text-sm text-sage-800">
-                  {f.icon} {f.name}
-                </p>
-                <p className="text-[10px] text-sage-500 mb-2">
-                  {f.difficulty} · {f.time} · {(f.plants || []).join(", ")}
-                </p>
-                {f.safety && (
-                  <p className="text-[11px] text-amber-800 bg-amber-50 rounded-lg px-2 py-1.5 mb-2">{f.safety}</p>
+                    {progress === 100 && (
+                      <p className="text-center text-xs text-emerald-700 font-medium">All steps checked — great work. Label and store safely.</p>
+                    )}
+                  </div>
                 )}
-                <ol className="list-decimal list-inside space-y-1">
-                  {(f.steps || []).map((s, i) => (
-                    <li key={i} className="text-xs text-sage-700">{s}</li>
+
+                <p className="text-[10px] text-sage-400">
+                  Always follow tested, current food-preservation guidelines (e.g. USDA / your local extension). PlotPilot is a planning checklist — not a substitute for official canning instructions or food-safety advice.
+                </p>
+              </>
+              );
+            })()}
+
+            {tab === "ferment" && (
+              <>
+                <p className="text-xs text-sage-500">
+                  Lacto-fermentation for garden harvests. Keep food under brine. White kahm yeast can be skimmed; fuzzy colored mold = toss.
+                </p>
+                <div className="space-y-3">
+                  {FERMENT_GUIDES.map(f => (
+                    <div key={f.id} className="bg-white rounded-2xl p-4 card-shadow">
+                      <div className="flex items-start gap-2 mb-2">
+                        <span className="text-2xl">{f.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm text-sage-800">{f.name}</p>
+                          <p className="text-[10px] text-sage-500">{f.difficulty} · {f.time}</p>
+                          <p className="text-[10px] text-sage-500">Crops: {(f.plants || []).join(", ")}</p>
+                        </div>
+                      </div>
+                      {f.safety && (
+                        <p className="text-[11px] text-amber-900 bg-amber-50 border border-amber-100 rounded-xl px-2.5 py-1.5 mb-2">{f.safety}</p>
+                      )}
+                      <ol className="list-decimal list-inside space-y-1">
+                        {(f.steps || []).map((s, i) => (
+                          <li key={i} className="text-xs text-sage-700">{s}</li>
+                        ))}
+                      </ol>
+                    </div>
                   ))}
-                </ol>
-              </div>
-            ))}
+                </div>
+              </>
+            )}
           </div>
-        )}
-      </div>
-    </div>
-  );
-}
+
+          {detail && (
+            <div className="fixed inset-0 bg-black/40 z-[100] flex items-end sm:items-center justify-center px-4 pt-4 pb-24" onClick={() => setDetail(null)}>
+              <div className="bg-white rounded-2xl p-5 w-full max-w-sm max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                <p className="text-2xl text-center">{detail.icon}</p>
+                <h3 className="font-semibold text-sage-800 text-center text-lg">{detail.name}</h3>
+                <p className="text-xs text-sage-500 text-center mb-3">{detail.servings} servings · {detail.time}</p>
+                <p className="text-xs font-semibold text-sage-700 mb-1">Ingredients (garden-linked)</p>
+                <ul className="text-xs text-sage-600 space-y-1 mb-3">
+                  {detail.ingredients.map((ing, i) => {
+                    const pl = PLANT_LIBRARY.find(p => p.id === ing.plantId);
+                    return (
+                      <li key={i} className="flex justify-between">
+                        <span>{pl?.icon} {pl?.name || ing.plantId}</span>
+                        <span>{ing.amount} {ing.unit} · ~{plantsNeededForIngredient(ing)} plant(s)</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <p className="text-xs text-sage-600 mb-4">{detail.steps}</p>
+                <button
+                  type="button"
+                  className="w-full py-2.5 rounded-xl bg-sage-600 text-white text-sm font-medium mb-2"
+                  onClick={() => {
+                    setSelected(prev => new Set([...prev, detail.id]));
+                    setDetail(null);
+                  }}
+                >
+                  Add to grow selection
+                </button>
+                <button type="button" className="w-full py-2 text-sm text-sage-500" onClick={() => setDetail(null)}>Close</button>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
     // ========== PHASE 1: 3-year plan, schedules, succession, harvest ==========
     function harvestVarietyKey(plantId, customPlants) {
       const pl = resolvePlant(plantId, customPlants) || PLANT_LIBRARY.find(p => p.id === plantId);
