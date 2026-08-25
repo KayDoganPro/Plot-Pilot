@@ -1350,24 +1350,30 @@
         });
       });
 
-      // Rotation risk from live beds + history
+      // Rotation risk: only prior seasons (not this year — that would flag every current planting)
       const year = today.getFullYear();
       bedList.forEach(bed => {
         const hist = (rotationHistory && rotationHistory[bed.id]) || [];
-        const recentFamilies = new Set();
-        hist.forEach(h => {
-          if (year - h.year < ROTATION_YEARS) (h.families || []).forEach(f => recentFamilies.add(f));
+        const priorHist = hist.filter(h => {
+          const hy = Number(h.year);
+          if (!Number.isFinite(hy)) return false;
+          const age = year - hy;
+          return age >= 1 && age < ROTATION_YEARS;
         });
+        if (!priorHist.length) return; // no real prior history → no risk notice
+        const recentFamilies = new Set();
+        priorHist.forEach(h => (h.families || []).forEach(f => recentFamilies.add(f)));
+        if (!recentFamilies.size) return;
         const liveFamilies = (placed || [])
-          .filter(p => p.bed === bed.id && p.status !== "harvested")
+          .filter(p => p.bed === bed.id && p.status !== "harvested" && !p.isCoverCrop && !p.isBedPrep)
           .map(p => (resolvePlant(p.plant) || PLANT_LIBRARY.find(x => x.id === p.plant))?.family)
           .filter(Boolean);
-        const conflicts = liveFamilies.filter(f => recentFamilies.has(f));
+        const conflicts = [...new Set(liveFamilies.filter(f => recentFamilies.has(f)))];
         if (conflicts.length) {
           push({
             id: `brief-rot-${bed.id}`,
             title: `Rotation risk: ${bed.name}`,
-            detail: `Same family within ${ROTATION_YEARS} years — consider swapping next season`,
+            detail: `Same family as a prior year in this bed (${conflicts.slice(0, 2).join(", ")}). Consider a different family next season.`,
             icon: "🔄",
             priority: "low",
             source: "rotation",
@@ -6690,16 +6696,22 @@
         alert(`Copied ${copies.length} planting(s) to ${next}. Check Rotate for family conflicts.`);
       };
 
-      // Families recently in a bed (history + current year plantings)
+      // Families recently in a bed — prior history + plantings in earlier plan years only
       const recentFamiliesForBed = (bedId, throughYear) => {
         const fams = new Set();
         const hist = (rotationHistory && rotationHistory[bedId]) || [];
         hist.forEach(h => {
-          if (throughYear - h.year < ROTATION_YEARS && throughYear - h.year >= 0) {
+          const hy = Number(h.year);
+          const age = throughYear - hy;
+          if (Number.isFinite(hy) && age >= 1 && age < ROTATION_YEARS) {
             (h.families || []).forEach(f => fams.add(f));
           }
         });
-        (placed || []).filter(p => p.bed === bedId && (p.year || y0) <= throughYear && (p.year || y0) > throughYear - ROTATION_YEARS)
+        (placed || [])
+          .filter(p => {
+            const py = p.year || y0;
+            return p.bed === bedId && py < throughYear && py > throughYear - ROTATION_YEARS;
+          })
           .forEach(p => {
             const pl = resolvePlant(p.plant, customPlants) || PLANT_LIBRARY.find(x => x.id === p.plant);
             if (pl?.family && pl.family !== "Ericaceae") fams.add(pl.family);
