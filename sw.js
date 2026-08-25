@@ -1,5 +1,5 @@
 /* PlotPilot service worker – caches app shell for offline use */
-const CACHE = "plotpilot-v47";
+const CACHE = "plotpilot-v48";
 const PRECACHE = [
   "./",
   "./index.html",
