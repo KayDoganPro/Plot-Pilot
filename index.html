@@ -3064,21 +3064,23 @@
         const maxToday = daily.temperature_2m_max?.[idx];
         const t = weather?.current?.temperature_2m;
         const humidity = weather?.current?.relative_humidity_2m;
-        const dryPast = past3 < 0.15;
-        const littleSoon = next3 < 0.2 && nextProb < 45;
-        const rainingNow = (weather?.current?.precipitation || 0) > 0.02 || todayP >= 0.15;
-        const heavyRecent = past3 >= 0.5 || todayP >= 0.4;
-        const hot = (t != null && t >= 85) || (maxToday != null && maxToday >= 88);
-        const drought = dryPast && littleSoon && (hot || past3 < 0.05);
-        const needWater = !rainingNow && dryPast && littleSoon;
-        const inspectAfterRain = heavyRecent || (todayP >= 0.25 && humidity >= 70);
+        // Stricter thresholds so weather tasks are rare, not daily nagging
+        const dryPast = past3 < 0.05; // nearly no rain last 3 days
+        const littleSoon = next3 < 0.1 && nextProb < 25;
+        const rainingNow = (weather?.current?.precipitation || 0) > 0.02 || todayP >= 0.1;
+        const heavyRecent = past3 >= 0.75 || todayP >= 0.5;
+        const hot = (t != null && t >= 90) || (maxToday != null && maxToday >= 92);
+        // Single water signal only when truly dry + hot, or zero rain for 3 days with none ahead
+        const needWater = !rainingNow && dryPast && littleSoon && (hot || past3 < 0.02);
+        const drought = false; // folded into needWater — no separate drought spam
+        const inspectAfterRain = heavyRecent && (humidity == null || humidity >= 75);
         return {
           idx, past3, todayP, next3, nextProb, dryPast, littleSoon, rainingNow,
           heavyRecent, hot, drought, needWater, inspectAfterRain, humidity, t, maxToday,
         };
       }, [weather]);
 
-      // Garden advice from weather
+      // Garden advice from weather (tips only — not tasks)
       const gardenAdvice = () => {
         if (!weather?.current) return [];
         const tips = [];
@@ -3095,71 +3097,85 @@
           tips.push({ level: "ok", text: "Low frost risk tonight" });
         }
 
-        if (sig?.drought) {
-          tips.push({ level: "warn", text: "Drought pattern — little rain behind or ahead. Water beds and pots deeply." });
-        } else if (sig?.needWater) {
-          tips.push({ level: "warn", text: "Dry stretch, little rain in the forecast — water the garden." });
-        } else if (sig?.rainingNow || (sig?.todayP || 0) >= 0.15) {
+        if (sig?.needWater) {
+          tips.push({ level: "info", text: "Dry stretch — check soil before watering." });
+        } else if (sig?.rainingNow || (sig?.todayP || 0) >= 0.1) {
           tips.push({ level: "ok", text: "Rain on the way or falling — skip extra watering." });
-        } else if (t >= 75) {
-          tips.push({ level: "info", text: "Warm day — check soil moisture on containers" });
+        } else if (t >= 85) {
+          tips.push({ level: "info", text: "Hot day — prioritize containers if soil is dry." });
         } else {
           tips.push({ level: "info", text: "Good conditions for outdoor work" });
         }
 
         if (sig?.inspectAfterRain) {
-          tips.push({ level: "warn", text: "Heavy or lingering rain — check leaves for fungus, slugs, and standing water." });
-        } else if (humidity >= 80 && t >= 60) {
+          tips.push({ level: "info", text: "Heavy rain lately — optional check for fungus or standing water." });
+        } else if (humidity >= 85 && t >= 65) {
           tips.push({ level: "info", text: "High humidity — watch for fungal issues" });
         }
         return tips;
       };
 
-      // Auto-add weather pattern tasks (once per kind per day)
+      // Auto-add weather tasks sparingly: at most one water + one inspect every 4 days
       useEffect(() => {
         if (!weatherSignals || !setTasks) return;
         const today = toISODate(new Date());
-        const stamp = (kind) => `pp_wx_task_${kind}_${today}`;
-        const addIfNeeded = (kind, payload) => {
-          if (localStorage.getItem(stamp(kind))) return;
-          setTasks(prev => {
-            const exists = (prev || []).some(t =>
-              t.kind === kind && !t.done && (t.due === today || t.windowStart === today)
+        const cooldownDays = 4;
+        const inCooldown = (kind) => {
+          try {
+            const raw = localStorage.getItem(`pp_wx_cooldown_${kind}`);
+            if (!raw) return false;
+            const until = raw;
+            return until >= today;
+          } catch (_) {
+            return false;
+          }
+        };
+        const setCooldown = (kind) => {
+          try {
+            localStorage.setItem(
+              `pp_wx_cooldown_${kind}`,
+              toISODate(addDays(new Date(), cooldownDays))
             );
-            if (exists) {
-              try { localStorage.setItem(stamp(kind), "1"); } catch (_) {}
+          } catch (_) {}
+        };
+        const addIfNeeded = (kind, payload) => {
+          if (inCooldown(kind)) return;
+          setTasks(prev => {
+            const open = (prev || []).some(t =>
+              (t.kind === kind || t.kind === "weather_drought" || t.kind === "weather_water") &&
+              !t.done &&
+              (kind === "weather_inspect" ? t.kind === "weather_inspect" : (t.kind === "weather_water" || t.kind === "weather_drought"))
+            );
+            // Any open water/drought task already counts — don't stack
+            if (kind !== "weather_inspect") {
+              const openWater = (prev || []).some(t =>
+                !t.done && (t.kind === "weather_water" || t.kind === "weather_drought")
+              );
+              if (openWater) {
+                setCooldown("weather_water");
+                return prev;
+              }
+            } else if (open) {
+              setCooldown(kind);
               return prev;
             }
-            try { localStorage.setItem(stamp(kind), "1"); } catch (_) {}
+            setCooldown(kind);
             return [payload, ...(prev || [])];
           });
         };
 
-        if (weatherSignals.drought) {
-          addIfNeeded("weather_drought", {
-            id: Date.now() + 0.11,
-            kind: "weather_drought",
-            title: "Drought watering",
-            plants: ["Garden"],
-            detail: `Little rain in the last days (~${weatherSignals.past3.toFixed(2)}" past 3d) and low chance ahead. Water beds and pots deeply this morning or evening.`,
-            done: false,
-            icon: "🏜️",
-            due: today,
-            windowStart: today,
-            windowEnd: toISODate(addDays(new Date(), 2)),
-          });
-        } else if (weatherSignals.needWater) {
+        if (weatherSignals.needWater) {
           addIfNeeded("weather_water", {
             id: Date.now() + 0.12,
             kind: "weather_water",
             title: "Water the garden",
             plants: ["Garden"],
-            detail: `Dry spell and little rain in the 3-day forecast (next ~${weatherSignals.next3.toFixed(2)}"). Check soil 2" down; water if dry.`,
+            detail: `Very dry (~${weatherSignals.past3.toFixed(2)}" in 3 days, little rain ahead). Water deeply if soil is dry 2" down.`,
             done: false,
             icon: "💧",
             due: today,
             windowStart: today,
-            windowEnd: toISODate(addDays(new Date(), 2)),
+            windowEnd: toISODate(addDays(new Date(), 3)),
           });
         }
 
@@ -3167,9 +3183,9 @@
           addIfNeeded("weather_inspect", {
             id: Date.now() + 0.13,
             kind: "weather_inspect",
-            title: "Check after rain",
+            title: "Check after heavy rain",
             plants: ["Garden"],
-            detail: "After heavy or lingering rain: look for powdery mildew, blight spots, slugs/snails, and standing water. Improve airflow; don’t compost badly diseased leaves.",
+            detail: "Optional: look for mildew, standing water, or slug damage after a heavy rain.",
             done: false,
             icon: "🍄",
             due: today,
