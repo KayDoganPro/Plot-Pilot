@@ -7402,17 +7402,28 @@
                 <p className="text-xs text-sage-400 text-center">No harvests logged yet</p>
               ) : (
                 <div className="space-y-1">
-                  {yearHarvests.slice(0, 12).map(h => {
+                  {yearHarvests.slice(0, 20).map(h => {
                     const pl = resolvePlant(h.plantId, customPlants) || PLANT_LIBRARY.find(p => p.id === h.plantId);
                     const bedName = h.bedId ? bedLabel(beds, h.bedId) : "";
                     return (
-                      <div key={h.id} className="flex justify-between text-xs bg-white rounded-lg px-2 py-1.5 card-shadow gap-2">
-                        <span className="min-w-0 truncate">
+                      <div key={h.id} className="flex items-center justify-between text-xs bg-white rounded-lg px-2 py-1.5 card-shadow gap-2">
+                        <span className="min-w-0 truncate flex-1">
                           {pl?.icon} {plantDisplayName(pl, { withCrop: true }) || h.plantId} · {h.qty} {h.unit}
                           {bedName ? <span className="text-sage-400"> · in {bedName}</span> : null}
                           {h.placedId ? null : <span className="text-amber-600"> · unlinked</span>}
                         </span>
                         <span className="text-sage-400 shrink-0">{fmtDate(h.date)}</span>
+                        <button
+                          type="button"
+                          title="Delete harvest log"
+                          className="shrink-0 text-red-500 hover:text-red-700 px-1.5 py-0.5 rounded"
+                          onClick={() => {
+                            if (!window.confirm("Delete this harvest log?")) return;
+                            setHarvests(prev => (prev || []).filter(x => x.id !== h.id));
+                          }}
+                        >
+                          <i className="fas fa-trash-alt text-[10px]"></i>
+                        </button>
                       </div>
                     );
                   })}
