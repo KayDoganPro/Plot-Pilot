@@ -85,10 +85,11 @@
       { id: 6, name: "Slow Bolt Cilantro", plantId: "cilantro", variety: "Slow Bolt", type: "Herb", measure: "count", qty: 30, unit: "seeds", expires: "2027-05-05", germRate: 65, low: true, source: "purchased" },
     ];
 
-    /** Per-crop / family seed care: store, germinate, grow, save */
+    /** Per-crop / family care: store, germinate, grow, save seed, bulbs, divide, clone */
     function getSeedCareGuide(plantId) {
       const pl = PLANT_LIBRARY.find(p => p.id === plantId) || resolvePlant(plantId);
       const family = pl?.family || "";
+      const id = pl?.cropId || pl?.id || plantId || "";
       const method = pl?.method || "direct";
       const germ = pl?.germDays != null ? `${pl.germDays} days typical` : "varies";
       const storeBase = "Cool, dark, dry place in airtight container. Silica gel or rice helps control moisture. Label variety + year.";
@@ -100,48 +101,99 @@
             ? `Start indoors ${pl?.startWeeksBeforeFrost || 6} weeks before last frost. Warm soil (70-80F). Germination ~${germ}.`
             : `Direct sow after frost. Germination ~${germ}.`,
           grow: `Full sun. Space ${pl?.spacing || "18–36 in"}. ${pl?.sun || "Full sun"}. Fertilize every ${pl?.fertilizeEveryDays || 21} days while fruiting.`,
+          bulbs: "Not typically bulb-propagated. Potato is a tuber (see clone). Eggplant/pepper/tomato: seed or cuttings.",
+          divide: "Not usually divided. Perennial ground cherries or related weeds—prefer seed.",
+          clone: "Tomato and many peppers root from softwood cuttings in water or moist mix. Take 4–6 in non-flowering shoots, remove lower leaves, keep warm and humid until roots form. Potatoes: plant disease-free seed tubers or chits—not kitchen potatoes if treated.",
         },
         Brassicaceae: {
           save: "Many brassicas cross. Isolate by distance or bag blooms. Biennials (cabbage, kale) need overwintering to flower for seed.",
           store: storeBase + " Best within 3–5 years.",
           germinate: `Cool temps OK. Germination ~${germ}. ${method === "indoor" ? "Start indoors or direct sow." : "Direct sow succession plantings."}`,
           grow: `Space ${pl?.spacing || "6–18 in"}. Prefer consistent moisture. ${pl?.sun || "Full sun to partial"}.`,
+          bulbs: "Not bulb crops. (Horseradish is a root cutting—see clone.)",
+          divide: "Perennial kales or collards in mild climates can be divided if multi-stemmed, but seed is standard.",
+          clone: "Horseradish: plant root sections in spring. Most brassicas are seed-grown each year.",
         },
         Fabaceae: {
           save: "Self-pollinating beans/peas are beginner-friendly. Dry pods on plant; shell when brittle. Avoid disease.",
           store: storeBase + " Bean/pea seed often lasts 3–5+ years.",
           germinate: `Direct sow in warm soil. Germination ~${germ}. Do not soak too long.`,
           grow: `Space ${pl?.spacing || "2–6 in"}. Nitrogen-fixing; light fertilizer. Provide trellis for poles.`,
+          bulbs: "Not applicable.",
+          divide: "Not typical for annual beans/peas.",
+          clone: "Rarely cloned; grow from seed for best vigor.",
         },
         Cucurbitaceae: {
           save: "Insects cross squash easily—hand-pollinate or isolate. Save from fully mature fruit. Dry seeds thoroughly.",
           store: storeBase + " 3–6 years typical.",
           germinate: `Warm soil essential. Germination ~${germ}. Start indoors in short seasons.`,
           grow: `Space ${pl?.spacing || "24–48 in"}. Full sun, rich soil, steady water.`,
+          bulbs: "Not applicable.",
+          divide: "Not divided.",
+          clone: "Sweet potato is a vine slip crop: sprout roots in water/soil, cut slips, root in mix, transplant after frost. Other cucurbits: seed.",
         },
         Apiaceae: {
           save: "Carrot/parsley/dill often biennial or bolt to seed. Isolate related umbels. Dry seed heads in paper bags.",
           store: storeBase + " Carrot seed viability drops after 2–3 years.",
           germinate: `Often slow. Keep moist. Germination ~${germ}. Light may help some.`,
           grow: `Space ${pl?.spacing || "2–8 in"}. Deep loose soil for roots.`,
+          bulbs: "Not true bulbs. Store mature carrot/parsnip roots for food; for seed, overwinter selected roots (steekling) and replant to flower.",
+          divide: "Some perennial herbs in this family (if grown) can be divided in spring.",
+          clone: "Root stecklings for seed crops; otherwise seed.",
         },
         Asteraceae: {
           save: "Lettuce: let bolt, dry seed heads. Flowers: dry heads, thresh. Easy for many annuals.",
           store: storeBase,
           germinate: `Germination ~${germ}. Surface-sow if tiny seed.`,
           grow: `Space ${pl?.spacing || "6–12 in"}. ${pl?.sun || "Full sun to partial"}.`,
+          bulbs: "Dahlia, etc.: lift tubers after frost, store cool and barely moist, divide eyes in spring before planting.",
+          divide: "Perennial asters, echinacea, chrysanthemums: dig clumps in spring or fall, split into sections with roots and shoots, replant.",
+          clone: "Many flowers and artichoke: basal cuttings or division. Jerusalem artichoke (sunchoke): plant tuber pieces.",
         },
         Lamiaceae: {
           save: "Many herbs self-seed. Collect dry flower spikes. Perennials can also be divided.",
           store: storeBase,
           germinate: `Often slow/light-dependent. Germination ~${germ}.`,
           grow: `Space ${pl?.spacing || "12 in"}. Prefer well-drained soil and sun.`,
+          bulbs: "Not bulb crops.",
+          divide: "Mint, oregano, thyme, chives-adjacent mints: dig and split clumps every 2–3 years in spring. Replant vigorous outer growth; discard woody centers.",
+          clone: "Basil, mint, rosemary, lavender, sage: 3–5 in softwood cuttings in water or sterile mix. Keep humid; roots in 1–3 weeks. Layer low stems of rosemary/thyme by pinning to soil.",
         },
         Amaryllidaceae: {
-          save: "Onion/leek biennial seed. Garlic is usually planted as cloves, not seed.",
-          store: storeBase + " Onion seed best used within 1–2 years.",
-          germinate: `Germination ~${germ}. Start early indoors for bulbs.`,
+          save: "Onion/leek biennial seed. Garlic is planted as cloves (not seed). Shallots: bulbs.",
+          store: storeBase + " Onion seed best within 1–2 years. Cure garlic/onion bulbs in warm airy shade 2–3 weeks before long storage.",
+          germinate: `Germination ~${germ}. Start early indoors for bulb onions from seed.`,
           grow: `Space ${pl?.spacing || "4–6 in"}. Full sun.`,
+          bulbs: "Garlic: plant largest cloves in fall (point up, 2 in deep). Save seed stock from best bulbs only. Onions/shallots: cure, store cool dry; plant sets or saved bulbs. Never store soft or moldy bulbs.",
+          divide: "Chives and bunching onions: dig clumps, pull apart into small bundles with roots, replant. Every 2–3 years keeps them vigorous.",
+          clone: "Garlic cloves and shallot bulbs are clones of the parent. Always start from healthy, firm stock.",
+        },
+        Ericaceae: {
+          save: "Blueberry from seed is slow and variable; named varieties are usually clonal.",
+          store: storeBase,
+          germinate: "Difficult; cold stratification often required. Most gardeners buy plants.",
+          grow: `Acid soil (pH ~4.5–5.5). Space ${pl?.spacing || "4–5 ft"}.`,
+          bulbs: "Not applicable.",
+          divide: "Rare; better to take cuttings.",
+          clone: "Softwood or hardwood cuttings of blueberry; keep moist and acidic medium. Layer low branches.",
+        },
+        Asparagaceae: {
+          save: "Asparagus from seed takes years to harvest; crowns are faster.",
+          store: storeBase,
+          germinate: `Germination ~${germ}.`,
+          grow: "Deep bed, perennial; wait 2–3 years before heavy harvest.",
+          bulbs: "Not true bulbs; crowns are fleshy roots + buds.",
+          divide: "Mature asparagus crowns can be carefully split when dormant; more common to plant purchased crowns.",
+          clone: "Crown division is the main vegetative method.",
+        },
+        Rosaceae: {
+          save: "Strawberry seed is possible but varieties often don’t come true; runners are standard.",
+          store: storeBase,
+          germinate: "Usually not from seed for named varieties.",
+          grow: `Space ${pl?.spacing || "12 in"}. Full sun.`,
+          bulbs: "Not applicable.",
+          divide: "Strawberry: dig and reset healthy crowns; discard old woody plants.",
+          clone: "Strawberry runners: peg daughter plants into pots or soil, sever after rooted. Raspberry/blackberry: tip layer or suckers.",
         },
       };
       const g = guides[family] || {
@@ -151,9 +203,58 @@
         grow: pl
           ? `Space ${pl.spacing}. ${pl.sun}. Days to harvest ~${pl.daysToHarvest}. Method: ${method === "indoor" ? "start indoors" : "direct sow"}.`
           : "See plant library entry for spacing and sun.",
+        bulbs: "If this crop forms bulbs or tubers (garlic, onion, dahlia, potato-type), cure in open air, store cool and dry or barely moist as the crop requires, and plant healthy stock only.",
+        divide: "Clumping perennials: dig in spring or fall, split so each piece has roots and shoots, replant at original depth, water in.",
+        clone: "Cuttings: non-flowering shoots, remove lower leaves, root in water or sterile mix. Layering: pin a low stem to soil until rooted, then cut free.",
       };
+
+      // Crop-specific overrides
+      const byId = {
+        garlic: {
+          save: "Do not rely on true seed. Select largest, healthiest bulbs at harvest for next fall’s planting stock.",
+          bulbs: "Fall plant: separate cloves just before planting. Point up, 2–3 in deep, 4–6 in apart. Mulch. Harvest when lower leaves brown. Cure 2–3 weeks out of sun, then store cool and dry.",
+          divide: "Each clove is a plant unit—no clump division needed.",
+          clone: "Every clove is a genetic clone of the parent bulb. Keep hardneck vs softneck types separate and labeled.",
+        },
+        onion: {
+          bulbs: "From sets or saved bulbs: plant in spring. From seed: start early. Cure tops-down until necks dry; store cool, dry, ventilated.",
+          divide: "Multiplier / potato onions and shallots: separate bulbs at planting.",
+        },
+        potato: {
+          bulbs: "Treat as tubers: cure briefly, store dark 40–50F. In spring chit (sprout) before planting pieces with eyes.",
+          clone: "Cut seed potatoes so each piece has 1–2 eyes; air-dry cut faces a day. Avoid grocery tubers treated against sprouting.",
+          save: "True potato seed is advanced; most growers save tubers as “seed potatoes.”",
+        },
+        sweetpotato: {
+          clone: "Bed roots in moist sand/soil or jars; when slips are 6–8 in, twist off, root in water/mix, transplant after soil is warm.",
+          bulbs: "Store roots 55–60F; do not refrigerate. Keep for slips, not long cold storage.",
+        },
+        strawberry: {
+          divide: "Reset strong crowns every 2–3 years; thin crowded beds.",
+          clone: "Runner plants are the easy clone method—root them in place or pots.",
+        },
+        mint: {
+          divide: "Aggressive spreader—divide and pot to contain. Spring or fall.",
+          clone: "Cuttings root in water in days.",
+        },
+        lavender: {
+          clone: "Semi-hardwood cuttings mid-summer; well-drained mix; high humidity. Avoid soggy soil.",
+          divide: "Only if the plant has multiple rooted crowns; otherwise prefer cuttings.",
+        },
+        asparagus: {
+          divide: "Only established crowns when dormant; usually plant new crowns instead.",
+        },
+        dahlia: {
+          bulbs: "After frost blackens foliage, dig tubers, dry, store in barely moist peat/vermiculite cool and frost-free. Divide in spring so each piece has an eye.",
+        },
+        blueberry: {
+          clone: "Hardwood or softwood cuttings; acidic medium; patience.",
+        },
+      };
+      const extra = byId[id] || {};
       return {
         ...g,
+        ...extra,
         plant: pl,
         germDays: pl?.germDays,
         daysToHarvest: pl?.daysToHarvest,
@@ -170,6 +271,63 @@
       { title: "4. Label everything", body: "Crop, variety, year, and source. Unlabeled jars become mysteries." },
       { title: "5. Store cool, dark, dry", body: "Airtight jars in a closet or fridge (with desiccant). Avoid heat and humidity swings." },
       { title: "6. Isolation & population", body: "Related plants cross via wind/insects. Distance, timing, or bagging keeps varieties pure. Save from multiple healthy plants when possible." },
+    ];
+
+    /** Beyond seed: bulbs, division, cloning — shown in Seed Vault → Guide */
+    const PROPAGATION_GUIDES = [
+      {
+        id: "bulbs",
+        title: "Save & plant bulbs / cloves / tubers",
+        icon: "🧄",
+        body: "Garlic, shallots, onions, dahlias, and similar crops are often kept as bulbs or tubers—not packets of seed.",
+        steps: [
+          "Harvest when foliage signals maturity (e.g. garlic: lower leaves brown).",
+          "Cure in warm, airy shade until skins are dry and necks tight (often 2–3 weeks).",
+          "Store only firm, disease-free stock. Label type and year.",
+          "Garlic/shallots: cool, dry, ventilated. Dahlias: cool, frost-free, barely moist medium. Potatoes: dark, ~40–50°F.",
+          "Replant the best stock at the right season (garlic often fall; many others spring).",
+        ],
+      },
+      {
+        id: "divide",
+        title: "Split roots & divide clumps",
+        icon: "🪴",
+        body: "Perennials that form clumps (chives, mint, oregano, echinacea, strawberries, bunching onions) stay healthier when divided every few years.",
+        steps: [
+          "Best in cool weather: early spring or fall (avoid extreme heat).",
+          "Water the day before so soil holds together.",
+          "Dig the whole clump; shake or rinse soil to see crowns and roots.",
+          "Pull or cut into pieces—each needs roots plus shoots or buds.",
+          "Discard dead woody centers; replant vigorous pieces at the same depth; water in.",
+          "Mulch lightly; shade for a few days if sun is harsh.",
+        ],
+      },
+      {
+        id: "clone",
+        title: "Clone: cuttings, runners & slips",
+        icon: "✂️",
+        body: "Cloning keeps the exact variety (unlike seed). Ideal for herbs, tomatoes, sweet potatoes, strawberries, and many flowers.",
+        steps: [
+          "Cuttings: take 3–6 in non-flowering shoots; strip lower leaves; root in water or sterile moist mix; keep humid and bright, not scorching.",
+          "Layering: pin a low stem to soil until it roots, then cut free (rosemary, thyme, many berries).",
+          "Runners: strawberry daughters—root in place or a pot, then sever from the mother.",
+          "Sweet potato slips: sprout a root, twist off shoots, root them, transplant after soil is warm.",
+          "Always start from healthy parent plants; never clone disease-ridden stock.",
+        ],
+      },
+      {
+        id: "when-which",
+        title: "Which method for which plant?",
+        icon: "🧭",
+        body: "Use seed for annual veggies and pure OP lines. Use bulbs/cloves for garlic and many ornamentals. Use division for clumping herbs and perennials. Use cuttings/runners when you need an exact copy of a favorite plant.",
+        steps: [
+          "Annual food crops → seed (and isolation if saving).",
+          "Garlic, shallot, potato, dahlia → bulbs / tubers / cloves.",
+          "Mint, chives, oregano, echinacea → divide clumps.",
+          "Basil, rosemary, tomato, sweet potato, strawberry → cuttings, slips, or runners.",
+          "Tap a packet in Inventory for crop-specific Store · Germinate · Grow · Save · Bulbs · Divide · Clone notes.",
+        ],
+      },
     ];
 
     // germDays, daysToHarvest, fertilizeEveryDays, startWeeksBeforeFrost, transplantWeeksBeforeFrost
@@ -2777,7 +2935,7 @@
       return { icon: "🌡️", label: "—" };
     };
 
-    function Dashboard({ tasks, setTasks, seeds, placed, setActive, journal, customPlants, profile, rotationHistory, beds }) {
+    function Dashboard({ tasks, setTasks, seeds, placed, setPlaced, setActive, journal, customPlants, profile, rotationHistory, beds, planYear }) {
       const lowStock = seeds.filter(s => s.low || s.qty <= 3).length;
       const toggleTask = (id) => {
         setTasks(prev => {
@@ -3771,21 +3929,44 @@
               <div className="bg-white rounded-2xl p-4 card-shadow">
                 <div className="grid grid-cols-2 gap-2">
                   {bedList.map(bed => {
-                    const bedIcons = (placed || [])
-                      .filter(p => p.bed === bed.id && p.status !== "harvested")
-                      .map(p => (resolvePlant(p.plant, customPlants) || PLANT_LIBRARY.find(pl => pl.id === p.plant))?.icon || "🌱")
-                      .slice(0, 4);
+                    // Identical membership rules to Layout's yearPlaced for this bed
+                    const y = planYear || new Date().getFullYear();
+                    const bedItems = (placed || []).filter(p =>
+                      String(p.bed) === String(bed.id) &&
+                      (p.year != null ? Number(p.year) : y) === y &&
+                      p.status !== "harvested" &&
+                      p.status !== "lost" &&
+                      !p.isCoverCrop &&
+                      !p.isBedPrep
+                    );
+                    const seen = new Set();
+                    const bedIcons = [];
+                    const names = [];
+                    bedItems.forEach(p => {
+                      const pl = resolvePlant(p.plant, customPlants) || PLANT_LIBRARY.find(x => x.id === p.plant);
+                      const key = String(pl?.cropId || pl?.id || p.plant);
+                      if (seen.has(key)) return;
+                      seen.add(key);
+                      bedIcons.push(pl?.icon || "🌱");
+                      names.push(plantDisplayName(pl, { withCrop: true }) || String(p.plant));
+                    });
                     return (
                       <button
                         type="button"
                         key={bed.id}
+                        title={names.length ? names.join(", ") : "Empty"}
                         onClick={() => setActive && setActive("layout")}
                         className={`${bed.color || "bg-sage-100 border-sage-300"} border rounded-xl p-2 text-center w-full hover:opacity-90 transition`}
                       >
                         <div className="text-lg mb-1 min-h-[28px]">
-                          {bedIcons.length > 0 ? bedIcons.join("") : <span className="text-sage-300 text-sm">empty</span>}
+                          {bedIcons.length > 0 ? bedIcons.slice(0, 4).join("") : <span className="text-sage-300 text-sm">empty</span>}
                         </div>
                         <p className="text-[10px] font-medium text-sage-700 leading-tight">{bed.name}</p>
+                        {names.length > 0 && (
+                          <p className="text-[8px] text-sage-400 leading-tight mt-0.5 line-clamp-2 px-0.5">
+                            {names.slice(0, 4).join(" · ")}
+                          </p>
+                        )}
                       </button>
                     );
                   })}
@@ -3855,7 +4036,10 @@
 
     function LayoutPlanner({ placed, setPlaced, setTasks, beds, setBeds, planYear, seeds, setSeeds, customPlants, setCustomPlants }) {
       const bedList = beds && beds.length ? beds : DEFAULT_BEDS;
-      const yearPlaced = (placed || []).filter(p => (p.year || new Date().getFullYear()) === (planYear || new Date().getFullYear()));
+      const yearPlaced = (placed || []).filter(p => {
+        const y = planYear || new Date().getFullYear();
+        return (p.year != null ? Number(p.year) : y) === y;
+      });
       const [dragPlantId, setDragPlantId] = useState(null);       // plant type being dragged from library
       const [dragPlacedId, setDragPlacedId] = useState(null);     // unique id of placed plant being moved
       const [dragOverBed, setDragOverBed] = useState(null);
@@ -4122,17 +4306,15 @@
 
       const deleteBed = (bedId) => {
         if (!setBeds) return;
-        const count = yearPlaced.filter(p => p.bed === bedId).length;
-        if (count > 0 && !confirm(`This bed has ${count} plant(s). Delete bed and keep plants unassigned?`)) return;
-        if (count === 0 && !confirm("Delete this bed?")) return;
+        const count = (placed || []).filter(p => p.bed === bedId).length;
+        if (count > 0) {
+          if (!confirm(`This bed has ${count} plant(s). Delete the bed and remove those plantings from the garden?`)) return;
+        } else if (!confirm("Delete this bed?")) {
+          return;
+        }
         setBeds(prev => prev.filter(b => b.id !== bedId));
-        // Move plants to first remaining bed if any
-        setPlaced(prev => {
-          const remaining = (beds || []).filter(b => b.id !== bedId);
-          const fallback = remaining[0]?.id;
-          if (!fallback) return prev.filter(p => p.bed !== bedId);
-          return prev.map(p => p.bed === bedId ? { ...p, bed: fallback } : p);
-        });
+        // Remove plantings from this bed only — never silently move them to another bed
+        setPlaced(prev => (prev || []).filter(p => p.bed !== bedId));
         setEditingBed(null);
       };
 
@@ -5528,7 +5710,7 @@
             {tab === "save" && (
               <div className="space-y-3">
                 <div className="bg-lime-50 border border-lime-200 rounded-2xl p-3 text-xs text-lime-950">
-                  Save seed from harvested (or mature) plantings in your garden. Only open-pollinated / heirloom varieties grow true.
+                  Save seed from mature plantings, or use Guide for bulbs, dividing roots, and cloning (cuttings/runners). OP/heirloom only for true-to-type seed.
                 </div>
                 {harvestCandidates.length === 0 ? (
                   <p className="text-sm text-sage-400 text-center py-6">Mark plants as harvested on Layout, or wait until harvest dates, then save seed here.</p>
@@ -5566,14 +5748,27 @@
 
             {tab === "guide" && (
               <div className="space-y-3">
-                <p className="text-xs text-sage-600">Homestead seed-saving basics. Always follow local regulations and disease-free practices.</p>
+                <p className="text-xs text-sage-600">Homestead propagation: seed, bulbs, division, and cloning. Always use disease-free stock and follow local rules.</p>
+                <p className="text-[11px] font-semibold text-sage-700 uppercase tracking-wide">Saving seed</p>
                 {SEED_SAVING_OVERVIEW.map((g, i) => (
                   <div key={i} className="bg-white rounded-xl p-3 card-shadow">
                     <p className="text-sm font-semibold text-sage-800">{g.title}</p>
                     <p className="text-xs text-sage-600 mt-1">{g.body}</p>
                   </div>
                 ))}
-                <p className="text-[10px] text-sage-400">Tap any seed in Inventory for crop-specific store · germinate · grow · save instructions.</p>
+                <p className="text-[11px] font-semibold text-sage-700 uppercase tracking-wide pt-1">Bulbs · roots · clones</p>
+                {PROPAGATION_GUIDES.map((g) => (
+                  <div key={g.id} className="bg-white rounded-xl p-3 card-shadow space-y-2">
+                    <p className="text-sm font-semibold text-sage-800">{g.icon} {g.title}</p>
+                    <p className="text-xs text-sage-600">{g.body}</p>
+                    <ol className="list-decimal list-inside space-y-1">
+                      {(g.steps || []).map((s, i) => (
+                        <li key={i} className="text-[11px] text-sage-700 leading-relaxed">{s}</li>
+                      ))}
+                    </ol>
+                  </div>
+                ))}
+                <p className="text-[10px] text-sage-400">Tap any item in Inventory for crop-specific store · germinate · grow · save seed · bulbs · divide · clone.</p>
               </div>
             )}
           </div>
@@ -5635,8 +5830,11 @@
                       { t: "Store", b: care.store },
                       { t: "Germinate", b: care.germinate },
                       { t: "Grow", b: care.grow },
-                      { t: "Save seed next time", b: care.save },
-                    ].map(block => (
+                      { t: "Save seed", b: care.save },
+                      { t: "Bulbs / tubers / cloves", b: care.bulbs },
+                      { t: "Split roots / divide", b: care.divide },
+                      { t: "Clone (cuttings, runners, slips)", b: care.clone },
+                    ].filter(block => block.b).map(block => (
                       <div key={block.t} className="border border-sage-100 rounded-xl p-3">
                         <p className="text-xs font-semibold text-sage-800 mb-1">{block.t}</p>
                         <p className="text-[11px] text-sage-600 leading-relaxed">{block.b}</p>
@@ -9516,12 +9714,14 @@
               setTasks={setTasks}
               seeds={seeds}
               placed={placed}
+              setPlaced={setPlaced}
               setActive={setActive}
               journal={journal}
               customPlants={customPlants}
               profile={profile}
               rotationHistory={rotationHistory}
               beds={beds}
+              planYear={planYear}
             />
           )}
           {active === "plan" && (
